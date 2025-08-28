@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, use } from "react"
 import { MainLayout } from "@/components/main-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -63,6 +63,16 @@ const projects = [
       { date: "2024-02-10", description: "Installation materials", amount: 1200, vat: 240, status: "Approved" },
       { date: "2024-02-08", description: "Electrical work", amount: 2500, vat: 500, status: "Pending Approval" },
     ],
+    documents: [
+      { name: "Project Specification.pdf", uploadDate: "2024-01-10" },
+      { name: "Installation Manual.pdf", uploadDate: "2024-01-20" },
+      { name: "Safety Guidelines.pdf", uploadDate: "2024-01-25" },
+    ],
+    photos: [
+      { name: "Site Survey - Week 1.jpg", uploadDate: "2024-01-15" },
+      { name: "Installation Progress.jpg", uploadDate: "2024-02-01" },
+      { name: "Equipment Setup.jpg", uploadDate: "2024-02-10" },
+    ],
   },
   {
     id: 2,
@@ -98,6 +108,16 @@ const projects = [
       { date: "2024-02-05", description: "Specialist craftsman", amount: 8500, vat: 1700, status: "Approved" },
       { date: "2024-01-28", description: "Additional permits", amount: 3200, vat: 640, status: "Pending Approval" },
     ],
+    documents: [
+      { name: "Heritage Assessment.pdf", uploadDate: "2023-10-15" },
+      { name: "Building Plans.pdf", uploadDate: "2023-11-01" },
+      { name: "Conservation Report.pdf", uploadDate: "2023-12-10" },
+    ],
+    photos: [
+      { name: "Before Restoration.jpg", uploadDate: "2023-11-05" },
+      { name: "Structural Work Progress.jpg", uploadDate: "2024-01-15" },
+      { name: "Material Samples.jpg", uploadDate: "2024-02-01" },
+    ],
   },
 ]
 
@@ -131,8 +151,9 @@ function getStatusText(status: string) {
   }
 }
 
-export default function ProjectDetailPage({ params }: { params: { id: string } }) {
-  const projectData = getProjectData(params.id)
+export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
+  const projectData = getProjectData(id)
   const [activeTab, setActiveTab] = useState("overview")
 
   return (
