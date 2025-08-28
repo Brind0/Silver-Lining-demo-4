@@ -97,6 +97,58 @@ function getStatusColor(status: string) {
   }
 }
 
+function getStatusBorderClass(status: string) {
+  switch (status) {
+    case "GREEN":
+      return "border-l-green-500"
+    case "AMBER":
+      return "border-l-amber-500"
+    case "RED":
+      return "border-l-red-500"
+    default:
+      return "border-l-gray-500"
+  }
+}
+
+function getStatusBackgroundClass(status: string) {
+  switch (status) {
+    case "GREEN":
+      return "bg-green-50"
+    case "AMBER":
+      return "bg-amber-50"
+    case "RED":
+      return "bg-red-50"
+    default:
+      return "bg-gray-50"
+  }
+}
+
+function getStatusBadgeText(status: string) {
+  switch (status) {
+    case "GREEN":
+      return "On Track"
+    case "AMBER":
+      return "At Risk"
+    case "RED":
+      return "Critical"
+    default:
+      return status
+  }
+}
+
+function getStatusBadgeClass(status: string) {
+  switch (status) {
+    case "GREEN":
+      return "bg-green-100 text-green-800"
+    case "AMBER":
+      return "bg-amber-100 text-amber-800"
+    case "RED":
+      return "bg-red-100 text-red-800"
+    default:
+      return "bg-gray-100 text-gray-800"
+  }
+}
+
 function getStatusIcon(status: string) {
   switch (status) {
     case "GREEN":
@@ -112,31 +164,21 @@ function getStatusIcon(status: string) {
 
 function ProjectCard({ project }: { project: any }) {
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
+    <Card className={`hover:shadow-md transition-shadow border-l-4 ${getStatusBorderClass(project.status)} ${getStatusBackgroundClass(project.status)}`}>
+      <CardHeader className="pb-3 relative">
+        <div className="absolute top-4 right-4">
+          <Badge className={`text-xs font-medium ${getStatusBadgeClass(project.status)}`}>
+            {getStatusBadgeText(project.status)}
+          </Badge>
+        </div>
+        <div className="pr-20">
           <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <CardTitle className="text-lg">{project.name}</CardTitle>
-              <Badge
-                variant={project.status === "RED" ? "destructive" : "secondary"}
-                className={
-                  project.status === "AMBER"
-                    ? "bg-amber-100 text-amber-800 border-amber-300"
-                    : project.status === "GREEN"
-                      ? "bg-green-100 text-green-800 border-green-300"
-                      : ""
-                }
-              >
-                {project.status}
-              </Badge>
-            </div>
+            <CardTitle className="text-lg">{project.name}</CardTitle>
             <CardDescription className="font-medium text-sm">
               {project.statusPhrase}
               {project.overrunPercentage && <span className="ml-2 text-xs">({project.overrunPercentage}% over)</span>}
             </CardDescription>
           </div>
-          <div className="flex items-center space-x-1">{getStatusIcon(project.status)}</div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -166,7 +208,16 @@ function ProjectCard({ project }: { project: any }) {
             <span className="text-muted-foreground">Project Progress</span>
             <span className="font-medium">{project.progress}%</span>
           </div>
-          <Progress value={project.progress} className="h-2" />
+          <Progress
+            value={project.progress}
+            className={`h-2 ${
+              project.status === "RED"
+                ? "[&>div]:bg-red-500"
+                : project.status === "AMBER"
+                  ? "[&>div]:bg-amber-500"
+                  : "[&>div]:bg-green-500"
+            }`}
+          />
         </div>
 
         {/* Client & Phase */}
