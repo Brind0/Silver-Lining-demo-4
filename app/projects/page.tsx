@@ -102,6 +102,7 @@ function getStatusColor(status: string) {
   }
 }
 
+
 function getStatusBorderAndBg(status: string) {
   switch (status) {
     case "GREEN":
@@ -129,6 +130,7 @@ function getStatusBadge(status: string) {
 }
 
 function getStatusText(status: string) {
+
   switch (status) {
     case "GREEN":
       return "On Track"
@@ -163,6 +165,7 @@ function ProjectCard({ project }: { project: any }) {
             <div className="flex items-center space-x-2">
               <CardTitle className="text-lg">{project.name}</CardTitle>
             </div>
+
             <CardDescription className="font-medium text-sm">
               {project.statusPhrase}
               {project.overrunPercentage && <span className="ml-2 text-xs">({project.overrunPercentage}% over)</span>}
@@ -202,7 +205,16 @@ function ProjectCard({ project }: { project: any }) {
             <span className="text-muted-foreground">Project Progress</span>
             <span className="font-medium">{project.progress}%</span>
           </div>
-          <Progress value={project.progress} className="h-2" />
+          <Progress
+            value={project.progress}
+            className={`h-2 ${
+              project.status === "RED"
+                ? "[&>div]:bg-red-500"
+                : project.status === "AMBER"
+                  ? "[&>div]:bg-amber-500"
+                  : "[&>div]:bg-green-500"
+            }`}
+          />
         </div>
 
         {/* Client & Phase */}
