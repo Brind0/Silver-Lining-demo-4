@@ -29,6 +29,45 @@ function getStatusDotClass(status: ProjectStatus): string {
   }
 }
 
+function getStatusBorderAndBg(status: ProjectStatus): string {
+  switch (status) {
+    case "GREEN":
+      return "border-l-green-500 bg-green-50/20"
+    case "AMBER":
+      return "border-l-amber-500 bg-amber-50/20"
+    case "RED":
+      return "border-l-red-500 bg-red-50/20"
+    default:
+      return "border-l-gray-500 bg-gray-50/20"
+  }
+}
+
+function getStatusBadge(status: ProjectStatus): string {
+  switch (status) {
+    case "GREEN":
+      return "bg-green-100 text-green-800"
+    case "AMBER":
+      return "bg-amber-100 text-amber-800"
+    case "RED":
+      return "bg-red-100 text-red-800"
+    default:
+      return "bg-gray-100 text-gray-800"
+  }
+}
+
+function getStatusText(status: ProjectStatus): string {
+  switch (status) {
+    case "GREEN":
+      return "On Track"
+    case "AMBER":
+      return "At Risk"
+    case "RED":
+      return "Critical"
+    default:
+      return "Unknown"
+  }
+}
+
 export function ProjectSwipeCards({ projects }: { projects: SwipeProject[] }) {
   return (
     <div className="-mx-2">
@@ -40,11 +79,13 @@ export function ProjectSwipeCards({ projects }: { projects: SwipeProject[] }) {
           return (
             <Card
               key={p.id}
-              className="w-[280px] h-[140px] bg-white rounded-xl border border-gray-200 p-4 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-grab select-none flex flex-col justify-between"
+              className={`w-[280px] h-[140px] bg-white rounded-xl border border-gray-200 border-l-4 p-4 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-grab select-none flex flex-col justify-between ${getStatusBorderAndBg(p.status)}`}
             >
               <div className="flex items-start justify-between mb-2">
                 <h3 className="font-semibold text-[16px] leading-snug text-gray-800 line-clamp-2 pr-2">{p.name}</h3>
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getStatusDotClass(p.status)}`} />
+                <div className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadge(p.status)}`}>
+                  {getStatusText(p.status)}
+                </div>
               </div>
 
               <div className="flex items-end justify-between mt-auto">

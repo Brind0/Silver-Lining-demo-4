@@ -151,3 +151,67 @@ onClick={() => setSelectedBusiness(isActive ? null : business.id)}
     - Marchmont Historic: 3 documents, 3 photos
   
 - **Result**: "VIEW PROJECT DETAILS" button now successfully navigates to project detail pages without errors
+
+---
+
+## RAG Status Visual Indicators
+
+### 9. Professional RAG Status Indicators on Project Cards
+- **Location**: 
+  - Main project cards: `app/projects/page.tsx` (ProjectCard component)
+  - Swipe cards: `components/project-swipe-cards.tsx` (ProjectSwipeCards component)
+- **Feature**: Added professional RAG status indicators with colored borders, background tints, and status badges
+- **Implementation**:
+
+#### Visual Design Elements
+1. **4px Colored Left Border**:
+   - Green: `border-l-green-500` for "On Track" projects
+   - Amber: `border-l-amber-500` for "At Risk" projects  
+   - Red: `border-l-red-500` for "Critical" projects
+
+2. **Subtle Background Tints (20% opacity)**:
+   - Green: `bg-green-50/20` for "On Track" projects
+   - Amber: `bg-amber-50/20` for "At Risk" projects
+   - Red: `bg-red-50/20` for "Critical" projects
+
+3. **Status Badges in Top-Right Corner**:
+   - Business-friendly text: "On Track", "At Risk", "Critical"
+   - Small, professional styling: `text-xs font-medium`
+   - Color-matched backgrounds:
+     - Green: `bg-green-100 text-green-800`
+     - Amber: `bg-amber-100 text-amber-800`
+     - Red: `bg-red-100 text-red-800`
+
+#### Technical Implementation
+
+**New Helper Functions Added**:
+```tsx
+function getStatusBorderAndBg(status: string): string {
+  // Returns combined border and background classes
+}
+
+function getStatusBadge(status: string): string {
+  // Returns badge styling classes
+}
+
+function getStatusText(status: string): string {
+  // Returns business-friendly status text
+}
+```
+
+**Card Updates**:
+- **Main Project Cards**: Added `border-l-4 ${getStatusBorderAndBg(project.status)}` to Card className
+- **Swipe Cards**: Updated className with border and background styling
+- **Status Badges**: Replaced status dots with professional badges containing business-friendly text
+
+#### Design Philosophy
+- **Professional appearance**: Colors used as subtle accents, maintaining white backgrounds and shadows
+- **Business-friendly language**: Clear, professional status terminology instead of color codes
+- **Accessibility**: High contrast text and clear visual hierarchy
+- **Consistency**: Same design language across both main project cards and swipeable project cards
+
+#### Benefits
+- **Immediate visual recognition**: 4px colored border provides instant status identification
+- **Professional presentation**: Business-appropriate language and styling
+- **Enhanced readability**: Subtle background tints improve card organization without compromising content
+- **Consistent user experience**: Unified RAG status presentation across all project card types
