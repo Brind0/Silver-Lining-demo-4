@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Read(c:\\Users\\soggy\\OneDrive\\Pictures\\Screenshots/**)",
+      "Read(c:\\Users\\soggy\\OneDrive\\Pictures\\Screenshots/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

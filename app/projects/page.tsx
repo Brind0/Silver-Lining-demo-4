@@ -4,9 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Eye, Calendar, Users, DollarSign, AlertTriangle, CheckCircle, XCircle } from "lucide-react"
 import Link from "next/link"
+import { useState } from "react"
 
 const projects = [
   {
@@ -23,6 +23,7 @@ const projects = [
     endDate: "2024-04-30",
     team: ["John Smith", "Sarah Wilson"],
     phase: "Installation",
+    business: "golf-sim",
   },
   {
     id: 2,
@@ -38,6 +39,7 @@ const projects = [
     endDate: "2024-05-15",
     team: ["Mike Johnson", "Emma Davis", "Tom Brown"],
     phase: "Restoration",
+    business: "listed-buildings",
   },
   {
     id: 3,
@@ -52,6 +54,7 @@ const projects = [
     endDate: "2024-06-30",
     team: ["Alice Cooper", "David Lee"],
     phase: "Planning",
+    business: "golf-sim",
   },
   {
     id: 4,
@@ -67,6 +70,7 @@ const projects = [
     endDate: "2024-03-31",
     team: ["Robert Taylor", "Lisa Johnson"],
     phase: "Final Touches",
+    business: "listed-buildings",
   },
   {
     id: 5,
@@ -81,6 +85,7 @@ const projects = [
     endDate: "2024-08-15",
     team: ["James Wilson", "Kate Brown"],
     phase: "Design",
+    business: "golf-sim",
   },
 ]
 
@@ -94,6 +99,47 @@ function getStatusColor(status: string) {
       return "bg-red-500"
     default:
       return "bg-gray-500"
+  }
+}
+
+
+function getStatusBorderAndBg(status: string) {
+  switch (status) {
+    case "GREEN":
+      return "border-l-green-500 bg-green-50/20"
+    case "AMBER":
+      return "border-l-amber-500 bg-amber-50/20"
+    case "RED":
+      return "border-l-red-500 bg-red-50/20"
+    default:
+      return "border-l-gray-500 bg-gray-50/20"
+  }
+}
+
+function getStatusBadge(status: string) {
+  switch (status) {
+    case "GREEN":
+      return "bg-green-100 text-green-800 border-green-200"
+    case "AMBER":
+      return "bg-amber-100 text-amber-800 border-amber-200"
+    case "RED":
+      return "bg-red-100 text-red-800 border-red-200"
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200"
+  }
+}
+
+function getStatusText(status: string) {
+
+  switch (status) {
+    case "GREEN":
+      return "On Track"
+    case "AMBER":
+      return "At Risk"
+    case "RED":
+      return "Critical"
+    default:
+      return "Unknown"
   }
 }
 
@@ -112,31 +158,24 @@ function getStatusIcon(status: string) {
 
 function ProjectCard({ project }: { project: any }) {
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className={`hover:shadow-md transition-shadow border-l-4 ${getStatusBorderAndBg(project.status)}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <CardTitle className="text-lg">{project.name}</CardTitle>
-              <Badge
-                variant={project.status === "RED" ? "destructive" : "secondary"}
-                className={
-                  project.status === "AMBER"
-                    ? "bg-amber-100 text-amber-800 border-amber-300"
-                    : project.status === "GREEN"
-                      ? "bg-green-100 text-green-800 border-green-300"
-                      : ""
-                }
-              >
-                {project.status}
-              </Badge>
             </div>
+
             <CardDescription className="font-medium text-sm">
               {project.statusPhrase}
               {project.overrunPercentage && <span className="ml-2 text-xs">({project.overrunPercentage}% over)</span>}
             </CardDescription>
           </div>
-          <div className="flex items-center space-x-1">{getStatusIcon(project.status)}</div>
+          <div className="flex items-center space-x-1">
+            <Badge className={`text-xs font-medium ${getStatusBadge(project.status)}`}>
+              {getStatusText(project.status)}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -166,7 +205,16 @@ function ProjectCard({ project }: { project: any }) {
             <span className="text-muted-foreground">Project Progress</span>
             <span className="font-medium">{project.progress}%</span>
           </div>
-          <Progress value={project.progress} className="h-2" />
+          <Progress
+            value={project.progress}
+            className={`h-2 ${
+              project.status === "RED"
+                ? "[&>div]:bg-red-500"
+                : project.status === "AMBER"
+                  ? "[&>div]:bg-amber-500"
+                  : "[&>div]:bg-green-500"
+            }`}
+          />
         </div>
 
         {/* Client & Phase */}
@@ -202,10 +250,10 @@ function ProjectCard({ project }: { project: any }) {
 
         <div className="pt-2">
           <Link href={`/projects/${project.id}`}>
-            <Button size="sm" className="w-full">
-              <Eye className="h-4 w-4 mr-2" />
-              View Project Details
-            </Button>
+            <div className="w-full px-3 py-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 border-2 border-gray-300 shadow-sm text-center hover:bg-gray-200 transition-colors cursor-pointer flex items-center justify-center">
+              <Eye className="h-3 w-3 mr-2" />
+              VIEW PROJECT DETAILS
+            </div>
           </Link>
         </div>
       </CardContent>
@@ -214,9 +262,46 @@ function ProjectCard({ project }: { project: any }) {
 }
 
 export default function ProjectsPage() {
-  const greenProjects = projects.filter((p) => p.status === "GREEN")
-  const amberProjects = projects.filter((p) => p.status === "AMBER")
-  const redProjects = projects.filter((p) => p.status === "RED")
+  const [selectedBusiness, setSelectedBusiness] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<string>("all")
+  
+  const filteredProjects = selectedBusiness 
+    ? projects.filter(p => p.business === selectedBusiness)
+    : projects
+    
+  const greenProjects = filteredProjects.filter((p) => p.status === "GREEN")
+  const amberProjects = filteredProjects.filter((p) => p.status === "AMBER")
+  const redProjects = filteredProjects.filter((p) => p.status === "RED")
+  
+  const businesses = [
+    {
+      id: 'golf-sim',
+      name: 'Silver Linings Golf Sim',
+      description: 'Premium golf simulators for luxury estates and private clubs',
+      icon: 'SG',
+      color: 'green',
+      projects: projects.filter(p => p.business === 'golf-sim'),
+      revenue: '175K'
+    },
+    {
+      id: 'listed-buildings',
+      name: 'Silver Linings Listed Buildings',
+      description: 'Heritage restoration and conservation for historic properties',
+      icon: 'LB',
+      color: 'amber',
+      projects: projects.filter(p => p.business === 'listed-buildings'),
+      revenue: '285K'
+    },
+    {
+      id: 'walpole-properties',
+      name: 'Walpole Properties',
+      description: 'Premium property development and luxury estate management',
+      icon: 'WP',
+      color: 'blue',
+      projects: projects.filter(p => p.business === 'walpole-properties'),
+      revenue: '0'
+    }
+  ]
 
   return (
     <MainLayout>
@@ -235,92 +320,166 @@ export default function ProjectsPage() {
           </div>
         </div>
 
-        {/* Project Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                <span className="text-sm font-medium">On Track</span>
-              </div>
-              <div className="text-2xl font-bold mt-2">{greenProjects.length}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-                <span className="text-sm font-medium">At Risk</span>
-              </div>
-              <div className="text-2xl font-bold mt-2">{amberProjects.length}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                <span className="text-sm font-medium">Critical</span>
-              </div>
-              <div className="text-2xl font-bold mt-2">{redProjects.length}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Total Budget</span>
-              </div>
-              <div className="text-2xl font-bold mt-2">£400K</div>
-            </CardContent>
-          </Card>
+        {/* Business Units */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {businesses.map((business) => {
+            const isActive = selectedBusiness === business.id
+            
+            return (
+              <Card 
+                key={business.id}
+                className={`hover:shadow-lg transition-all duration-300 cursor-pointer group relative ${
+                  isActive 
+                    ? 'ring-2 ring-black' 
+                    : ''
+                }`}
+                onClick={() => setSelectedBusiness(isActive ? null : business.id)}
+              >
+                {isActive && (
+                  <div className="absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 border-2 border-gray-300 shadow-sm">
+                    ACTIVE
+                  </div>
+                )}
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="h-12 w-12 rounded-lg bg-gray-800 flex items-center justify-center">
+                      <span className="text-white font-bold text-lg">{business.icon}</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-muted-foreground">Active Projects</div>
+                      <div className="text-2xl font-bold">{business.projects.length}</div>
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2 group-hover:text-gray-700 transition-colors">
+                    {business.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {business.description}
+                  </p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Revenue YTD</span>
+                    <span className="font-semibold text-gray-800">£{business.revenue}</span>
+                  </div>
+                  <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-gray-800 h-2 rounded-full" 
+                      style={{width: business.projects.length > 0 ? '70%' : '0%'}}
+                    ></div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
+        
 
-        <Tabs defaultValue="all" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">All Projects ({projects.length})</TabsTrigger>
-            <TabsTrigger value="green" className="text-green-700">
-              On Track ({greenProjects.length})
-            </TabsTrigger>
-            <TabsTrigger value="amber" className="text-amber-700">
-              At Risk ({amberProjects.length})
-            </TabsTrigger>
-            <TabsTrigger value="red" className="text-red-700">
-              Critical ({redProjects.length})
-            </TabsTrigger>
-          </TabsList>
+        <div className="space-y-6">
+          <div className="grid grid-cols-4 gap-3 mb-6">
+            <button 
+              onClick={() => setActiveTab("all")}
+              className={`flex flex-col items-center p-4 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 ${
+                activeTab === "all" 
+                  ? "bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200 shadow-md" 
+                  : "bg-gradient-to-br from-white to-gray-50/50 border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <div className="flex items-center space-x-2 mb-2">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                  <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                </div>
+                <span className="text-sm font-semibold text-gray-800">All Projects</span>
+              </div>
+              <span className="text-2xl font-bold text-primary-900">{filteredProjects.length}</span>
+            </button>
 
-          <TabsContent value="all" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {projects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
+            <button 
+              onClick={() => setActiveTab("red")}
+              className={`flex flex-col items-center p-4 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 ${
+                activeTab === "red" 
+                  ? "bg-gradient-to-br from-red-50 to-red-100/50 border-red-200 shadow-md" 
+                  : "bg-gradient-to-br from-white to-red-50/30 border-red-100 hover:border-red-200"
+              }`}
+            >
+              <div className="flex items-center space-x-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                <span className="text-sm font-semibold text-gray-800">Critical</span>
+              </div>
+              <span className="text-2xl font-bold text-red-600">{redProjects.length}</span>
+            </button>
+
+            <button 
+              onClick={() => setActiveTab("amber")}
+              className={`flex flex-col items-center p-4 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 ${
+                activeTab === "amber" 
+                  ? "bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200 shadow-md" 
+                  : "bg-gradient-to-br from-white to-amber-50/30 border-amber-100 hover:border-amber-200"
+              }`}
+            >
+              <div className="flex items-center space-x-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                <span className="text-sm font-semibold text-gray-800">At Risk</span>
+              </div>
+              <span className="text-2xl font-bold text-amber-600">{amberProjects.length}</span>
+            </button>
+
+            <button 
+              onClick={() => setActiveTab("green")}
+              className={`flex flex-col items-center p-4 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 ${
+                activeTab === "green" 
+                  ? "bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200 shadow-md" 
+                  : "bg-gradient-to-br from-white to-emerald-50/30 border-emerald-100 hover:border-emerald-200"
+              }`}
+            >
+              <div className="flex items-center space-x-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                <span className="text-sm font-semibold text-gray-800">On Track</span>
+              </div>
+              <span className="text-2xl font-bold text-emerald-600">{greenProjects.length}</span>
+            </button>
+          </div>
+
+          {activeTab === "all" && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredProjects.map((project) => (
+                  <ProjectCard key={project.id} project={project} />
+                ))}
+              </div>
             </div>
-          </TabsContent>
+          )}
 
-          <TabsContent value="green" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {greenProjects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
+          {activeTab === "red" && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {redProjects.map((project) => (
+                  <ProjectCard key={project.id} project={project} />
+                ))}
+              </div>
             </div>
-          </TabsContent>
+          )}
 
-          <TabsContent value="amber" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {amberProjects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
+          {activeTab === "amber" && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {amberProjects.map((project) => (
+                  <ProjectCard key={project.id} project={project} />
+                ))}
+              </div>
             </div>
-          </TabsContent>
+          )}
 
-          <TabsContent value="red" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {redProjects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
+          {activeTab === "green" && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {greenProjects.map((project) => (
+                  <ProjectCard key={project.id} project={project} />
+                ))}
+              </div>
             </div>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
     </MainLayout>
   )
