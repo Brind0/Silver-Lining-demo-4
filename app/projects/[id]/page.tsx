@@ -11,6 +11,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
   ArrowLeft,
   Calendar,
   Users,
@@ -24,6 +33,7 @@ import {
   FileText,
   ImageIcon,
   Eye,
+  Check,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -74,13 +84,13 @@ const projects = [
       { name: "Equipment Setup.jpg", uploadDate: "2024-02-10" },
     ],
     tasks: [
-      { id: 1, name: "Install main electrical panel", category: "electrical", status: "completed", assignee: "John Smith", dueDate: "2024-02-15" },
-      { id: 2, name: "Run wiring for simulator", category: "electrical", status: "completed", assignee: "Sarah Wilson", dueDate: "2024-02-20" },
-      { id: 3, name: "Install water supply lines", category: "plumbing", status: "in-progress", assignee: "Mike Johnson", dueDate: "2024-03-01" },
-      { id: 4, name: "Build custom framework", category: "carpenter", status: "pending", assignee: "John Smith", dueDate: "2024-03-10" },
-      { id: 5, name: "Install flooring", category: "other", status: "pending", assignee: "Sarah Wilson", dueDate: "2024-03-15" },
-      { id: 6, name: "Connect drainage system", category: "plumbing", status: "in-progress", assignee: "Mike Johnson", dueDate: "2024-03-05" },
-      { id: 7, name: "Install lighting fixtures", category: "electrical", status: "pending", assignee: "John Smith", dueDate: "2024-03-20" },
+      { id: 1, name: "Install main electrical panel", category: "electrical", status: "completed", assignee: "John Smith", dueDate: "2024-02-15", description: "Install 200-amp electrical panel with dedicated circuits for golf simulator equipment", priority: "High", estimatedHours: 8, actualHours: 7, notes: "Completed ahead of schedule. All circuits tested and approved by inspector." },
+      { id: 2, name: "Run wiring for simulator", category: "electrical", status: "completed", assignee: "Sarah Wilson", dueDate: "2024-02-20", description: "Run dedicated 220V wiring from panel to simulator location", priority: "High", estimatedHours: 6, actualHours: 6, notes: "Wiring completed and tested. Ready for equipment connection." },
+      { id: 3, name: "Install water supply lines", category: "plumbing", status: "in-progress", assignee: "Mike Johnson", dueDate: "2024-03-01", description: "Install water supply for climate control and cleaning systems", priority: "Medium", estimatedHours: 4, actualHours: 2, notes: "60% complete. Waiting for specialized fittings delivery." },
+      { id: 4, name: "Build custom framework", category: "carpenter", status: "pending", assignee: "John Smith", dueDate: "2024-03-10", description: "Construct custom wooden framework for simulator mounting", priority: "High", estimatedHours: 12, actualHours: 0, notes: "Materials ordered. Waiting for electrical work completion." },
+      { id: 5, name: "Install flooring", category: "other", status: "pending", assignee: "Sarah Wilson", dueDate: "2024-03-15", description: "Install specialized anti-static flooring for simulator area", priority: "Medium", estimatedHours: 8, actualHours: 0, notes: "Flooring materials in storage. Scheduled after framework completion." },
+      { id: 6, name: "Connect drainage system", category: "plumbing", status: "in-progress", assignee: "Mike Johnson", dueDate: "2024-03-05", description: "Connect drainage for HVAC condensation and cleaning runoff", priority: "Low", estimatedHours: 3, actualHours: 1, notes: "Drainage partially connected. Final connections pending." },
+      { id: 7, name: "Install lighting fixtures", category: "electrical", status: "pending", assignee: "John Smith", dueDate: "2024-03-20", description: "Install LED lighting system with dimmer controls", priority: "Medium", estimatedHours: 5, actualHours: 0, notes: "Fixtures selected and approved by client. Installation scheduled." },
     ],
   },
   {
@@ -128,12 +138,12 @@ const projects = [
       { name: "Material Samples.jpg", uploadDate: "2024-02-01" },
     ],
     tasks: [
-      { id: 1, name: "Restore period stonework", category: "carpenter", status: "completed", assignee: "Emma Davis", dueDate: "2024-01-20" },
-      { id: 2, name: "Update electrical systems", category: "electrical", status: "completed", assignee: "Tom Brown", dueDate: "2024-02-01" },
-      { id: 3, name: "Repair roof drainage", category: "plumbing", status: "in-progress", assignee: "Alice Cooper", dueDate: "2024-02-28" },
-      { id: 4, name: "Install heritage windows", category: "carpenter", status: "in-progress", assignee: "Emma Davis", dueDate: "2024-03-15" },
-      { id: 5, name: "Conservation cleaning", category: "other", status: "pending", assignee: "Tom Brown", dueDate: "2024-04-01" },
-      { id: 6, name: "Install period plumbing", category: "plumbing", status: "pending", assignee: "Alice Cooper", dueDate: "2024-03-30" },
+      { id: 1, name: "Restore period stonework", category: "carpenter", status: "completed", assignee: "Emma Davis", dueDate: "2024-01-20", description: "Restore original limestone facade using traditional techniques", priority: "High", estimatedHours: 40, actualHours: 38, notes: "Restoration completed to heritage standards. Stone color perfectly matched." },
+      { id: 2, name: "Update electrical systems", category: "electrical", status: "completed", assignee: "Tom Brown", dueDate: "2024-02-01", description: "Upgrade electrical systems while maintaining period aesthetics", priority: "High", estimatedHours: 24, actualHours: 26, notes: "All wiring hidden within walls. Modern safety standards met." },
+      { id: 3, name: "Repair roof drainage", category: "plumbing", status: "in-progress", assignee: "Alice Cooper", dueDate: "2024-02-28", description: "Repair and upgrade roof drainage system with period-appropriate materials", priority: "High", estimatedHours: 16, actualHours: 12, notes: "75% complete. Custom lead work in progress." },
+      { id: 4, name: "Install heritage windows", category: "carpenter", status: "in-progress", assignee: "Emma Davis", dueDate: "2024-03-15", description: "Install custom-made sash windows matching original specifications", priority: "Medium", estimatedHours: 32, actualHours: 20, notes: "First floor windows installed. Ground floor in progress." },
+      { id: 5, name: "Conservation cleaning", category: "other", status: "pending", assignee: "Tom Brown", dueDate: "2024-04-01", description: "Gentle cleaning of historic surfaces using approved conservation methods", priority: "Low", estimatedHours: 20, actualHours: 0, notes: "Awaiting completion of other work. Cleaning products approved by heritage officer." },
+      { id: 6, name: "Install period plumbing", category: "plumbing", status: "pending", assignee: "Alice Cooper", dueDate: "2024-03-30", description: "Install modern plumbing systems concealed within period fixtures", priority: "Medium", estimatedHours: 18, actualHours: 0, notes: "Period fixtures sourced and ready. Installation follows drainage completion." },
     ],
   },
 ]
@@ -173,6 +183,29 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const projectData = getProjectData(id)
   const [activeTab, setActiveTab] = useState("overview")
   const [groupTasks, setGroupTasks] = useState(false)
+  const [completedTasks, setCompletedTasks] = useState<number[]>([])
+  const [selectedTask, setSelectedTask] = useState<any>(null)
+
+  const toggleTaskCompletion = (taskId: number) => {
+    setCompletedTasks(prev => 
+      prev.includes(taskId) 
+        ? prev.filter(id => id !== taskId)
+        : [...prev, taskId]
+    )
+  }
+
+  const openTaskDetails = (task: any) => {
+    setSelectedTask(task)
+  }
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "High": return "text-red-600 bg-red-50 border-red-200"
+      case "Medium": return "text-amber-600 bg-amber-50 border-amber-200"
+      case "Low": return "text-green-600 bg-green-50 border-green-200"
+      default: return "text-gray-600 bg-gray-50 border-gray-200"
+    }
+  }
 
   return (
     <MainLayout>
@@ -332,24 +365,121 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               <Card>
                 <CardContent className="p-6">
                   <div className="space-y-4">
-                    {projectData.tasks?.map((task) => (
-                      <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-3 h-3 rounded-full ${
-                            task.status === "completed" ? "bg-green-500" :
-                            task.status === "in-progress" ? "bg-amber-500" :
-                            "bg-gray-300"
-                          }`} />
-                          <div>
-                            <p className="text-sm font-medium">{task.name}</p>
-                            <p className="text-xs text-muted-foreground">{task.assignee} • Due {new Date(task.dueDate).toLocaleDateString()}</p>
+                    {projectData.tasks?.map((task) => {
+                      const isCompleted = completedTasks.includes(task.id)
+                      return (
+                        <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50">
+                          <div className="flex items-center space-x-3 flex-1">
+                            <button
+                              onClick={() => toggleTaskCompletion(task.id)}
+                              className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                                isCompleted
+                                  ? "bg-gray-900 border-gray-900 text-white"
+                                  : "border-gray-300 hover:border-gray-400"
+                              }`}
+                            >
+                              {isCompleted && <Check className="h-3 w-3" />}
+                            </button>
+                            <div className={`w-3 h-3 rounded-full ${
+                              task.status === "completed" ? "bg-green-500" :
+                              task.status === "in-progress" ? "bg-amber-500" :
+                              "bg-gray-300"
+                            }`} />
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <div className="cursor-pointer flex-1 hover:bg-gray-50 p-1 rounded">
+                                  <p className={`text-sm font-medium transition-all ${
+                                    isCompleted ? "line-through text-gray-500" : ""
+                                  }`}>{task.name}</p>
+                                  <p className={`text-xs text-muted-foreground transition-all ${
+                                    isCompleted ? "line-through" : ""
+                                  }`}>{task.assignee} • Due {new Date(task.dueDate).toLocaleDateString()}</p>
+                                </div>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                  <DialogTitle className="flex items-center space-x-2">
+                                    <div className={`w-3 h-3 rounded-full ${
+                                      task.status === "completed" ? "bg-green-500" :
+                                      task.status === "in-progress" ? "bg-amber-500" :
+                                      "bg-gray-300"
+                                    }`} />
+                                    <span>{task.name}</span>
+                                  </DialogTitle>
+                                  <DialogDescription>
+                                    {task.description}
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-700">Assigned to</label>
+                                      <p className="text-sm text-gray-900">{task.assignee}</p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-700">Due Date</label>
+                                      <p className="text-sm text-gray-900">{new Date(task.dueDate).toLocaleDateString()}</p>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-sm font-medium text-gray-700">Category</label>
+                                      <Badge variant="outline" className="text-xs font-semibold border-2 px-3 py-1 bg-gray-100 text-gray-800 border-gray-300 ml-4">
+                                        {task.category.toUpperCase()}
+                                      </Badge>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-sm font-medium text-gray-700">Priority</label>
+                                      <Badge className={`text-xs font-semibold border-2 px-3 py-1 ml-4 ${getPriorityColor(task.priority)}`}>
+                                        {task.priority}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-700">Estimated Hours</label>
+                                      <p className="text-sm text-gray-900">{task.estimatedHours}h</p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-700">Actual Hours</label>
+                                      <p className="text-sm text-gray-900">{task.actualHours}h</p>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="text-sm font-medium text-gray-700">Progress</label>
+                                    <div className="mt-1">
+                                      <div className="flex items-center justify-between text-sm">
+                                        <span className="text-gray-600">
+                                          {task.status === "completed" ? "Completed" :
+                                           task.status === "in-progress" ? "In Progress" : "Pending"}
+                                        </span>
+                                        <span className="text-gray-600">
+                                          {task.actualHours > 0 ? Math.round((task.actualHours / task.estimatedHours) * 100) : 0}%
+                                        </span>
+                                      </div>
+                                      <Progress 
+                                        value={task.actualHours > 0 ? Math.round((task.actualHours / task.estimatedHours) * 100) : 0} 
+                                        className="h-2 mt-1" 
+                                      />
+                                    </div>
+                                  </div>
+                                  {task.notes && (
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-700">Notes</label>
+                                      <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg mt-1">{task.notes}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                           </div>
+                          <Badge 
+                            variant="outline" 
+                            className="text-xs font-semibold border-2 px-3 py-1 bg-gray-100 text-gray-800 border-gray-300"
+                          >
+                            {task.category.toUpperCase()}
+                          </Badge>
                         </div>
-                        <Badge variant="outline" className="text-xs">
-                          {task.category}
-                        </Badge>
-                      </div>
-                    )) || <p className="text-muted-foreground">No tasks available</p>}
+                      )
+                    }) || <p className="text-muted-foreground">No tasks available</p>}
                   </div>
                 </CardContent>
               </Card>
@@ -362,26 +492,122 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm font-medium capitalize flex items-center justify-between">
                           {category}
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-xs font-semibold border-2 px-2 py-1 bg-gray-100 text-gray-800 border-gray-300">
                             {categoryTasks.length}
                           </Badge>
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-3">
-                        {categoryTasks.length > 0 ? categoryTasks.map((task) => (
-                          <div key={task.id} className="p-2 rounded border hover:bg-gray-50">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <div className={`w-2 h-2 rounded-full ${
-                                task.status === "completed" ? "bg-green-500" :
-                                task.status === "in-progress" ? "bg-amber-500" :
-                                "bg-gray-300"
-                              }`} />
-                              <p className="text-xs font-medium line-clamp-2">{task.name}</p>
+                        {categoryTasks.length > 0 ? categoryTasks.map((task) => {
+                          const isCompleted = completedTasks.includes(task.id)
+                          return (
+                            <div key={task.id} className="p-3 rounded border hover:bg-gray-50">
+                              <div className="flex items-center space-x-3 mb-2">
+                                <button
+                                  onClick={() => toggleTaskCompletion(task.id)}
+                                  className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                                    isCompleted
+                                      ? "bg-gray-900 border-gray-900 text-white"
+                                      : "border-gray-300 hover:border-gray-400"
+                                  }`}
+                                >
+                                  {isCompleted && <Check className="h-3 w-3" />}
+                                </button>
+                                <div className={`w-3 h-3 rounded-full ${
+                                  task.status === "completed" ? "bg-green-500" :
+                                  task.status === "in-progress" ? "bg-amber-500" :
+                                  "bg-gray-300"
+                                }`} />
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <p className={`text-sm font-medium line-clamp-2 transition-all cursor-pointer hover:text-blue-600 ${
+                                      isCompleted ? "line-through text-gray-500" : ""
+                                    }`}>{task.name}</p>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl">
+                                    <DialogHeader>
+                                      <DialogTitle className="flex items-center space-x-2">
+                                        <div className={`w-3 h-3 rounded-full ${
+                                          task.status === "completed" ? "bg-green-500" :
+                                          task.status === "in-progress" ? "bg-amber-500" :
+                                          "bg-gray-300"
+                                        }`} />
+                                        <span>{task.name}</span>
+                                      </DialogTitle>
+                                      <DialogDescription>
+                                        {task.description}
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                          <label className="text-sm font-medium text-gray-700">Assigned to</label>
+                                          <p className="text-sm text-gray-900">{task.assignee}</p>
+                                        </div>
+                                        <div>
+                                          <label className="text-sm font-medium text-gray-700">Due Date</label>
+                                          <p className="text-sm text-gray-900">{new Date(task.dueDate).toLocaleDateString()}</p>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                          <label className="text-sm font-medium text-gray-700">Category</label>
+                                          <Badge variant="outline" className="text-xs font-semibold border-2 px-3 py-1 bg-gray-100 text-gray-800 border-gray-300 ml-4">
+                                            {task.category.toUpperCase()}
+                                          </Badge>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                          <label className="text-sm font-medium text-gray-700">Priority</label>
+                                          <Badge className={`text-xs font-semibold border-2 px-3 py-1 ml-4 ${getPriorityColor(task.priority)}`}>
+                                            {task.priority}
+                                          </Badge>
+                                        </div>
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                          <label className="text-sm font-medium text-gray-700">Estimated Hours</label>
+                                          <p className="text-sm text-gray-900">{task.estimatedHours}h</p>
+                                        </div>
+                                        <div>
+                                          <label className="text-sm font-medium text-gray-700">Actual Hours</label>
+                                          <p className="text-sm text-gray-900">{task.actualHours}h</p>
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-700">Progress</label>
+                                        <div className="mt-1">
+                                          <div className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-600">
+                                              {task.status === "completed" ? "Completed" :
+                                               task.status === "in-progress" ? "In Progress" : "Pending"}
+                                            </span>
+                                            <span className="text-gray-600">
+                                              {task.actualHours > 0 ? Math.round((task.actualHours / task.estimatedHours) * 100) : 0}%
+                                            </span>
+                                          </div>
+                                          <Progress 
+                                            value={task.actualHours > 0 ? Math.round((task.actualHours / task.estimatedHours) * 100) : 0} 
+                                            className="h-2 mt-1" 
+                                          />
+                                        </div>
+                                      </div>
+                                      {task.notes && (
+                                        <div>
+                                          <label className="text-sm font-medium text-gray-700">Notes</label>
+                                          <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg mt-1">{task.notes}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                              </div>
+                              <p className={`text-sm text-muted-foreground transition-all ml-8 ${
+                                isCompleted ? "line-through" : ""
+                              }`}>{task.assignee}</p>
+                              <p className={`text-sm text-muted-foreground transition-all ml-8 ${
+                                isCompleted ? "line-through" : ""
+                              }`}>Due {new Date(task.dueDate).toLocaleDateString()}</p>
                             </div>
-                            <p className="text-xs text-muted-foreground">{task.assignee}</p>
-                            <p className="text-xs text-muted-foreground">Due {new Date(task.dueDate).toLocaleDateString()}</p>
-                          </div>
-                        )) : (
+                          )
+                        }) : (
                           <p className="text-xs text-muted-foreground">No {category} tasks</p>
                         )}
                       </CardContent>
@@ -391,77 +617,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </div>
             )}
             
-            <Card
-              className={`border-2 ${
-                projectData.status === "RED"
-                  ? "border-red-500"
-                  : projectData.status === "AMBER"
-                    ? "border-amber-500"
-                    : "border-green-500"
-              }`}
-            >
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Emily's Tasks - {projectData.name}</CardTitle>
-                  <Badge
-                    variant={projectData.status === "RED" ? "destructive" : "secondary"}
-                    className={
-                      projectData.status === "AMBER"
-                        ? "bg-amber-100 text-amber-800 border-amber-300"
-                        : projectData.status === "GREEN"
-                          ? "bg-green-100 text-green-800 border-green-300"
-                          : ""
-                    }
-                  >
-                    {projectData.status}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {projectData.status === "AMBER" && (
-                  <Alert className="border-amber-300 bg-amber-50">
-                    <AlertTriangle className="h-4 w-4 text-amber-600" />
-                    <AlertDescription className="text-amber-800">
-                      <div className="space-y-2">
-                        <p className="font-medium">Action Required:</p>
-                        <ul className="text-sm space-y-1">
-                          <li>• Approve £2,500 receipt for equipment</li>
-                          <li>• Review {projectData.overrunPercentage}% budget variance</li>
-                          <li>• Schedule supplier meeting for delayed materials</li>
-                        </ul>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {projectData.status === "RED" && (
-                  <Alert variant="destructive">
-                    <XCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      <div className="space-y-2">
-                        <p className="font-medium">Critical Issues:</p>
-                        <ul className="text-sm space-y-1">
-                          <li>• Budget overrun: £{(projectData.spent - projectData.budget).toLocaleString()}</li>
-                          <li>• Immediate cost control measures required</li>
-                          <li>• Client notification and approval needed</li>
-                        </ul>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="flex space-x-2">
-                  <Button size="sm" className="flex-1">
-                    <Eye className="h-4 w-4 mr-2" />
-                    Take Action
-                  </Button>
-                  <Button size="sm" variant="outline" className="flex-1 bg-transparent">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Schedule Review
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           <TabsContent value="team" className="space-y-4">
