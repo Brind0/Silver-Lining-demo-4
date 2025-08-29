@@ -73,6 +73,15 @@ const projects = [
       { name: "Installation Progress.jpg", uploadDate: "2024-02-01" },
       { name: "Equipment Setup.jpg", uploadDate: "2024-02-10" },
     ],
+    tasks: [
+      { id: 1, name: "Install main electrical panel", category: "electrical", status: "completed", assignee: "John Smith", dueDate: "2024-02-15" },
+      { id: 2, name: "Run wiring for simulator", category: "electrical", status: "completed", assignee: "Sarah Wilson", dueDate: "2024-02-20" },
+      { id: 3, name: "Install water supply lines", category: "plumbing", status: "in-progress", assignee: "Mike Johnson", dueDate: "2024-03-01" },
+      { id: 4, name: "Build custom framework", category: "carpenter", status: "pending", assignee: "John Smith", dueDate: "2024-03-10" },
+      { id: 5, name: "Install flooring", category: "other", status: "pending", assignee: "Sarah Wilson", dueDate: "2024-03-15" },
+      { id: 6, name: "Connect drainage system", category: "plumbing", status: "in-progress", assignee: "Mike Johnson", dueDate: "2024-03-05" },
+      { id: 7, name: "Install lighting fixtures", category: "electrical", status: "pending", assignee: "John Smith", dueDate: "2024-03-20" },
+    ],
   },
   {
     id: 2,
@@ -118,6 +127,14 @@ const projects = [
       { name: "Structural Work Progress.jpg", uploadDate: "2024-01-15" },
       { name: "Material Samples.jpg", uploadDate: "2024-02-01" },
     ],
+    tasks: [
+      { id: 1, name: "Restore period stonework", category: "carpenter", status: "completed", assignee: "Emma Davis", dueDate: "2024-01-20" },
+      { id: 2, name: "Update electrical systems", category: "electrical", status: "completed", assignee: "Tom Brown", dueDate: "2024-02-01" },
+      { id: 3, name: "Repair roof drainage", category: "plumbing", status: "in-progress", assignee: "Alice Cooper", dueDate: "2024-02-28" },
+      { id: 4, name: "Install heritage windows", category: "carpenter", status: "in-progress", assignee: "Emma Davis", dueDate: "2024-03-15" },
+      { id: 5, name: "Conservation cleaning", category: "other", status: "pending", assignee: "Tom Brown", dueDate: "2024-04-01" },
+      { id: 6, name: "Install period plumbing", category: "plumbing", status: "pending", assignee: "Alice Cooper", dueDate: "2024-03-30" },
+    ],
   },
 ]
 
@@ -155,6 +172,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const { id } = use(params)
   const projectData = getProjectData(id)
   const [activeTab, setActiveTab] = useState("overview")
+  const [groupTasks, setGroupTasks] = useState(false)
 
   return (
     <MainLayout>
@@ -290,6 +308,89 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           </TabsContent>
 
           <TabsContent value="tasks" className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-4">
+                <h3 className="text-lg font-semibold">Project Tasks</h3>
+                <button
+                  onClick={() => setGroupTasks(!groupTasks)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                    groupTasks
+                      ? "bg-gray-100 text-gray-800 border-2 border-gray-300 shadow-sm"
+                      : "bg-gray-50 text-gray-600 border-2 border-gray-200 hover:bg-gray-100"
+                  }`}
+                >
+                  {groupTasks ? "GROUPED" : "GROUP TASKS"}
+                </button>
+              </div>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Task
+              </Button>
+            </div>
+            
+            {!groupTasks ? (
+              <Card>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {projectData.tasks?.map((task) => (
+                      <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-3 h-3 rounded-full ${
+                            task.status === "completed" ? "bg-green-500" :
+                            task.status === "in-progress" ? "bg-amber-500" :
+                            "bg-gray-300"
+                          }`} />
+                          <div>
+                            <p className="text-sm font-medium">{task.name}</p>
+                            <p className="text-xs text-muted-foreground">{task.assignee} • Due {new Date(task.dueDate).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {task.category}
+                        </Badge>
+                      </div>
+                    )) || <p className="text-muted-foreground">No tasks available</p>}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                {["plumbing", "electrical", "carpenter", "other"].map((category) => {
+                  const categoryTasks = projectData.tasks?.filter(task => task.category === category) || [];
+                  return (
+                    <Card key={category} className="h-fit">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-medium capitalize flex items-center justify-between">
+                          {category}
+                          <Badge variant="secondary" className="text-xs">
+                            {categoryTasks.length}
+                          </Badge>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {categoryTasks.length > 0 ? categoryTasks.map((task) => (
+                          <div key={task.id} className="p-2 rounded border hover:bg-gray-50">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <div className={`w-2 h-2 rounded-full ${
+                                task.status === "completed" ? "bg-green-500" :
+                                task.status === "in-progress" ? "bg-amber-500" :
+                                "bg-gray-300"
+                              }`} />
+                              <p className="text-xs font-medium line-clamp-2">{task.name}</p>
+                            </div>
+                            <p className="text-xs text-muted-foreground">{task.assignee}</p>
+                            <p className="text-xs text-muted-foreground">Due {new Date(task.dueDate).toLocaleDateString()}</p>
+                          </div>
+                        )) : (
+                          <p className="text-xs text-muted-foreground">No {category} tasks</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+            
             <Card
               className={`border-2 ${
                 projectData.status === "RED"

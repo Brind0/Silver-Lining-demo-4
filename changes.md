@@ -215,3 +215,101 @@ function getStatusText(status: string): string {
 - **Professional presentation**: Business-appropriate language and styling
 - **Enhanced readability**: Subtle background tints improve card organization without compromising content
 - **Consistent user experience**: Unified RAG status presentation across all project card types
+
+---
+
+## Project Details Page - Tasks Section Enhancement
+
+### 10. Task Management System with Grouping Functionality
+- **Location**: `app/projects/[id]/page.tsx` (Tasks TabsContent section)
+- **Feature**: Enhanced tasks section with grouping toggle, four-column categorization, and add task functionality
+- **Implementation**:
+
+#### New Features Added
+
+1. **Project Tasks Header with Controls**:
+   - **Location**: Lines 292-309 (new section before existing tasks card)
+   - **Components**: 
+     - "Project Tasks" header (h3 with `text-lg font-semibold`)
+     - Group toggle button with business card active styling
+     - "Add Task" button positioned on the right
+
+2. **Group Tasks Toggle Button**:
+   - **Styling**: Matches business card active button styling from projects page
+   - **Active State**: `bg-gray-100 text-gray-800 border-2 border-gray-300 shadow-sm`
+   - **Inactive State**: `bg-gray-50 text-gray-600 border-2 border-gray-200 hover:bg-gray-100`
+   - **Text**: "GROUPED" when active, "GROUP TASKS" when inactive
+   - **Functionality**: Toggleable state with `groupTasks` useState variable
+
+3. **Four-Column Task Grouping System**:
+   - **Categories**: Plumbing, Electrical, Carpenter, Other
+   - **Layout**: Responsive grid (`grid-cols-1 md:grid-cols-2 xl:grid-cols-4`)
+   - **Card Design**: Individual cards for each category with task counts
+   - **Task Display**: Compact cards showing status dots, names, assignees, and due dates
+
+4. **Task Data Structure**:
+   - **Added to Project Data**: Sample task arrays for both Henderson Golf Sim and Marchmont Historic projects
+   - **Task Properties**: id, name, category, status, assignee, dueDate
+   - **Categories**: "electrical", "plumbing", "carpenter", "other"
+   - **Status Types**: "completed", "in-progress", "pending"
+
+#### Technical Implementation
+
+**State Management**:
+```tsx
+const [groupTasks, setGroupTasks] = useState(false)
+```
+
+**Toggle Button Logic**:
+```tsx
+onClick={() => setGroupTasks(!groupTasks)}
+```
+
+**Conditional Rendering**:
+- **Ungrouped View**: Single card with linear task list
+- **Grouped View**: Four-column grid with categorized task cards
+
+**Task Filtering by Category**:
+```tsx
+const categoryTasks = projectData.tasks?.filter(task => task.category === category) || [];
+```
+
+#### Visual Design Elements
+
+**Status Indicators**:
+- Green dot: Completed tasks (`bg-green-500`)
+- Amber dot: In-progress tasks (`bg-amber-500`) 
+- Gray dot: Pending tasks (`bg-gray-300`)
+
+**Category Cards**:
+- Header with capitalized category name
+- Task count badge (`Badge variant="secondary"`)
+- Compact task display with hover effects
+- Empty state messaging for categories with no tasks
+
+**Responsive Design**:
+- Single column on mobile
+- Two columns on medium screens (md:grid-cols-2)
+- Four columns on extra large screens (xl:grid-cols-4)
+
+#### Sample Task Data Added
+
+**Henderson Golf Sim Tasks**:
+- Electrical: Install main panel, run wiring, install fixtures
+- Plumbing: Install water supply, connect drainage
+- Carpenter: Build custom framework
+- Other: Install flooring
+
+**Marchmont Historic Tasks**:
+- Carpenter: Restore stonework, install heritage windows
+- Electrical: Update electrical systems
+- Plumbing: Repair roof drainage, install period plumbing
+- Other: Conservation cleaning
+
+#### Benefits
+- **Organized Task Management**: Clear categorization by trade/specialty
+- **Flexible Viewing**: Toggle between grouped and linear views
+- **Visual Status Tracking**: Instant status recognition with color-coded dots
+- **Professional Interface**: Consistent styling with rest of application
+- **Task Addition**: Ready-to-use "Add Task" functionality
+- **Responsive Design**: Optimal viewing across device sizes
