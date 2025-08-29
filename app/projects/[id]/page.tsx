@@ -20,6 +20,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Area, ComposedChart } from "recharts"
+import {
   ArrowLeft,
   Calendar,
   Users,
@@ -92,6 +101,25 @@ const projects = [
       { id: 6, name: "Connect drainage system", category: "plumbing", status: "in-progress", assignee: "Mike Johnson", dueDate: "2024-03-05", description: "Connect drainage for HVAC condensation and cleaning runoff", priority: "Low", estimatedHours: 3, actualHours: 1, notes: "Drainage partially connected. Final connections pending." },
       { id: 7, name: "Install lighting fixtures", category: "electrical", status: "pending", assignee: "John Smith", dueDate: "2024-03-20", description: "Install LED lighting system with dimmer controls", priority: "Medium", estimatedHours: 5, actualHours: 0, notes: "Fixtures selected and approved by client. Installation scheduled." },
     ],
+    weeklySpending: [
+      { week: "Week 1", date: "Jan 15", spent: 8000, cumulative: 8000, forecast: 8500, weekNumber: 1 },
+      { week: "Week 2", date: "Jan 22", spent: 12000, cumulative: 20000, forecast: 17000, weekNumber: 2 },
+      { week: "Week 3", date: "Jan 29", spent: 9500, cumulative: 29500, forecast: 25500, weekNumber: 3 },
+      { week: "Week 4", date: "Feb 5", spent: 8500, cumulative: 38000, forecast: 34000, weekNumber: 4 },
+      { week: "Week 5", date: "Feb 12", spent: 0, cumulative: 38000, forecast: 42500, weekNumber: 5 },
+      { week: "Week 6", date: "Feb 19", spent: 0, cumulative: 38000, forecast: 46000, weekNumber: 6, riskAlert: { overrun: 6000, confidence: 85, date: "Apr 15", action: "Switch to Supplier B, £2k savings" }},
+      { week: "Week 7", date: "Feb 26", spent: 0, cumulative: 38000, forecast: 48500, weekNumber: 7 },
+      { week: "Week 8", date: "Mar 5", spent: 0, cumulative: 38000, forecast: 51000, weekNumber: 8 },
+    ],
+    currentWeekPosition: 4.3,
+    budgetForecast: {
+      projectedTotal: 51000,
+      overrunAmount: 6000,
+      overrunDate: "2024-04-15",
+      currentBurnRate: 6500,
+      daysUntilOverrun: 21,
+      confidence: 85
+    }
   },
   {
     id: 2,
@@ -145,6 +173,96 @@ const projects = [
       { id: 5, name: "Conservation cleaning", category: "other", status: "pending", assignee: "Tom Brown", dueDate: "2024-04-01", description: "Gentle cleaning of historic surfaces using approved conservation methods", priority: "Low", estimatedHours: 20, actualHours: 0, notes: "Awaiting completion of other work. Cleaning products approved by heritage officer." },
       { id: 6, name: "Install period plumbing", category: "plumbing", status: "pending", assignee: "Alice Cooper", dueDate: "2024-03-30", description: "Install modern plumbing systems concealed within period fixtures", priority: "Medium", estimatedHours: 18, actualHours: 0, notes: "Period fixtures sourced and ready. Installation follows drainage completion." },
     ],
+    weeklySpending: [
+      { week: "Week 1", date: "Jan 15", spent: 8000, cumulative: 8000, forecast: 8500, weekNumber: 1 },
+      { week: "Week 2", date: "Jan 22", spent: 12000, cumulative: 20000, forecast: 17000, weekNumber: 2 },
+      { week: "Week 3", date: "Jan 29", spent: 9500, cumulative: 29500, forecast: 25500, weekNumber: 3 },
+      { week: "Week 4", date: "Feb 5", spent: 8500, cumulative: 38000, forecast: 34000, weekNumber: 4 },
+      { week: "Week 5", date: "Feb 12", spent: 0, cumulative: 38000, forecast: 42500, weekNumber: 5 },
+      { week: "Week 6", date: "Feb 19", spent: 0, cumulative: 38000, forecast: 46000, weekNumber: 6, riskAlert: { overrun: 6000, confidence: 85, date: "Apr 15", action: "Switch to Supplier B, £2k savings" }},
+      { week: "Week 7", date: "Feb 26", spent: 0, cumulative: 38000, forecast: 48500, weekNumber: 7 },
+      { week: "Week 8", date: "Mar 5", spent: 0, cumulative: 38000, forecast: 51000, weekNumber: 8 },
+    ],
+    currentWeekPosition: 4.3,
+    budgetForecast: {
+      projectedTotal: 51000,
+      overrunAmount: 6000,
+      overrunDate: "2024-04-15",
+      currentBurnRate: 6500,
+      daysUntilOverrun: 21,
+      confidence: 85
+    }
+  },
+  {
+    id: 2,
+    name: "Marchmont Historic",
+    budget: 120000,
+    spent: 165000,
+    status: "RED",
+    statusPhrase: "Critical overrun",
+    overrunPercentage: 37.5,
+    progress: 75,
+    client: "Marchmont Trust",
+    startDate: "2023-11-01",
+    endDate: "2024-05-15",
+    description: "Historic building restoration with period-appropriate materials and modern safety standards.",
+    team: [
+      { name: "Emma Davis", role: "Heritage Specialist", avatar: "/placeholder.svg?height=40&width=40" },
+      { name: "Tom Brown", role: "Restoration Lead", avatar: "/placeholder.svg?height=40&width=40" },
+      { name: "Alice Cooper", role: "Project Coordinator", avatar: "/placeholder.svg?height=40&width=40" },
+    ],
+    phases: [
+      { name: "Assessment", status: "completed", progress: 100 },
+      { name: "Structural Work", status: "completed", progress: 100 },
+      { name: "Restoration", status: "in-progress", progress: 75 },
+      { name: "Final Inspection", status: "pending", progress: 0 },
+    ],
+    expenses: [
+      { category: "Materials", budgeted: 80000, spent: 110000, status: "Over Budget" },
+      { category: "Labor", budgeted: 35000, spent: 45000, status: "Over Budget" },
+      { category: "Permits", budgeted: 5000, spent: 10000, status: "Over Budget" },
+    ],
+    recentExpenses: [
+      { date: "2024-02-12", description: "Period stone materials", amount: 15000, vat: 3000, status: "Approved" },
+      { date: "2024-02-05", description: "Specialist craftsman", amount: 8500, vat: 1700, status: "Approved" },
+      { date: "2024-01-28", description: "Additional permits", amount: 3200, vat: 640, status: "Pending Approval" },
+    ],
+    documents: [
+      { name: "Heritage Assessment.pdf", uploadDate: "2023-10-15" },
+      { name: "Building Plans.pdf", uploadDate: "2023-11-01" },
+      { name: "Conservation Report.pdf", uploadDate: "2023-12-10" },
+    ],
+    photos: [
+      { name: "Before Restoration.jpg", uploadDate: "2023-11-05" },
+      { name: "Structural Work Progress.jpg", uploadDate: "2024-01-15" },
+      { name: "Material Samples.jpg", uploadDate: "2024-02-01" },
+    ],
+    tasks: [
+      { id: 1, name: "Restore period stonework", category: "carpenter", status: "completed", assignee: "Emma Davis", dueDate: "2024-01-20", description: "Restore original limestone facade using traditional techniques", priority: "High", estimatedHours: 40, actualHours: 38, notes: "Restoration completed to heritage standards. Stone color perfectly matched." },
+      { id: 2, name: "Update electrical systems", category: "electrical", status: "completed", assignee: "Tom Brown", dueDate: "2024-02-01", description: "Upgrade electrical systems while maintaining period aesthetics", priority: "High", estimatedHours: 24, actualHours: 26, notes: "All wiring hidden within walls. Modern safety standards met." },
+      { id: 3, name: "Repair roof drainage", category: "plumbing", status: "in-progress", assignee: "Alice Cooper", dueDate: "2024-02-28", description: "Repair and upgrade roof drainage system with period-appropriate materials", priority: "High", estimatedHours: 16, actualHours: 12, notes: "75% complete. Custom lead work in progress." },
+      { id: 4, name: "Install heritage windows", category: "carpenter", status: "in-progress", assignee: "Emma Davis", dueDate: "2024-03-15", description: "Install custom-made sash windows matching original specifications", priority: "Medium", estimatedHours: 32, actualHours: 20, notes: "First floor windows installed. Ground floor in progress." },
+      { id: 5, name: "Conservation cleaning", category: "other", status: "pending", assignee: "Tom Brown", dueDate: "2024-04-01", description: "Gentle cleaning of historic surfaces using approved conservation methods", priority: "Low", estimatedHours: 20, actualHours: 0, notes: "Awaiting completion of other work. Cleaning products approved by heritage officer." },
+      { id: 6, name: "Install period plumbing", category: "plumbing", status: "pending", assignee: "Alice Cooper", dueDate: "2024-03-30", description: "Install modern plumbing systems concealed within period fixtures", priority: "Medium", estimatedHours: 18, actualHours: 0, notes: "Period fixtures sourced and ready. Installation follows drainage completion." },
+    ],
+    weeklySpending: [
+      { week: "Week 1", spent: 20000, cumulative: 20000, forecast: 18000 },
+      { week: "Week 2", spent: 25000, cumulative: 45000, forecast: 36000 },
+      { week: "Week 3", spent: 30000, cumulative: 75000, forecast: 54000 },
+      { week: "Week 4", spent: 28000, cumulative: 103000, forecast: 72000 },
+      { week: "Week 5", spent: 35000, cumulative: 138000, forecast: 90000 },
+      { week: "Week 6", spent: 27000, cumulative: 165000, forecast: 108000 },
+      { week: "Week 7", spent: 0, cumulative: 165000, forecast: 126000 },
+      { week: "Week 8", spent: 0, cumulative: 165000, forecast: 144000 },
+    ],
+    budgetForecast: {
+      projectedTotal: 195000,
+      overrunAmount: 75000,
+      overrunDate: "2024-01-28",
+      currentBurnRate: 28500,
+      daysUntilOverrun: -30,
+      confidence: 92
+    }
   },
 ]
 
@@ -185,6 +303,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [groupTasks, setGroupTasks] = useState(false)
   const [completedTasks, setCompletedTasks] = useState<number[]>([])
   const [selectedTask, setSelectedTask] = useState<any>(null)
+  const [taskAssignments, setTaskAssignments] = useState<{[key: number]: string}>({})
 
   const toggleTaskCompletion = (taskId: number) => {
     setCompletedTasks(prev => 
@@ -198,6 +317,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     setSelectedTask(task)
   }
 
+  const updateTaskAssignee = (taskId: number, newAssignee: string) => {
+    setTaskAssignments(prev => ({ ...prev, [taskId]: newAssignee }))
+  }
+
+  const getTaskAssignee = (task: any) => {
+    return taskAssignments[task.id] || task.assignee
+  }
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "High": return "text-red-600 bg-red-50 border-red-200"
@@ -205,6 +332,25 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       case "Low": return "text-green-600 bg-green-50 border-green-200"
       default: return "text-gray-600 bg-gray-50 border-gray-200"
     }
+  }
+
+  const getBudgetStatus = (project: any) => {
+    if (!project.budgetForecast) {
+      return { status: "unknown", color: "bg-gray-500", textColor: "text-gray-700" }
+    }
+    const overrunPercentage = ((project.budgetForecast.projectedTotal - project.budget) / project.budget) * 100
+    if (overrunPercentage <= 5) return { status: "on-track", color: "bg-green-500", textColor: "text-green-700" }
+    if (overrunPercentage <= 15) return { status: "at-risk", color: "bg-amber-500", textColor: "text-amber-700" }
+    return { status: "over-budget", color: "bg-red-500", textColor: "text-red-700" }
+  }
+
+  const formatOverrunWarning = (project: any) => {
+    if (!project.budgetForecast) return "No forecast available"
+    const overrun = project.budgetForecast.overrunAmount
+    const days = project.budgetForecast.daysUntilOverrun
+    if (days < 0) return `£${overrun.toLocaleString()} Already Over Budget`
+    if (days <= 30) return `£${overrun.toLocaleString()} Overrun Forecast in ${days} days`
+    return `£${overrun.toLocaleString()} Projected Overrun`
   }
 
   return (
@@ -393,7 +539,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                   }`}>{task.name}</p>
                                   <p className={`text-xs text-muted-foreground transition-all ${
                                     isCompleted ? "line-through" : ""
-                                  }`}>{task.assignee} • Due {new Date(task.dueDate).toLocaleDateString()}</p>
+                                  }`}>{getTaskAssignee(task)} • Due {new Date(task.dueDate).toLocaleDateString()}</p>
                                 </div>
                               </DialogTrigger>
                               <DialogContent className="max-w-2xl">
@@ -414,7 +560,23 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                   <div className="grid grid-cols-2 gap-4">
                                     <div>
                                       <label className="text-sm font-medium text-gray-700">Assigned to</label>
-                                      <p className="text-sm text-gray-900">{task.assignee}</p>
+                                      <Select value={getTaskAssignee(task)} onValueChange={(value) => updateTaskAssignee(task.id, value)}>
+                                        <SelectTrigger className="w-full mt-1">
+                                          <SelectValue placeholder="Select team member" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {projectData.team.map((member, index) => (
+                                            <SelectItem key={index} value={member.name}>
+                                              <div className="flex items-center space-x-2">
+                                                <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium">
+                                                  {member.name.split(" ").map(n => n[0]).join("")}
+                                                </div>
+                                                <span>{member.name}</span>
+                                              </div>
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
                                     </div>
                                     <div>
                                       <label className="text-sm font-medium text-gray-700">Due Date</label>
@@ -542,7 +704,23 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                       <div className="grid grid-cols-2 gap-4">
                                         <div>
                                           <label className="text-sm font-medium text-gray-700">Assigned to</label>
-                                          <p className="text-sm text-gray-900">{task.assignee}</p>
+                                          <Select value={getTaskAssignee(task)} onValueChange={(value) => updateTaskAssignee(task.id, value)}>
+                                            <SelectTrigger className="w-full mt-1">
+                                              <SelectValue placeholder="Select team member" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {projectData.team.map((member, index) => (
+                                                <SelectItem key={index} value={member.name}>
+                                                  <div className="flex items-center space-x-2">
+                                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium">
+                                                      {member.name.split(" ").map(n => n[0]).join("")}
+                                                    </div>
+                                                    <span>{member.name}</span>
+                                                  </div>
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
                                         </div>
                                         <div>
                                           <label className="text-sm font-medium text-gray-700">Due Date</label>
@@ -601,7 +779,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                               </div>
                               <p className={`text-sm text-muted-foreground transition-all ml-8 ${
                                 isCompleted ? "line-through" : ""
-                              }`}>{task.assignee}</p>
+                              }`}>{getTaskAssignee(task)}</p>
                               <p className={`text-sm text-muted-foreground transition-all ml-8 ${
                                 isCompleted ? "line-through" : ""
                               }`}>Due {new Date(task.dueDate).toLocaleDateString()}</p>
@@ -653,39 +831,377 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           </TabsContent>
 
           <TabsContent value="budget" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-6">
+              {/* Budget Status Overview */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Budget Breakdown</CardTitle>
+                  <CardTitle className="flex items-center justify-between">
+                    Budget Forecasts
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Badge 
+                          className={`text-xs font-semibold border-2 px-3 py-1 ${
+                            getBudgetStatus(projectData).status === "on-track" ? "bg-green-100 text-green-800 border-green-300" :
+                            getBudgetStatus(projectData).status === "at-risk" ? "bg-amber-100 text-amber-800 border-amber-300" :
+                            "bg-red-100 text-red-800 border-red-300"
+                          }`}
+                        >
+                          {getBudgetStatus(projectData).status === "on-track" ? "On Track" :
+                           getBudgetStatus(projectData).status === "at-risk" ? "At Risk" : "Over Budget"}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Based on current spend rate of £{projectData.budgetForecast?.currentBurnRate?.toLocaleString() || 'N/A'}/week</p>
+                        <p>Forecast confidence: {projectData.budgetForecast?.confidence || 'N/A'}%</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {projectData.expenses.map((expense, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{expense.category}</span>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-muted-foreground">
-                            £{expense.spent.toLocaleString()} / £{expense.budgeted.toLocaleString()}
-                          </span>
-                          <Badge variant={expense.status === "Over Budget" ? "destructive" : "secondary"}>
-                            {expense.status}
-                          </Badge>
-                        </div>
+                  {/* Overall Budget Progress */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Project Budget</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-muted-foreground">
+                          £{projectData.spent.toLocaleString()} / £{projectData.budget.toLocaleString()}
+                        </span>
+                        <span className={`text-xs font-medium ${getBudgetStatus(projectData).textColor}`}>
+                          Forecast: £{projectData.budgetForecast?.projectedTotal?.toLocaleString() || 'N/A'}
+                        </span>
                       </div>
+                    </div>
+                    <div className="relative">
                       <Progress
-                        value={(expense.spent / expense.budgeted) * 100}
-                        className={`h-2 ${expense.status === "Over Budget" ? "[&>div]:bg-red-500" : ""}`}
+                        value={(projectData.spent / projectData.budget) * 100}
+                        className={`h-3 [&>div]:${getBudgetStatus(projectData).color}`}
+                      />
+                      {/* Forecast indicator */}
+                      <div 
+                        className="absolute top-0 h-3 w-0.5 bg-gray-400 opacity-60"
+                        style={{ left: `${Math.min(((projectData.budgetForecast?.projectedTotal || 0) / projectData.budget) * 100, 100)}%` }}
                       />
                     </div>
-                  ))}
+                    {(projectData.budgetForecast?.overrunAmount || 0) > 0 && (
+                      <div className={`p-2 rounded-lg ${
+                        getBudgetStatus(projectData).status === "over-budget" ? "bg-red-50 border border-red-200" :
+                        "bg-amber-50 border border-amber-200"
+                      }`}>
+                        <div className="flex items-center space-x-2">
+                          <AlertTriangle className={`h-4 w-4 ${
+                            getBudgetStatus(projectData).status === "over-budget" ? "text-red-600" : "text-amber-600"
+                          }`} />
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <span className={`text-xs font-medium ${
+                                getBudgetStatus(projectData).status === "over-budget" ? "text-red-700" : "text-amber-700"
+                              }`}>
+                                {formatOverrunWarning(projectData)}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Based on current spend rate and project timeline</p>
+                              <p>Current burn rate: £{projectData.budgetForecast?.currentBurnRate?.toLocaleString() || 'N/A'}/week</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Spending Trends Chart */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Spending Trends</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart 
+                          data={projectData.weeklySpending || []} 
+                          margin={{ top: 20, right: 80, left: 20, bottom: 5 }}
+                          onClick={(data) => {
+                            if (data?.activePayload?.[0]?.payload?.riskAlert) {
+                              const alert = data.activePayload[0].payload.riskAlert;
+                              if (confirm(`Risk Alert: £${alert.overrun.toLocaleString()} overrun expected by ${alert.date} (${alert.confidence}% confidence)\n\nRecommended Action: ${alert.action}\n\nClick OK to implement this action.`)) {
+                                console.log(`Action taken: ${alert.action} at ${new Date().toISOString()}`);
+                                alert(`Action logged: ${alert.action}`);
+                              }
+                            }
+                          }}
+                        >
+                          <CartesianGrid 
+                            strokeDasharray="1 2" 
+                            stroke="#e5e7eb" 
+                            strokeOpacity={0.3}
+                            horizontal={true}
+                            vertical={false}
+                          />
+                          
+                          <XAxis 
+                            dataKey="week" 
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ 
+                              fontSize: 11, 
+                              fill: '#6b7280',
+                              fontWeight: 500
+                            }}
+                            interval={0}
+                          />
+                          
+                          <YAxis 
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ 
+                              fontSize: 10, 
+                              fill: '#6b7280',
+                              fontWeight: 400
+                            }}
+                            tickFormatter={(value) => `£${(value / 1000).toFixed(0)}k`}
+                            domain={[0, 'dataMax + 3000']}
+                          />
+                          
+                          <RechartsTooltip 
+                            contentStyle={{
+                              backgroundColor: '#ffffff',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '6px',
+                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                              fontSize: '11px',
+                              padding: '8px 12px'
+                            }}
+                            formatter={(value, name, props) => {
+                              const payload = props.payload;
+                              if (payload?.riskAlert && name === 'forecast') {
+                                return [
+                                  <div key="risk-alert" className="space-y-1">
+                                    <div className="font-medium text-red-600">⚠️ Risk Alert</div>
+                                    <div>£{payload.riskAlert.overrun.toLocaleString()} overrun expected by {payload.riskAlert.date}</div>
+                                    <div className="text-xs text-gray-500">({payload.riskAlert.confidence}% confidence)</div>
+                                    <div className="text-xs text-blue-600 cursor-pointer font-medium mt-2">
+                                      💡 {payload.riskAlert.action}
+                                    </div>
+                                  </div>,
+                                  ''
+                                ];
+                              }
+                              return [
+                                `£${Number(value).toLocaleString()}`, 
+                                name === 'cumulative' ? 'Actual Spend' : 
+                                name === 'forecast' ? 'Projected Spend' : 'Weekly Spend'
+                              ];
+                            }}
+                            labelFormatter={(label, payload) => {
+                              const data = payload?.[0]?.payload;
+                              if (data) {
+                                return `${label} - ${data.date}`;
+                              }
+                              return label;
+                            }}
+                            labelStyle={{ 
+                              color: '#374151', 
+                              fontWeight: 600,
+                              fontSize: '11px'
+                            }}
+                          />
+                          
+                          {/* Current week indicator - flexible positioning */}
+                          <ReferenceLine 
+                            x={projectData.currentWeekPosition || 4.3}
+                            stroke="#10b981" 
+                            strokeWidth={2} 
+                            strokeOpacity={0.8}
+                            label={{ 
+                              value: "Today", 
+                              position: "top",
+                              style: { 
+                                textAnchor: 'middle',
+                                fontSize: '10px',
+                                fontWeight: 600,
+                                fill: '#10b981'
+                              }
+                            }}
+                          />
+                          
+                          {/* Budget limit line - RED HORIZONTAL with right-side label */}
+                          <ReferenceLine 
+                            y={projectData.budget} 
+                            stroke="#dc2626" 
+                            strokeWidth={2}
+                            strokeOpacity={1}
+                            label={{ 
+                              value: `Budget Limit £${(projectData.budget / 1000).toFixed(0)}k`, 
+                              position: "insideTopRight",
+                              offset: 10,
+                              style: {
+                                fontSize: '10px',
+                                fontWeight: 600,
+                                fill: '#dc2626',
+                                textAnchor: 'start'
+                              }
+                            }}
+                          />
+                          
+                          {/* Actual spending line - BLACK SOLID */}
+                          <Line 
+                            type="monotone" 
+                            dataKey="cumulative" 
+                            stroke="#000000" 
+                            strokeWidth={2.5} 
+                            dot={{ 
+                              fill: '#000000', 
+                              stroke: '#ffffff',
+                              strokeWidth: 1, 
+                              r: 3
+                            }}
+                            activeDot={{ 
+                              r: 5, 
+                              fill: '#000000',
+                              stroke: '#ffffff',
+                              strokeWidth: 2
+                            }}
+                          />
+                          
+                          {/* Forecast line - BLACK DASHED */}
+                          <Line 
+                            type="monotone" 
+                            dataKey="forecast" 
+                            stroke="#000000" 
+                            strokeWidth={2} 
+                            strokeDasharray="6 3"
+                            dot={(props) => {
+                              const { payload, index } = props;
+                              if (payload?.riskAlert) {
+                                return (
+                                  <circle 
+                                    key={`risk-dot-${index}`}
+                                    cx={props.cx} 
+                                    cy={props.cy} 
+                                    r="6" 
+                                    fill="#9ca3af" 
+                                    stroke="#ffffff" 
+                                    strokeWidth="2"
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => {
+                                      if (confirm(`Risk Alert: £${payload.riskAlert.overrun.toLocaleString()} overrun expected by ${payload.riskAlert.date} (${payload.riskAlert.confidence}% confidence)\n\nRecommended Action: ${payload.riskAlert.action}\n\nClick OK to implement this action.`)) {
+                                        console.log(`Action taken: ${payload.riskAlert.action} at ${new Date().toISOString()}`);
+                                        alert(`Action logged: ${payload.riskAlert.action}`);
+                                      }
+                                    }}
+                                  />
+                                );
+                              }
+                              return (
+                                <circle 
+                                  key={`forecast-dot-${index}`}
+                                  cx={props.cx} 
+                                  cy={props.cy} 
+                                  r="2" 
+                                  fill="#000000" 
+                                  stroke="#ffffff" 
+                                  strokeWidth="1"
+                                />
+                              );
+                            }}
+                            activeDot={{ 
+                              r: 4, 
+                              fill: '#000000',
+                              stroke: '#ffffff',
+                              strokeWidth: 1
+                            }}
+                          />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Budget Breakdown */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Category Breakdown</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {projectData.expenses.map((expense, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">{expense.category}</span>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm text-muted-foreground">
+                              £{expense.spent.toLocaleString()} / £{expense.budgeted.toLocaleString()}
+                            </span>
+                            <Badge variant={expense.status === "Over Budget" ? "destructive" : "secondary"}>
+                              {expense.status}
+                            </Badge>
+                          </div>
+                        </div>
+                        <Progress
+                          value={(expense.spent / expense.budgeted) * 100}
+                          className={`h-2 ${expense.status === "Over Budget" ? "[&>div]:bg-red-500" : ""}`}
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Additional Forecasting Tools */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center space-x-2">
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Weekly Burn Rate</span>
+                    </div>
+                    <div className="text-2xl font-bold mt-2">£{projectData.budgetForecast?.currentBurnRate?.toLocaleString() || 'N/A'}</div>
+                    <div className="text-xs text-muted-foreground">Average weekly spend</div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Completion Forecast</span>
+                    </div>
+                    <div className="text-2xl font-bold mt-2">
+                      {(projectData.budgetForecast?.daysUntilOverrun || 0) > 0 ? 
+                        `${projectData.budgetForecast.daysUntilOverrun}d` : 
+                        "Over"
+                      }
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {(projectData.budgetForecast?.daysUntilOverrun || 0) > 0 ? 
+                        "Until budget limit" : 
+                        "Budget exceeded"
+                      }
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Forecast Confidence</span>
+                    </div>
+                    <div className="text-2xl font-bold mt-2">{projectData.budgetForecast?.confidence || 'N/A'}%</div>
+                    <div className="text-xs text-muted-foreground">Based on historical data</div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Recent Expenses Table */}
               <Card>
                 <CardHeader>
                   <CardTitle>Recent Expenses</CardTitle>
                 </CardHeader>
                 <CardContent>
+
                   <Table>
                     <TableHeader>
                       <TableRow>

@@ -661,3 +661,237 @@ const getPriorityColor = (priority: string) => {
 - **Professional Appearance**: Subtle color palette maintains focus on task content rather than interface elements
 - **Consistent Experience**: Checkbox styling is uniform across both grouped and ungrouped task views
 - **Improved Spacing**: Badge alignment creates better visual balance in the popup grid layout
+
+---
+
+## Task Assignee Management System
+
+### 15. Interactive Assignee Selection Dropdown
+- **Location**: `app/projects/[id]/page.tsx` (Tasks TabsContent section - Dialog popups)
+- **Feature**: Dropdown selection for task assignees using project team members
+- **Implementation**:
+
+#### New Features Added
+
+1. **Assignee Selection Dropdown**:
+   - **Interactive Dropdown**: Replaced static assignee text with selectable dropdown
+   - **Team Member Integration**: Populated with actual project team members
+   - **Visual Indicators**: Team member initials displayed in dropdown options
+   - **Real-time Updates**: Assignee changes reflect immediately in task lists
+
+2. **State Management**:
+   - **Assignment Tracking**: `taskAssignments` state tracks assignment changes
+   - **Fallback Logic**: `getTaskAssignee()` function handles both original and updated assignments  
+   - **Update Functionality**: `updateTaskAssignee()` manages assignment changes
+   - **Persistent Display**: Updated assignments show in both grouped and ungrouped views
+
+3. **Professional UI Design**:
+   - **Avatar Initials**: Circular avatar placeholders with team member initials
+   - **Consistent Styling**: Matches existing form field styling
+   - **Proper Spacing**: Maintains dialog layout consistency
+   - **Responsive Design**: Full-width dropdown with appropriate sizing
+
+#### Technical Implementation
+
+**Select Component Integration**:
+```tsx
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+```
+
+**State Management**:
+```tsx
+const [taskAssignments, setTaskAssignments] = useState<{[key: number]: string}>({})
+
+const updateTaskAssignee = (taskId: number, newAssignee: string) => {
+  setTaskAssignments(prev => ({ ...prev, [taskId]: newAssignee }))
+}
+
+const getTaskAssignee = (task: any) => {
+  return taskAssignments[task.id] || task.assignee
+}
+```
+
+**Dropdown Implementation**:
+```tsx
+<Select value={getTaskAssignee(task)} onValueChange={(value) => updateTaskAssignee(task.id, value)}>
+  <SelectTrigger className="w-full mt-1">
+    <SelectValue placeholder="Select team member" />
+  </SelectTrigger>
+  <SelectContent>
+    {projectData.team.map((member, index) => (
+      <SelectItem key={index} value={member.name}>
+        <div className="flex items-center space-x-2">
+          <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium">
+            {member.name.split(" ").map(n => n[0]).join("")}
+          </div>
+          <span>{member.name}</span>
+        </div>
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+```
+
+#### Sample Team Integration
+
+**Henderson Golf Sim Team**:
+- John Smith (Project Manager)
+- Sarah Wilson (Installation Lead)  
+- Mike Johnson (Technical Specialist)
+
+**Marchmont Historic Team**:
+- Emma Davis (Heritage Specialist)
+- Tom Brown (Restoration Lead)
+- Alice Cooper (Project Coordinator)
+
+#### Benefits
+- **Dynamic Assignment**: Project managers can reassign tasks to available team members
+- **Visual Clarity**: Team member avatars provide quick visual identification
+- **Real-time Updates**: Assignment changes reflect immediately across all task views
+- **Project Context**: Only shows team members actually assigned to the specific project
+- **Professional Interface**: Maintains consistent styling with existing dialog components
+- **Enhanced Workflow**: Streamlines task management without leaving the task detail view
+- **State Persistence**: Assignment changes persist throughout the session
+
+---
+
+## Budget Forecasting & Analytics System
+
+### 16. Comprehensive Budget Forecasting Dashboard
+- **Location**: `app/projects/[id]/page.tsx` (Budget TabsContent section)
+- **Feature**: Advanced budget forecasting with predictive analytics, spending visualization, and warning systems
+- **Implementation**:
+
+#### New Features Added
+
+1. **Budget Forecasting Overview**:
+   - **Status Classification**: Green (on-track ≤5% overrun), Amber (at-risk ≤15%), Red (over-budget >15%)
+   - **Single Progress Bar**: Color-coded budget status with forecast indicator line
+   - **Real-time Warnings**: Dynamic overrun alerts with timeline predictions
+   - **Confidence Metrics**: Forecast accuracy percentage based on historical data
+
+2. **Interactive Spending Trends Chart**:
+   - **Weekly Spending Visualization**: Line chart showing cumulative spending vs forecasts
+   - **Budget Limit Line**: Red dotted line indicating budget ceiling
+   - **Warning Areas**: Shaded amber/red zones for projected overruns
+   - **Dual Data Lines**: Actual spending (solid blue) vs forecast (dashed red)
+   - **Responsive Tooltips**: Hover details with formatted currency values
+
+3. **Advanced Warning System**:
+   - **Overrun Predictions**: "£23k Overrun Forecast in 14 days" style alerts
+   - **Contextual Tooltips**: "Based on current spend rate" explanations
+   - **Color-coded Alerts**: Red for critical, amber for at-risk situations
+   - **Timeline Indicators**: Days until budget limit exceeded
+
+4. **Additional Forecasting Tools**:
+   - **Weekly Burn Rate**: Average weekly spending calculation
+   - **Completion Forecast**: Days until budget limit reached
+   - **Forecast Confidence**: Percentage accuracy based on historical patterns
+   - **Smart Indicators**: Visual icons and clear labeling
+
+#### Technical Implementation
+
+**Enhanced Data Structure**:
+```tsx
+weeklySpending: [
+  { week: "Week 1", spent: 8000, cumulative: 8000, forecast: 8500 },
+  // ... weekly progression
+],
+budgetForecast: {
+  projectedTotal: 68000,
+  overrunAmount: 23000,
+  overrunDate: "2024-04-15",
+  currentBurnRate: 9500,
+  daysUntilOverrun: 14,
+  confidence: 85
+}
+```
+
+**Budget Status Logic**:
+```tsx
+const getBudgetStatus = (project: any) => {
+  const overrunPercentage = ((project.budgetForecast.projectedTotal - project.budget) / project.budget) * 100
+  if (overrunPercentage <= 5) return { status: "on-track", color: "bg-green-500", textColor: "text-green-700" }
+  if (overrunPercentage <= 15) return { status: "at-risk", color: "bg-amber-500", textColor: "text-amber-700" }
+  return { status: "over-budget", color: "bg-red-500", textColor: "text-red-700" }
+}
+```
+
+**Recharts Integration**:
+```tsx
+<ComposedChart data={projectData.weeklySpending}>
+  <ReferenceLine 
+    y={projectData.budget} 
+    stroke="red" 
+    strokeDasharray="5 5" 
+    label={{ value: "Budget Limit", position: "topLeft" }}
+  />
+  <Area 
+    dataKey="forecast" 
+    fill="rgba(239, 68, 68, 0.1)" 
+    stroke="none"
+  />
+  <Line type="monotone" dataKey="cumulative" stroke="#2563eb" strokeWidth={2} />
+  <Line type="monotone" dataKey="forecast" stroke="#dc2626" strokeDasharray="5 5" />
+</ComposedChart>
+```
+
+**Smart Warning Generation**:
+```tsx
+const formatOverrunWarning = (project: any) => {
+  const overrun = project.budgetForecast.overrunAmount
+  const days = project.budgetForecast.daysUntilOverrun
+  if (days < 0) return `£${overrun.toLocaleString()} Already Over Budget`
+  if (days <= 30) return `£${overrun.toLocaleString()} Overrun Forecast in ${days} days`
+  return `£${overrun.toLocaleString()} Projected Overrun`
+}
+```
+
+#### Sample Forecasting Data
+
+**Henderson Golf Sim (Amber Status)**:
+- Current: £38k spent / £45k budget
+- Forecast: £68k total (51% overrun)
+- Warning: "£23k Overrun Forecast in 14 days"
+- Burn rate: £9.5k/week, 85% confidence
+
+**Marchmont Historic (Red Status)**:
+- Current: £165k spent / £120k budget (37.5% over)
+- Forecast: £195k total (62.5% overrun)
+- Warning: "£75k Already Over Budget"
+- Burn rate: £28.5k/week, 92% confidence
+
+#### Visual Design Elements
+
+**Progress Bar Enhancements**:
+- Color-coded status (green/amber/red)
+- Forecast indicator line showing projected completion
+- Height increased to 12px for better visibility
+
+**Chart Features**:
+- Professional grid lines with reduced opacity
+- Currency formatting (£45k, £60k)
+- Responsive container sizing
+- Hover tooltips with detailed breakdowns
+
+**Warning System**:
+- Alert triangle icons
+- Color-matched backgrounds and borders
+- Contextual tooltip explanations
+- Professional alert styling
+
+#### Benefits
+- **Predictive Planning**: Early warning system prevents budget surprises
+- **Visual Clarity**: Chart visualization makes trends immediately apparent
+- **Professional Reporting**: Confidence metrics and detailed forecasting data
+- **Actionable Insights**: Specific timelines and amounts for decision-making
+- **Risk Management**: Color-coded status system for quick assessment
+- **Historical Context**: Spending patterns inform future projections
+- **Stakeholder Communication**: Clear visual tools for project reporting
+- **Proactive Management**: Early intervention capabilities through forecasting
