@@ -215,3 +215,683 @@ function getStatusText(status: string): string {
 - **Professional presentation**: Business-appropriate language and styling
 - **Enhanced readability**: Subtle background tints improve card organization without compromising content
 - **Consistent user experience**: Unified RAG status presentation across all project card types
+
+---
+
+## Project Details Page - Tasks Section Enhancement
+
+### 10. Task Management System with Grouping Functionality
+- **Location**: `app/projects/[id]/page.tsx` (Tasks TabsContent section)
+- **Feature**: Enhanced tasks section with grouping toggle, four-column categorization, and add task functionality
+- **Implementation**:
+
+#### New Features Added
+
+1. **Project Tasks Header with Controls**:
+   - **Location**: Lines 292-309 (new section before existing tasks card)
+   - **Components**: 
+     - "Project Tasks" header (h3 with `text-lg font-semibold`)
+     - Group toggle button with business card active styling
+     - "Add Task" button positioned on the right
+
+2. **Group Tasks Toggle Button**:
+   - **Styling**: Matches business card active button styling from projects page
+   - **Active State**: `bg-gray-100 text-gray-800 border-2 border-gray-300 shadow-sm`
+   - **Inactive State**: `bg-gray-50 text-gray-600 border-2 border-gray-200 hover:bg-gray-100`
+   - **Text**: "GROUPED" when active, "GROUP TASKS" when inactive
+   - **Functionality**: Toggleable state with `groupTasks` useState variable
+
+3. **Four-Column Task Grouping System**:
+   - **Categories**: Plumbing, Electrical, Carpenter, Other
+   - **Layout**: Responsive grid (`grid-cols-1 md:grid-cols-2 xl:grid-cols-4`)
+   - **Card Design**: Individual cards for each category with task counts
+   - **Task Display**: Compact cards showing status dots, names, assignees, and due dates
+
+4. **Task Data Structure**:
+   - **Added to Project Data**: Sample task arrays for both Henderson Golf Sim and Marchmont Historic projects
+   - **Task Properties**: id, name, category, status, assignee, dueDate
+   - **Categories**: "electrical", "plumbing", "carpenter", "other"
+   - **Status Types**: "completed", "in-progress", "pending"
+
+#### Technical Implementation
+
+**State Management**:
+```tsx
+const [groupTasks, setGroupTasks] = useState(false)
+```
+
+**Toggle Button Logic**:
+```tsx
+onClick={() => setGroupTasks(!groupTasks)}
+```
+
+**Conditional Rendering**:
+- **Ungrouped View**: Single card with linear task list
+- **Grouped View**: Four-column grid with categorized task cards
+
+**Task Filtering by Category**:
+```tsx
+const categoryTasks = projectData.tasks?.filter(task => task.category === category) || [];
+```
+
+#### Visual Design Elements
+
+**Status Indicators**:
+- Green dot: Completed tasks (`bg-green-500`)
+- Amber dot: In-progress tasks (`bg-amber-500`) 
+- Gray dot: Pending tasks (`bg-gray-300`)
+
+**Category Cards**:
+- Header with capitalized category name
+- Task count badge (`Badge variant="secondary"`)
+- Compact task display with hover effects
+- Empty state messaging for categories with no tasks
+
+**Responsive Design**:
+- Single column on mobile
+- Two columns on medium screens (md:grid-cols-2)
+- Four columns on extra large screens (xl:grid-cols-4)
+
+#### Sample Task Data Added
+
+**Henderson Golf Sim Tasks**:
+- Electrical: Install main panel, run wiring, install fixtures
+- Plumbing: Install water supply, connect drainage
+- Carpenter: Build custom framework
+- Other: Install flooring
+
+**Marchmont Historic Tasks**:
+- Carpenter: Restore stonework, install heritage windows
+- Electrical: Update electrical systems
+- Plumbing: Repair roof drainage, install period plumbing
+- Other: Conservation cleaning
+
+#### Benefits
+- **Organized Task Management**: Clear categorization by trade/specialty
+- **Flexible Viewing**: Toggle between grouped and linear views
+- **Visual Status Tracking**: Instant status recognition with color-coded dots
+- **Professional Interface**: Consistent styling with rest of application
+- **Task Addition**: Ready-to-use "Add Task" functionality
+- **Responsive Design**: Optimal viewing across device sizes
+
+---
+
+## Task Completion & Emily's Card Removal Enhancement
+
+### 11. Interactive Task Completion with Visual Feedback
+- **Location**: `app/projects/[id]/page.tsx` (Tasks TabsContent section)
+- **Feature**: Added clickable completion checkboxes, removed Emily's tasks card, enhanced badge styling
+- **Implementation**:
+
+#### New Features Added
+
+1. **Task Completion System**:
+   - **Checkbox Buttons**: Interactive 5x5px (ungrouped) and 4x4px (grouped) checkboxes with green checkmark
+   - **Visual States**: 
+     - Unchecked: Gray border with hover effect (`border-gray-300 hover:border-green-400`)
+     - Checked: Green background with white checkmark (`bg-green-500 border-green-500 text-white`)
+   - **Strikethrough Effect**: Completed tasks show line-through text on names, assignees, and due dates
+   - **State Management**: `completedTasks` useState array tracks completion status by task ID
+
+2. **Task Interaction Logic**:
+   - **Toggle Function**: `toggleTaskCompletion(taskId)` adds/removes task IDs from completion array
+   - **Persistent Visibility**: Completed tasks remain visible with visual indicators
+   - **Smooth Transitions**: `transition-all` class provides smooth animation effects
+
+3. **Enhanced Badge Styling**:
+   - **Bold Appearance**: `font-bold` with `border-2` for prominent visibility
+   - **Dark Theme**: `bg-gray-900 text-white border-gray-900` for professional contrast
+   - **Uppercase Text**: Category names displayed in uppercase for better readability
+   - **Hover Effects**: `hover:bg-gray-800` for interactive feedback
+
+4. **Emily's Tasks Card Removal**:
+   - **Complete Removal**: Entire Emily's tasks card section eliminated from tasks tab
+   - **Clean Interface**: Tasks section now focuses solely on project task management
+   - **Improved User Experience**: Reduced clutter and clearer task-focused interface
+
+#### Technical Implementation
+
+**State Management**:
+```tsx
+const [completedTasks, setCompletedTasks] = useState<number[]>([])
+
+const toggleTaskCompletion = (taskId: number) => {
+  setCompletedTasks(prev => 
+    prev.includes(taskId) 
+      ? prev.filter(id => id !== taskId)
+      : [...prev, taskId]
+  )
+}
+```
+
+**Checkbox Component**:
+```tsx
+<button
+  onClick={() => toggleTaskCompletion(task.id)}
+  className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+    isCompleted
+      ? "bg-green-500 border-green-500 text-white"
+      : "border-gray-300 hover:border-green-400"
+  }`}
+>
+  {isCompleted && <Check className="h-3 w-3" />}
+</button>
+```
+
+**Visual Feedback**:
+```tsx
+<p className={`text-sm font-medium transition-all ${
+  isCompleted ? "line-through text-gray-500" : ""
+}`}>{task.name}</p>
+```
+
+**Enhanced Badge Styling**:
+```tsx
+<Badge 
+  variant="outline" 
+  className="text-xs font-bold border-2 px-3 py-1 bg-gray-900 text-white border-gray-900 hover:bg-gray-800"
+>
+  {task.category.toUpperCase()}
+</Badge>
+```
+
+#### Benefits
+- **Interactive Task Management**: Users can mark tasks complete with immediate visual feedback
+- **Non-destructive Completion**: Tasks remain visible when completed, maintaining project history
+- **Professional Appearance**: Bold, high-contrast badges improve readability and interface quality
+- **Streamlined Interface**: Removal of Emily's card creates cleaner, more focused task management
+- **Consistent Experience**: Completion functionality works seamlessly in both grouped and ungrouped views
+- **Smooth Animations**: Transition effects provide polished user experience
+
+---
+
+## Task Interface Refinements
+
+### 12. Badge Styling and Grouped Card Readability Improvements
+- **Location**: `app/projects/[id]/page.tsx` (Tasks TabsContent section)
+- **Feature**: Refined badge appearance and improved grouped task card content sizing
+- **Implementation**:
+
+#### Refinements Made
+
+1. **Softened Badge Styling**:
+   - **Background**: Changed from black (`bg-gray-900`) to light gray (`bg-gray-100`)
+   - **Text Color**: Changed from white to dark gray (`text-gray-800`)
+   - **Border**: Updated to light gray (`border-gray-300`)
+   - **Weight**: Reduced from `font-bold` to `font-semibold` for subtler appearance
+   - **Professional Look**: Maintains prominence while being less aggressive
+
+2. **Enhanced Grouped Task Card Readability**:
+   - **Increased Padding**: Changed from `p-2` to `p-3` for better spacing
+   - **Larger Text**: Upgraded task names from `text-xs` to `text-sm`
+   - **Improved Spacing**: Increased gap between elements (`space-x-3`, `mb-2`)
+   - **Better Alignment**: Added `ml-8` margin to assignee and due date for consistent indentation
+   - **Larger Interactive Elements**: Checkbox increased from 4x4px to 5x5px, Check icon from 2x2px to 3x3px
+   - **Status Dots**: Increased from 2x2px to 3x3px for better visibility
+
+3. **Consistent Green Color Usage**:
+   - **Completion Markers**: Uses site-standard `bg-green-500` matching other "on track" indicators
+   - **Color Consistency**: Aligns with existing CheckCircle icons (`text-green-500`)
+   - **Visual Harmony**: Maintains consistent green theming across the application
+
+#### Technical Updates
+
+**Refined Badge Styling**:
+```tsx
+<Badge 
+  variant="outline" 
+  className="text-xs font-semibold border-2 px-3 py-1 bg-gray-100 text-gray-800 border-gray-300"
+>
+  {task.category.toUpperCase()}
+</Badge>
+```
+
+**Improved Grouped Card Content**:
+```tsx
+<div className="p-3 rounded border hover:bg-gray-50">
+  <div className="flex items-center space-x-3 mb-2">
+    <button className="w-5 h-5 rounded border-2 flex items-center justify-center">
+      {isCompleted && <Check className="h-3 w-3" />}
+    </button>
+    <div className="w-3 h-3 rounded-full" />
+    <p className="text-sm font-medium">{task.name}</p>
+  </div>
+  <p className="text-sm text-muted-foreground ml-8">{task.assignee}</p>
+  <p className="text-sm text-muted-foreground ml-8">Due {date}</p>
+</div>
+```
+
+#### Benefits
+- **Improved Readability**: Larger text sizes make grouped task cards easier to read
+- **Professional Appearance**: Softer badge styling maintains visibility without being overwhelming  
+- **Better Space Utilization**: Enhanced padding and spacing optimize card real estate usage
+- **Consistent Theming**: Green completion markers align with site-wide color standards
+- **Enhanced Accessibility**: Larger interactive elements improve usability across devices
+
+---
+
+## Task Detail Popups System
+
+### 13. Comprehensive Task Information Dialogs
+- **Location**: `app/projects/[id]/page.tsx` (Tasks TabsContent section)
+- **Feature**: Interactive task detail popups with comprehensive project information
+- **Implementation**:
+
+#### New Features Added
+
+1. **Enhanced Task Data Model**:
+   - **Extended Properties**: Added description, priority, estimatedHours, actualHours, and notes fields
+   - **Detailed Information**: Each task now contains comprehensive project context
+   - **Progress Tracking**: Actual vs estimated hours for accurate progress monitoring
+   - **Priority Classification**: High/Medium/Low priority levels with color coding
+
+2. **Interactive Dialog System**:
+   - **Click-to-View**: Task names become clickable triggers for detail popups
+   - **Modal Dialogs**: Full-screen overlay dialogs with comprehensive task information
+   - **Responsive Design**: Optimized layout for various screen sizes (max-w-2xl)
+   - **Professional UI**: Clean, organized information presentation
+
+3. **Comprehensive Task Details Display**:
+   - **Header Section**: Task name with status indicator and detailed description
+   - **Assignee & Timeline**: Clear display of responsible person and due date
+   - **Category & Priority**: Visual badges with appropriate color coding
+   - **Time Tracking**: Estimated vs actual hours with percentage completion
+   - **Progress Visualization**: Progress bars showing completion percentage
+   - **Notes Section**: Additional context and status updates
+
+4. **Priority Color System**:
+   - **High Priority**: Red styling (`text-red-600 bg-red-50 border-red-200`)
+   - **Medium Priority**: Amber styling (`text-amber-600 bg-amber-50 border-amber-200`)
+   - **Low Priority**: Green styling (`text-green-600 bg-green-50 border-green-200`)
+   - **Visual Hierarchy**: Immediate priority recognition through color coding
+
+#### Technical Implementation
+
+**Dialog Component Integration**:
+```tsx
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+```
+
+**Enhanced Task Data Structure**:
+```tsx
+{
+  id: 1,
+  name: "Install main electrical panel",
+  category: "electrical",
+  status: "completed",
+  assignee: "John Smith",
+  dueDate: "2024-02-15",
+  description: "Install 200-amp electrical panel with dedicated circuits for golf simulator equipment",
+  priority: "High",
+  estimatedHours: 8,
+  actualHours: 7,
+  notes: "Completed ahead of schedule. All circuits tested and approved by inspector."
+}
+```
+
+**Priority Color Function**:
+```tsx
+const getPriorityColor = (priority: string) => {
+  switch (priority) {
+    case "High": return "text-red-600 bg-red-50 border-red-200"
+    case "Medium": return "text-amber-600 bg-amber-50 border-amber-200"
+    case "Low": return "text-green-600 bg-green-50 border-green-200"
+    default: return "text-gray-600 bg-gray-50 border-gray-200"
+  }
+}
+```
+
+**Dialog Content Layout**:
+```tsx
+<DialogContent className="max-w-2xl">
+  <DialogHeader>
+    <DialogTitle>{task.name}</DialogTitle>
+    <DialogDescription>{task.description}</DialogDescription>
+  </DialogHeader>
+  <div className="space-y-4">
+    <div className="grid grid-cols-2 gap-4">
+      {/* Task details grid */}
+    </div>
+    <div>
+      {/* Progress visualization */}
+    </div>
+    <div>
+      {/* Notes section */}
+    </div>
+  </div>
+</DialogContent>
+```
+
+**Progress Calculation**:
+```tsx
+{task.actualHours > 0 ? Math.round((task.actualHours / task.estimatedHours) * 100) : 0}%
+```
+
+#### Sample Enhanced Task Data
+
+**Henderson Golf Sim Tasks**:
+- Detailed descriptions for each electrical, plumbing, carpentry, and general tasks
+- Time estimates ranging from 3-12 hours per task
+- Progress tracking with actual hours logged
+- Comprehensive notes documenting completion status and next steps
+
+**Marchmont Historic Tasks**:
+- Heritage-specific task descriptions with conservation context
+- Extended time estimates reflecting specialized restoration work
+- Detailed progress notes maintaining heritage compliance standards
+- Priority assignments based on structural and regulatory requirements
+
+#### Benefits
+- **Comprehensive Information**: Users get complete task context without leaving the interface
+- **Improved Project Transparency**: Detailed progress tracking and time management visibility
+- **Enhanced Communication**: Notes field provides status updates and important context
+- **Priority Management**: Visual priority system helps focus attention on critical tasks
+- **Professional Presentation**: Clean, organized dialog layout maintains application quality
+- **Better Decision Making**: Access to detailed information enables informed project management
+- **Time Tracking**: Actual vs estimated hours provide valuable project metrics
+- **Status Context**: Notes field captures important project developments and blockers
+
+---
+
+## Task Interface Polish Updates
+
+### 14. Completion Checkbox and Badge Layout Refinements
+- **Location**: `app/projects/[id]/page.tsx` (Tasks TabsContent section)
+- **Feature**: Updated completion checkbox styling and improved badge positioning in popups
+- **Implementation**:
+
+#### Visual Refinements Made
+
+1. **Completion Checkbox Color Change**:
+   - **Background**: Changed from green (`bg-green-500`) to dark gray (`bg-gray-900`)
+   - **Border**: Updated from green (`border-green-500`) to dark gray (`border-gray-900`)
+   - **Hover State**: Changed from green hover (`hover:border-green-400`) to gray hover (`hover:border-gray-400`)
+   - **Professional Appearance**: Black and white checkboxes provide cleaner, more neutral styling
+   - **Consistency**: Maintains white checkmark icon on dark background for clear visibility
+
+2. **Popup Badge Layout Improvements**:
+   - **Horizontal Alignment**: Category and Priority badges align on the same level as their labels
+   - **Balanced Positioning**: Labels on left, badges on right with `ml-4` spacing
+   - **Flex Layout**: Uses `flex items-center justify-between` for optimal alignment
+   - **Visual Harmony**: Creates balanced spacing without excessive gaps
+
+#### Technical Implementation
+
+**Updated Checkbox Styling**:
+```tsx
+<button
+  onClick={() => toggleTaskCompletion(task.id)}
+  className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+    isCompleted
+      ? "bg-gray-900 border-gray-900 text-white"
+      : "border-gray-300 hover:border-gray-400"
+  }`}
+>
+  {isCompleted && <Check className="h-3 w-3" />}
+</button>
+```
+
+**Balanced Badge Layout**:
+```tsx
+<div className="flex items-center justify-between">
+  <label className="text-sm font-medium text-gray-700">Category</label>
+  <Badge variant="outline" className="text-xs font-semibold border-2 px-3 py-1 bg-gray-100 text-gray-800 border-gray-300 ml-4">
+    {task.category.toUpperCase()}
+  </Badge>
+</div>
+
+<div className="flex items-center justify-between">
+  <label className="text-sm font-medium text-gray-700">Priority</label>
+  <Badge className={`text-xs font-semibold border-2 px-3 py-1 ml-4 ${getPriorityColor(task.priority)}`}>
+    {task.priority}
+  </Badge>
+</div>
+```
+
+#### Benefits
+- **Neutral Styling**: Black and white checkboxes provide professional, non-distracting completion indicators
+- **Better Visual Hierarchy**: Balanced badge layout creates cleaner dialog appearance with improved readability
+- **Professional Appearance**: Subtle color palette maintains focus on task content rather than interface elements
+- **Consistent Experience**: Checkbox styling is uniform across both grouped and ungrouped task views
+- **Improved Spacing**: Badge alignment creates better visual balance in the popup grid layout
+
+---
+
+## Task Assignee Management System
+
+### 15. Interactive Assignee Selection Dropdown
+- **Location**: `app/projects/[id]/page.tsx` (Tasks TabsContent section - Dialog popups)
+- **Feature**: Dropdown selection for task assignees using project team members
+- **Implementation**:
+
+#### New Features Added
+
+1. **Assignee Selection Dropdown**:
+   - **Interactive Dropdown**: Replaced static assignee text with selectable dropdown
+   - **Team Member Integration**: Populated with actual project team members
+   - **Visual Indicators**: Team member initials displayed in dropdown options
+   - **Real-time Updates**: Assignee changes reflect immediately in task lists
+
+2. **State Management**:
+   - **Assignment Tracking**: `taskAssignments` state tracks assignment changes
+   - **Fallback Logic**: `getTaskAssignee()` function handles both original and updated assignments  
+   - **Update Functionality**: `updateTaskAssignee()` manages assignment changes
+   - **Persistent Display**: Updated assignments show in both grouped and ungrouped views
+
+3. **Professional UI Design**:
+   - **Avatar Initials**: Circular avatar placeholders with team member initials
+   - **Consistent Styling**: Matches existing form field styling
+   - **Proper Spacing**: Maintains dialog layout consistency
+   - **Responsive Design**: Full-width dropdown with appropriate sizing
+
+#### Technical Implementation
+
+**Select Component Integration**:
+```tsx
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+```
+
+**State Management**:
+```tsx
+const [taskAssignments, setTaskAssignments] = useState<{[key: number]: string}>({})
+
+const updateTaskAssignee = (taskId: number, newAssignee: string) => {
+  setTaskAssignments(prev => ({ ...prev, [taskId]: newAssignee }))
+}
+
+const getTaskAssignee = (task: any) => {
+  return taskAssignments[task.id] || task.assignee
+}
+```
+
+**Dropdown Implementation**:
+```tsx
+<Select value={getTaskAssignee(task)} onValueChange={(value) => updateTaskAssignee(task.id, value)}>
+  <SelectTrigger className="w-full mt-1">
+    <SelectValue placeholder="Select team member" />
+  </SelectTrigger>
+  <SelectContent>
+    {projectData.team.map((member, index) => (
+      <SelectItem key={index} value={member.name}>
+        <div className="flex items-center space-x-2">
+          <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium">
+            {member.name.split(" ").map(n => n[0]).join("")}
+          </div>
+          <span>{member.name}</span>
+        </div>
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+```
+
+#### Sample Team Integration
+
+**Henderson Golf Sim Team**:
+- John Smith (Project Manager)
+- Sarah Wilson (Installation Lead)  
+- Mike Johnson (Technical Specialist)
+
+**Marchmont Historic Team**:
+- Emma Davis (Heritage Specialist)
+- Tom Brown (Restoration Lead)
+- Alice Cooper (Project Coordinator)
+
+#### Benefits
+- **Dynamic Assignment**: Project managers can reassign tasks to available team members
+- **Visual Clarity**: Team member avatars provide quick visual identification
+- **Real-time Updates**: Assignment changes reflect immediately across all task views
+- **Project Context**: Only shows team members actually assigned to the specific project
+- **Professional Interface**: Maintains consistent styling with existing dialog components
+- **Enhanced Workflow**: Streamlines task management without leaving the task detail view
+- **State Persistence**: Assignment changes persist throughout the session
+
+---
+
+## Budget Forecasting & Analytics System
+
+### 16. Comprehensive Budget Forecasting Dashboard
+- **Location**: `app/projects/[id]/page.tsx` (Budget TabsContent section)
+- **Feature**: Advanced budget forecasting with predictive analytics, spending visualization, and warning systems
+- **Implementation**:
+
+#### New Features Added
+
+1. **Budget Forecasting Overview**:
+   - **Status Classification**: Green (on-track ≤5% overrun), Amber (at-risk ≤15%), Red (over-budget >15%)
+   - **Single Progress Bar**: Color-coded budget status with forecast indicator line
+   - **Real-time Warnings**: Dynamic overrun alerts with timeline predictions
+   - **Confidence Metrics**: Forecast accuracy percentage based on historical data
+
+2. **Interactive Spending Trends Chart**:
+   - **Weekly Spending Visualization**: Line chart showing cumulative spending vs forecasts
+   - **Budget Limit Line**: Red dotted line indicating budget ceiling
+   - **Warning Areas**: Shaded amber/red zones for projected overruns
+   - **Dual Data Lines**: Actual spending (solid blue) vs forecast (dashed red)
+   - **Responsive Tooltips**: Hover details with formatted currency values
+
+3. **Advanced Warning System**:
+   - **Overrun Predictions**: "£23k Overrun Forecast in 14 days" style alerts
+   - **Contextual Tooltips**: "Based on current spend rate" explanations
+   - **Color-coded Alerts**: Red for critical, amber for at-risk situations
+   - **Timeline Indicators**: Days until budget limit exceeded
+
+4. **Additional Forecasting Tools**:
+   - **Weekly Burn Rate**: Average weekly spending calculation
+   - **Completion Forecast**: Days until budget limit reached
+   - **Forecast Confidence**: Percentage accuracy based on historical patterns
+   - **Smart Indicators**: Visual icons and clear labeling
+
+#### Technical Implementation
+
+**Enhanced Data Structure**:
+```tsx
+weeklySpending: [
+  { week: "Week 1", spent: 8000, cumulative: 8000, forecast: 8500 },
+  // ... weekly progression
+],
+budgetForecast: {
+  projectedTotal: 68000,
+  overrunAmount: 23000,
+  overrunDate: "2024-04-15",
+  currentBurnRate: 9500,
+  daysUntilOverrun: 14,
+  confidence: 85
+}
+```
+
+**Budget Status Logic**:
+```tsx
+const getBudgetStatus = (project: any) => {
+  const overrunPercentage = ((project.budgetForecast.projectedTotal - project.budget) / project.budget) * 100
+  if (overrunPercentage <= 5) return { status: "on-track", color: "bg-green-500", textColor: "text-green-700" }
+  if (overrunPercentage <= 15) return { status: "at-risk", color: "bg-amber-500", textColor: "text-amber-700" }
+  return { status: "over-budget", color: "bg-red-500", textColor: "text-red-700" }
+}
+```
+
+**Recharts Integration**:
+```tsx
+<ComposedChart data={projectData.weeklySpending}>
+  <ReferenceLine 
+    y={projectData.budget} 
+    stroke="red" 
+    strokeDasharray="5 5" 
+    label={{ value: "Budget Limit", position: "topLeft" }}
+  />
+  <Area 
+    dataKey="forecast" 
+    fill="rgba(239, 68, 68, 0.1)" 
+    stroke="none"
+  />
+  <Line type="monotone" dataKey="cumulative" stroke="#2563eb" strokeWidth={2} />
+  <Line type="monotone" dataKey="forecast" stroke="#dc2626" strokeDasharray="5 5" />
+</ComposedChart>
+```
+
+**Smart Warning Generation**:
+```tsx
+const formatOverrunWarning = (project: any) => {
+  const overrun = project.budgetForecast.overrunAmount
+  const days = project.budgetForecast.daysUntilOverrun
+  if (days < 0) return `£${overrun.toLocaleString()} Already Over Budget`
+  if (days <= 30) return `£${overrun.toLocaleString()} Overrun Forecast in ${days} days`
+  return `£${overrun.toLocaleString()} Projected Overrun`
+}
+```
+
+#### Sample Forecasting Data
+
+**Henderson Golf Sim (Amber Status)**:
+- Current: £38k spent / £45k budget
+- Forecast: £68k total (51% overrun)
+- Warning: "£23k Overrun Forecast in 14 days"
+- Burn rate: £9.5k/week, 85% confidence
+
+**Marchmont Historic (Red Status)**:
+- Current: £165k spent / £120k budget (37.5% over)
+- Forecast: £195k total (62.5% overrun)
+- Warning: "£75k Already Over Budget"
+- Burn rate: £28.5k/week, 92% confidence
+
+#### Visual Design Elements
+
+**Progress Bar Enhancements**:
+- Color-coded status (green/amber/red)
+- Forecast indicator line showing projected completion
+- Height increased to 12px for better visibility
+
+**Chart Features**:
+- Professional grid lines with reduced opacity
+- Currency formatting (£45k, £60k)
+- Responsive container sizing
+- Hover tooltips with detailed breakdowns
+
+**Warning System**:
+- Alert triangle icons
+- Color-matched backgrounds and borders
+- Contextual tooltip explanations
+- Professional alert styling
+
+#### Benefits
+- **Predictive Planning**: Early warning system prevents budget surprises
+- **Visual Clarity**: Chart visualization makes trends immediately apparent
+- **Professional Reporting**: Confidence metrics and detailed forecasting data
+- **Actionable Insights**: Specific timelines and amounts for decision-making
+- **Risk Management**: Color-coded status system for quick assessment
+- **Historical Context**: Spending patterns inform future projections
+- **Stakeholder Communication**: Clear visual tools for project reporting
+- **Proactive Management**: Early intervention capabilities through forecasting

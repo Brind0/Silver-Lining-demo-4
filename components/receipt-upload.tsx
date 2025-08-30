@@ -133,7 +133,6 @@ export function ReceiptUpload({ onSubmit, onCancel }: ReceiptUploadProps) {
       processOCR(file)
     }
   }
-
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>

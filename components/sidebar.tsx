@@ -42,6 +42,11 @@ const navigation = [
     icon: Receipt,
   },
   {
+    name: "Analytics",
+    href: "/analytics",
+    icon: BarChart3,
+  },
+  {
     name: "Reports",
     href: "/reports",
     icon: FileText,

@@ -184,7 +184,6 @@ export default function ReceiptsPage() {
     // TODO: Handle the receipt submission to your backend
     // This could include uploading the file, saving the data, etc.
   }
-
   return (
     <MainLayout>
       <div className="p-6 space-y-6">
