@@ -26,13 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Area, ComposedChart } from "recharts"
 import {
@@ -50,18 +43,8 @@ import {
   ImageIcon,
   Eye,
   Check,
-  Search,
-  Settings,
-  ChevronDown,
-  FileEdit,
-  MessageSquare,
 } from "lucide-react"
 import Link from "next/link"
-import { DocumentCreationModal } from "@/components/document-creation-modal"
-import { ProjectEditModal } from "@/components/project-edit-modal"
-import { AssistantEditModal } from "@/components/assistant-edit-modal"
-import { TechnicalSpecificationsModal } from "@/components/technical-specifications-modal"
-import { ActivityTooltip } from "@/components/activity-tooltip"
 
 const projects = [
   {
@@ -321,12 +304,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [completedTasks, setCompletedTasks] = useState<number[]>([])
   const [selectedTask, setSelectedTask] = useState<any>(null)
   const [taskAssignments, setTaskAssignments] = useState<{[key: number]: string}>({})
-  const [searchTerm, setSearchTerm] = useState("")
-  const [createdDocuments, setCreatedDocuments] = useState<any[]>([])
-  const [showDocumentModal, setShowDocumentModal] = useState(false)
-  const [showProjectEditModal, setShowProjectEditModal] = useState(false)
-  const [showAssistantModal, setShowAssistantModal] = useState(false)
-  const [showTechnicalModal, setShowTechnicalModal] = useState(false)
 
   const toggleTaskCompletion = (taskId: number) => {
     setCompletedTasks(prev => 
@@ -356,206 +333,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       default: return "text-gray-600 bg-gray-50 border-gray-200"
     }
   }
-
-  const filteredFiles = searchTerm
-    ? [
-        ...projectData.documents
-          .filter(doc => doc.name.toLowerCase().includes(searchTerm.toLowerCase()))
-          .map(doc => ({ ...doc, type: 'document', isNew: false })),
-        ...projectData.photos
-          .filter(photo => photo.name.toLowerCase().includes(searchTerm.toLowerCase()))
-          .map(photo => ({ ...photo, type: 'photo', isNew: false })),
-        ...createdDocuments
-          .filter(doc => doc.name.toLowerCase().includes(searchTerm.toLowerCase()))
-          .map(doc => ({ ...doc, type: 'document', isNew: true, uploadDate: doc.createdDate }))
-      ].sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime())
-    : []
-
-  const technicalSpecifications = {
-    materials: [
-      {
-        category: "Stone & Masonry",
-        specification: "Period-matched limestone blocks (Bath stone equivalent)",
-        supplier: "Heritage Stone Supplies Ltd",
-        quantity: "45 tons",
-        unitCost: "£180/ton",
-        status: "Delivered"
-      },
-      {
-        category: "Timber",
-        specification: "Reclaimed oak beams (19th century specification)",
-        supplier: "Traditional Building Materials Co",
-        quantity: "12 beams",
-        unitCost: "£320/beam",
-        status: "Installed"
-      },
-      {
-        category: "Roofing",
-        specification: "Welsh slate tiles (500mm x 250mm)",
-        supplier: "Celtic Slate Quarries",
-        quantity: "2,400 tiles",
-        unitCost: "£4.50/tile",
-        status: "On Order"
-      }
-    ],
-    equipment: [
-      {
-        category: "Lifting Equipment",
-        specification: "Mobile crane (25-ton capacity, heritage-approved)",
-        supplier: "Precision Crane Hire",
-        quantity: "1 unit",
-        unitCost: "£450/day",
-        status: "Approved"
-      },
-      {
-        category: "Safety Equipment",
-        specification: "Scaffolding system (heritage building certified)",
-        supplier: "Heritage Access Solutions",
-        quantity: "Complete system",
-        unitCost: "£2,800/month",
-        status: "Installed"
-      }
-    ],
-    safety: [
-      {
-        requirement: "Heritage Building Safety Protocol",
-        specification: "HSE Guidelines for Historic Buildings (HSG 33)",
-        compliance: "Grade I Listed Building Requirements",
-        status: "Compliant"
-      },
-      {
-        requirement: "Structural Safety Assessment",
-        specification: "Monthly structural integrity inspections",
-        compliance: "Building Control Approved",
-        status: "Current"
-      }
-    ],
-    testing: [
-      {
-        test: "Stone Integrity Assessment",
-        procedure: "Ultrasonic testing of limestone blocks",
-        frequency: "Weekly during installation",
-        lastCompleted: "2024-02-10",
-        nextDue: "2024-02-17",
-        status: "Scheduled"
-      },
-      {
-        test: "Timber Moisture Content",
-        procedure: "Electronic moisture meter testing",
-        frequency: "Bi-weekly",
-        lastCompleted: "2024-02-08",
-        nextDue: "2024-02-22",
-        status: "Overdue"
-      }
-    ]
-  }
-
-  const recentActivity = [
-    {
-      action: "Heritage stone delivered",
-      project: projectData.name,
-      time: "15 min ago",
-      icon: CheckCircle,
-      color: "text-green-600",
-      details: "45 tons of period-matched limestone blocks delivered from Heritage Stone Supplies Ltd",
-      user: "Emma Davis",
-      exactTime: new Date(Date.now() - 15 * 60 * 1000).toLocaleString(),
-      amount: "£8,100",
-      status: "Completed",
-      nextStep: "Begin installation phase"
-    },
-    {
-      action: "Safety inspection passed",
-      project: projectData.name,
-      time: "45 min ago",
-      icon: CheckCircle,
-      color: "text-green-600",
-      details: "Heritage building safety protocols inspection completed successfully",
-      user: "Tom Brown",
-      exactTime: new Date(Date.now() - 45 * 60 * 1000).toLocaleString(),
-      amount: "£320",
-      status: "Completed",
-      nextStep: "Continue restoration work"
-    },
-    {
-      action: "Budget review approved",
-      project: projectData.name,
-      time: "1 hour ago",
-      icon: DollarSign,
-      color: "text-blue-600",
-      details: "Monthly budget review and overrun analysis approved by client",
-      user: "Alice Cooper",
-      exactTime: new Date(Date.now() - 1 * 60 * 60 * 1000).toLocaleString(),
-      amount: "£0",
-      status: "Approved",
-      nextStep: "Implement cost control measures"
-    },
-    {
-      action: "Structural assessment completed",
-      project: projectData.name,
-      time: "2 hours ago",
-      icon: CheckCircle,
-      color: "text-blue-600",
-      details: "Monthly structural integrity inspection completed with no issues identified",
-      user: "Tom Brown",
-      exactTime: new Date(Date.now() - 2 * 60 * 60 * 1000).toLocaleString(),
-      amount: "£450",
-      status: "Approved",
-      nextStep: "Schedule next inspection"
-    },
-    {
-      action: "Timber moisture test overdue",
-      project: projectData.name,
-      time: "1 day ago",
-      icon: AlertTriangle,
-      color: "text-red-600",
-      details: "Bi-weekly timber moisture content testing is overdue and requires immediate attention",
-      user: "Alice Cooper",
-      exactTime: new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleString(),
-      amount: "£0",
-      status: "Attention Required",
-      nextStep: "Schedule emergency moisture testing"
-    },
-    {
-      action: "Oak beam installation started",
-      project: projectData.name,
-      time: "2 days ago",
-      icon: Settings,
-      color: "text-amber-600",
-      details: "Installation of reclaimed oak beams for structural support has commenced",
-      user: "Emma Davis",
-      exactTime: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleString(),
-      amount: "£3,840",
-      status: "Pending Review",
-      nextStep: "Monitor installation progress"
-    },
-    {
-      action: "Welsh slate tiles ordered",
-      project: projectData.name,
-      time: "3 days ago",
-      icon: Plus,
-      color: "text-amber-600",
-      details: "2,400 Welsh slate tiles ordered from Celtic Slate Quarries for roof restoration",
-      user: "Emma Davis",
-      exactTime: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toLocaleString(),
-      amount: "£10,800",
-      status: "Pending Review",
-      nextStep: "Confirm delivery schedule"
-    },
-    {
-      action: "Crane rental confirmed",
-      project: projectData.name,
-      time: "4 days ago",
-      icon: CheckCircle,
-      color: "text-green-600",
-      details: "25-ton heritage-approved mobile crane rental confirmed for stone installation",
-      user: "Tom Brown",
-      exactTime: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toLocaleString(),
-      amount: "£2,250",
-      status: "Completed",
-      nextStep: "Coordinate delivery schedule"
-    }
-  ]
 
   const getBudgetStatus = (project: any) => {
     if (!project.budgetForecast) {
@@ -756,142 +533,42 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-[600px]">
-              {/* Left Column - Project Description + Quick Specs (3/5 width) */}
-              <div className="lg:col-span-3 space-y-6">
-                <Card className="h-fit">
-                  <CardHeader>
-                    <CardTitle>Project Description</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground leading-relaxed mb-4">{projectData.description}</p>
-                  </CardContent>
-                </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Description</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{projectData.description}</p>
+                </CardContent>
+              </Card>
 
-                {/* Technical Specs Summary Bar */}
-                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowTechnicalModal(true)}>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center justify-between">
-                      Technical Specifications
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Type:</span>
-                        <span className="font-medium">
-                          {projectData.name.includes('Heritage') ? 'Historic Building' : 
-                           projectData.name.includes('Office') ? 'Commercial Office' : 
-                           'Residential Complex'}
-                        </span>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Phases</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {projectData.phases.map((phase, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{phase.name}</span>
+                        <Badge
+                          variant={
+                            phase.status === "completed"
+                              ? "default"
+                              : phase.status === "in-progress"
+                                ? "secondary"
+                                : "outline"
+                          }
+                        >
+                          {phase.status}
+                        </Badge>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Scale:</span>
-                        <span className="font-medium">
-                          {projectData.budget > 100000 ? 'Large Scale' : 
-                           projectData.budget > 50000 ? 'Medium Scale' : 'Small Scale'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Duration:</span>
-                        <span className="font-medium">
-                          {Math.ceil((new Date(projectData.endDate).getTime() - new Date(projectData.startDate).getTime()) / (1000 * 60 * 60 * 24 * 30))} months
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Team:</span>
-                        <span className="font-medium">{projectData.team.length} members</span>
-                      </div>
+                      <Progress value={phase.progress} className="h-2" />
                     </div>
-                  </CardContent>
-                </Card>
-
-                {/* Project Phases - Compact Horizontal Layout */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Project Phases</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="space-y-3">
-                      {projectData.phases.map((phase, index) => (
-                        <div key={index} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">{phase.name}</span>
-                            <Badge
-                              variant={
-                                phase.status === "completed"
-                                  ? "default"
-                                  : phase.status === "in-progress"
-                                    ? "secondary"
-                                    : "outline"
-                              }
-                              className="text-xs"
-                            >
-                              {phase.status}
-                            </Badge>
-                          </div>
-                          <Progress value={phase.progress} className="h-2" />
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>{phase.progress}% complete</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Right Column - Expanded Recent Activity (2/5 width, full height) */}
-              <div className="lg:col-span-2">
-                <Card className="h-full flex flex-col">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
-                    <p className="text-sm text-muted-foreground">Latest project updates and developments</p>
-                  </CardHeader>
-                  <CardContent className="flex-1 overflow-y-auto space-y-1">
-                    {recentActivity.map((activity, index) => {
-                      const IconComponent = activity.icon
-                      return (
-                        <ActivityTooltip key={index} activity={activity}>
-                          <div className="py-3 px-3 -mx-3 border-b border-gray-100 last:border-b-0 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-50 hover:shadow-sm hover:scale-[1.01]">
-                            <div className="flex items-start space-x-3">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                activity.status === 'Completed' ? 'bg-green-100' :
-                                activity.status === 'Approved' ? 'bg-blue-100' :
-                                activity.status === 'Attention Required' ? 'bg-red-100' :
-                                'bg-amber-100'
-                              }`}>
-                                <IconComponent className={`w-4 h-4 ${activity.color}`} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 leading-tight">{activity.action}</p>
-                                <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
-                                <div className="flex items-center justify-between mt-2">
-                                  <Badge 
-                                    variant="outline" 
-                                    className={`text-xs px-2 py-0.5 ${
-                                      activity.status === 'Completed' ? 'border-green-200 text-green-700' :
-                                      activity.status === 'Approved' ? 'border-blue-200 text-blue-700' :
-                                      activity.status === 'Attention Required' ? 'border-red-200 text-red-700' :
-                                      'border-amber-200 text-amber-700'
-                                    }`}
-                                  >
-                                    {activity.status}
-                                  </Badge>
-                                  {activity.amount && activity.amount !== "£0" && (
-                                    <span className="text-xs font-medium text-gray-900">{activity.amount}</span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </ActivityTooltip>
-                      )
-                    })}
-                  </CardContent>
-                </Card>
-              </div>
+                  ))}
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
@@ -1657,197 +1334,55 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           </TabsContent>
 
           <TabsContent value="files" className="space-y-4">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Project Files</h3>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Edit Project
-                    <ChevronDown className="h-4 w-4 ml-1" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setShowProjectEditModal(true)}>
-                    <FileEdit className="h-4 w-4 mr-2" />
-                    Manual Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setShowAssistantModal(true)}>
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Work with Assistant
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            
-            <div className="flex items-center space-x-4 mb-6">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search for documents or photos..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Button onClick={() => setShowDocumentModal(true)} className="shrink-0">
+              <Button size="sm">
                 <Plus className="h-4 w-4 mr-2" />
-                Create Document
+                Upload File
               </Button>
             </div>
-
-            {searchTerm && (
-              <div className="mb-4">
-                <p className="text-sm text-muted-foreground mb-3">
-                  Showing results for "{searchTerm}"
-                </p>
-                {filteredFiles.length === 0 ? (
-                  <Card className="p-6 text-center">
-                    <div className="space-y-3">
-                      <Search className="h-8 w-8 text-muted-foreground mx-auto" />
-                      <p className="text-muted-foreground">No files found matching your search</p>
-                      <Button onClick={() => setShowDocumentModal(true)} size="sm">
-                        Create Document Instead
-                      </Button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Documents</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {projectData.documents.map((doc, index) => (
+                    <div key={index} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{doc.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Uploaded {new Date(doc.uploadDate).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                  </Card>
-                ) : (
-                  <div className="space-y-2">
-                    {filteredFiles.map((file, index) => (
-                      <div key={index} className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                        {file.type === 'document' ? (
-                          <FileText className="h-4 w-4 text-blue-500" />
-                        ) : (
-                          <ImageIcon className="h-4 w-4 text-green-500" />
-                        )}
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2">
-                            <p className="text-sm font-medium">{file.name}</p>
-                            {file.isNew && (
-                              <div className="w-2 h-2 rounded-full bg-green-500" />
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {file.type === 'document' ? 'Document' : 'Photo'} • 
-                            {file.isNew ? 'Created' : 'Uploaded'} {new Date(file.uploadDate).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+                  ))}
+                </CardContent>
+              </Card>
 
-            {!searchTerm && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center space-x-2">
-                      <FileText className="h-4 w-4" />
-                      <span>Documents</span>
-                      <Badge variant="secondary" className="text-xs">
-                        {projectData.documents.length}
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {projectData.documents.map((doc, index) => (
-                      <div key={index} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted transition-colors">
-                        <FileText className="h-4 w-4 text-blue-500" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{doc.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Uploaded {new Date(doc.uploadDate).toLocaleDateString()}
-                          </p>
-                        </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Photos</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {projectData.photos.map((photo, index) => (
+                    <div key={index} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted">
+                      <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{photo.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Uploaded {new Date(photo.uploadDate).toLocaleDateString()}
+                        </p>
                       </div>
-                    ))}
-                    {createdDocuments.map((doc, index) => (
-                      <div key={`created-${index}`} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted transition-colors">
-                        <FileText className="h-4 w-4 text-green-500" />
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2">
-                            <p className="text-sm font-medium">{doc.name}</p>
-                            <div className="w-2 h-2 rounded-full bg-green-500" />
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Created {new Date(doc.createdDate).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center space-x-2">
-                      <ImageIcon className="h-4 w-4" />
-                      <span>Photos</span>
-                      <Badge variant="secondary" className="text-xs">
-                        {projectData.photos.length}
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {projectData.photos.map((photo, index) => (
-                      <div key={index} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted transition-colors">
-                        <ImageIcon className="h-4 w-4 text-green-500" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{photo.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Uploaded {new Date(photo.uploadDate).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
-      
-      <DocumentCreationModal
-        open={showDocumentModal}
-        onOpenChange={setShowDocumentModal}
-        onDocumentCreated={(doc) => setCreatedDocuments(prev => [...prev, doc])}
-        projectContext={{
-          name: projectData.name,
-          client: projectData.client,
-          budget: projectData.budget,
-          team: projectData.team,
-          status: projectData.status,
-          description: projectData.description
-        }}
-      />
-      
-      <ProjectEditModal
-        open={showProjectEditModal}
-        onOpenChange={setShowProjectEditModal}
-        projectData={projectData}
-        onSave={(updatedProject) => {
-          console.log('Project updated:', updatedProject)
-        }}
-      />
-      
-      <AssistantEditModal
-        open={showAssistantModal}
-        onOpenChange={setShowAssistantModal}
-        projectData={projectData}
-        onSave={(updatedProject) => {
-          console.log('Project updated via assistant:', updatedProject)
-        }}
-      />
-      
-      <TechnicalSpecificationsModal
-        open={showTechnicalModal}
-        onOpenChange={setShowTechnicalModal}
-        projectName={projectData.name}
-        technicalSpecifications={technicalSpecifications}
-      />
     </MainLayout>
   )
 }
