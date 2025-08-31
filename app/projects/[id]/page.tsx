@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, use } from "react"
+import React, { useState, use } from "react"
 import { MainLayout } from "@/components/main-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Area, ComposedChart } from "recharts"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Area, ComposedChart, BarChart, Bar, Legend } from "recharts"
 import {
   ArrowLeft,
   Calendar,
@@ -55,6 +55,13 @@ import {
   ChevronDown,
   FileEdit,
   MessageSquare,
+  Download,
+  RefreshCw,
+  X,
+  TrendingUp,
+  TrendingDown,
+  Filter,
+  ChevronRight,
 } from "lucide-react"
 import Link from "next/link"
 import { DocumentCreationModal } from "@/components/document-creation-modal"
@@ -119,23 +126,44 @@ const projects = [
       { id: 7, name: "Install lighting fixtures", category: "electrical", status: "pending", assignee: "John Smith", dueDate: "2024-03-20", description: "Install LED lighting system with dimmer controls", priority: "Medium", estimatedHours: 5, actualHours: 0, notes: "Fixtures selected and approved by client. Installation scheduled." },
     ],
     weeklySpending: [
-      { week: "Week 1", date: "Jan 15", spent: 8000, cumulative: 8000, forecast: 8500, weekNumber: 1 },
-      { week: "Week 2", date: "Jan 22", spent: 12000, cumulative: 20000, forecast: 17000, weekNumber: 2 },
-      { week: "Week 3", date: "Jan 29", spent: 9500, cumulative: 29500, forecast: 25500, weekNumber: 3 },
-      { week: "Week 4", date: "Feb 5", spent: 8500, cumulative: 38000, forecast: 34000, weekNumber: 4 },
-      { week: "Week 5", date: "Feb 12", spent: 0, cumulative: 38000, forecast: 42500, weekNumber: 5 },
-      { week: "Week 6", date: "Feb 19", spent: 0, cumulative: 38000, forecast: 46000, weekNumber: 6, riskAlert: { overrun: 6000, confidence: 85, date: "Apr 15", action: "Switch to Supplier B, £2k savings" }},
-      { week: "Week 7", date: "Feb 26", spent: 0, cumulative: 38000, forecast: 48500, weekNumber: 7 },
-      { week: "Week 8", date: "Mar 5", spent: 0, cumulative: 38000, forecast: 51000, weekNumber: 8 },
+      { week: "Week 1", date: "Jan 15", actual: 8000, projected: 8500, budget: 9000, daily: [1200, 1100, 1400, 1300, 1500, 1000, 500] },
+      { week: "Week 2", date: "Jan 22", actual: 20000, projected: 19500, budget: 18000, daily: [2000, 1800, 2200, 1900, 2100, 1600, 400] },
+      { week: "Week 3", date: "Jan 29", actual: 29500, projected: 28800, budget: 27000, daily: [1600, 1400, 1800, 1500, 1700, 1200, 300] },
+      { week: "Week 4", date: "Feb 5", actual: 38000, projected: 37200, budget: 36000, daily: [1400, 1200, 1600, 1300, 1500, 1000, 500] },
+      { week: "Week 5", date: "Feb 12", actual: 38000, projected: 44500, budget: 45000, daily: [0, 0, 0, 0, 0, 0, 0] },
+      { week: "Week 6", date: "Feb 19", actual: 38000, projected: 51000, budget: 54000, daily: [0, 0, 0, 0, 0, 0, 0] },
+      { week: "Week 7", date: "Feb 26", actual: 38000, projected: 57500, budget: 63000, daily: [0, 0, 0, 0, 0, 0, 0] },
+      { week: "Week 8", date: "Mar 5", actual: 38000, projected: 64000, budget: 72000, daily: [0, 0, 0, 0, 0, 0, 0] },
     ],
+    costBreakdown: {
+      materials: { budget: 18000, projected: 19500, actual: 16200 },
+      labor: { budget: 15000, projected: 16800, actual: 14300 },
+      equipment: { budget: 8000, projected: 8200, actual: 7500 },
+      permits: { budget: 2000, projected: 2100, actual: 0 },
+      overhead: { budget: 1500, projected: 1600, actual: 0 },
+      contingency: { budget: 500, projected: 800, actual: 0 }
+    },
+    keyDrivers: [
+      { name: "Premium Equipment Upgrade", budget: 8000, actual: 7500, variance: -500, status: "under" },
+      { name: "Specialist Labor Premium", budget: 15000, actual: 14300, variance: -700, status: "under" },
+      { name: "Custom Materials", budget: 18000, actual: 16200, variance: -1800, status: "under" },
+      { name: "Extended Installation Time", budget: 0, actual: 0, variance: 0, status: "neutral" },
+      { name: "Additional Safety Requirements", budget: 2000, actual: 0, variance: -2000, status: "under" }
+    ],
+    riskAlerts: [
+      { id: 1, type: "warning", level: "amber", confidence: 82, title: "Material Delivery Delay Risk", message: "Weather conditions may delay specialized flooring delivery by 3-5 days", impact: "£1,200 potential overtime costs", dismissed: false },
+      { id: 2, type: "predictive", level: "green", confidence: 89, title: "Under Budget Projection", message: "Current spending trend indicates 8% under budget completion", impact: "£3,600 potential savings", dismissed: false }
+    ],
+    dismissedAlerts: [],
+    timePeriod: "8week",
     currentWeekPosition: 4.3,
     budgetForecast: {
-      projectedTotal: 51000,
-      overrunAmount: 6000,
-      overrunDate: "2024-04-15",
-      currentBurnRate: 6500,
-      daysUntilOverrun: 21,
-      confidence: 85
+      projectedTotal: 42800,
+      overrunAmount: -2200,
+      overrunDate: null,
+      currentBurnRate: 5500,
+      daysUntilOverrun: null,
+      confidence: 87
     }
   },
   {
@@ -327,6 +355,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [showProjectEditModal, setShowProjectEditModal] = useState(false)
   const [showAssistantModal, setShowAssistantModal] = useState(false)
   const [showTechnicalModal, setShowTechnicalModal] = useState(false)
+  const [timePeriod, setTimePeriod] = useState("8week")
+  const [autoRefresh, setAutoRefresh] = useState(true)
+  const [selectedDrillDown, setSelectedDrillDown] = useState<any>(null)
+  const [showDrillDownModal, setShowDrillDownModal] = useState(false)
+  const [dismissedAlerts, setDismissedAlerts] = useState<number[]>([])
+  const [lastRefresh, setLastRefresh] = useState(new Date())
 
   const toggleTaskCompletion = (taskId: number) => {
     setCompletedTasks(prev => 
@@ -335,6 +369,49 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         : [...prev, taskId]
     )
   }
+
+  const dismissAlert = (alertId: number) => {
+    setDismissedAlerts(prev => [...prev, alertId])
+  }
+
+  const handleTimePeriodChange = (period: string) => {
+    setTimePeriod(period)
+    // In a real app, this would trigger data refetch
+  }
+
+  const handleRefresh = () => {
+    setLastRefresh(new Date())
+    // In a real app, this would trigger data refetch
+  }
+
+  const handleDrillDown = (data: any, type: 'line' | 'bar') => {
+    setSelectedDrillDown({ ...data, type })
+    setShowDrillDownModal(true)
+  }
+
+  const exportToPDF = () => {
+    console.log('Exporting dashboard to PDF...')
+    // Implementation would go here
+  }
+
+  const exportToExcel = () => {
+    console.log('Exporting dashboard to Excel...')
+    // Implementation would go here
+  }
+
+  // Auto-refresh effect
+  React.useEffect(() => {
+    if (autoRefresh) {
+      const interval = setInterval(() => {
+        handleRefresh()
+      }, 30000) // Refresh every 30 seconds
+      return () => clearInterval(interval)
+    }
+  }, [autoRefresh])
+
+  const filteredAlerts = projectData.riskAlerts?.filter(alert => 
+    !dismissedAlerts.includes(alert.id)
+  ) || []
 
   const openTaskDetails = (task: any) => {
     setSelectedTask(task)
@@ -1320,339 +1397,569 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 </CardContent>
               </Card>
 
+
+              {/* 2x2 Dashboard Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Spending Trends Chart */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Spending Trends</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart 
-                          data={projectData.weeklySpending || []} 
-                          margin={{ top: 20, right: 80, left: 20, bottom: 5 }}
-                          onClick={(data) => {
-                            if (data?.activePayload?.[0]?.payload?.riskAlert) {
-                              const alert = data.activePayload[0].payload.riskAlert;
-                              if (confirm(`Risk Alert: £${alert.overrun.toLocaleString()} overrun expected by ${alert.date} (${alert.confidence}% confidence)\n\nRecommended Action: ${alert.action}\n\nClick OK to implement this action.`)) {
-                                console.log(`Action taken: ${alert.action} at ${new Date().toISOString()}`);
-                                alert(`Action logged: ${alert.action}`);
-                              }
-                            }
-                          }}
-                        >
-                          <CartesianGrid 
-                            strokeDasharray="1 2" 
-                            stroke="#e5e7eb" 
-                            strokeOpacity={0.3}
-                            horizontal={true}
-                            vertical={false}
-                          />
-                          
-                          <XAxis 
-                            dataKey="week" 
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ 
-                              fontSize: 11, 
-                              fill: '#6b7280',
-                              fontWeight: 500
-                            }}
-                            interval={0}
-                          />
-                          
-                          <YAxis 
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ 
-                              fontSize: 10, 
-                              fill: '#6b7280',
-                              fontWeight: 400
-                            }}
-                            tickFormatter={(value) => `£${(value / 1000).toFixed(0)}k`}
-                            domain={[0, 'dataMax + 3000']}
-                          />
-                          
-                          <RechartsTooltip 
-                            contentStyle={{
-                              backgroundColor: '#ffffff',
-                              border: '1px solid #d1d5db',
-                              borderRadius: '6px',
-                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                              fontSize: '11px',
-                              padding: '8px 12px'
-                            }}
-                            formatter={(value, name, props) => {
-                              const payload = props.payload;
-                              if (payload?.riskAlert && name === 'forecast') {
-                                return [
-                                  <div key="risk-alert" className="space-y-1">
-                                    <div className="font-medium text-red-600">⚠️ Risk Alert</div>
-                                    <div>£{payload.riskAlert.overrun.toLocaleString()} overrun expected by {payload.riskAlert.date}</div>
-                                    <div className="text-xs text-gray-500">({payload.riskAlert.confidence}% confidence)</div>
-                                    <div className="text-xs text-blue-600 cursor-pointer font-medium mt-2">
-                                      💡 {payload.riskAlert.action}
-                                    </div>
-                                  </div>,
-                                  ''
-                                ];
-                              }
-                              return [
-                                `£${Number(value).toLocaleString()}`, 
-                                name === 'cumulative' ? 'Actual Spend' : 
-                                name === 'forecast' ? 'Projected Spend' : 'Weekly Spend'
-                              ];
-                            }}
-                            labelFormatter={(label, payload) => {
-                              const data = payload?.[0]?.payload;
-                              if (data) {
-                                return `${label} - ${data.date}`;
-                              }
-                              return label;
-                            }}
-                            labelStyle={{ 
-                              color: '#374151', 
-                              fontWeight: 600,
-                              fontSize: '11px'
-                            }}
-                          />
-                          
-                          {/* Current week indicator - flexible positioning */}
-                          <ReferenceLine 
-                            x={projectData.currentWeekPosition || 4.3}
-                            stroke="#10b981" 
-                            strokeWidth={2} 
-                            strokeOpacity={0.8}
-                            label={{ 
-                              value: "Today", 
-                              position: "top",
-                              style: { 
-                                textAnchor: 'middle',
-                                fontSize: '10px',
-                                fontWeight: 600,
-                                fill: '#10b981'
-                              }
-                            }}
-                          />
-                          
-                          {/* Budget limit line - RED HORIZONTAL with right-side label */}
-                          <ReferenceLine 
-                            y={projectData.budget} 
-                            stroke="#dc2626" 
-                            strokeWidth={2}
-                            strokeOpacity={1}
-                            label={{ 
-                              value: `Budget Limit £${(projectData.budget / 1000).toFixed(0)}k`, 
-                              position: "insideTopRight",
-                              offset: 10,
-                              style: {
-                                fontSize: '10px',
-                                fontWeight: 600,
-                                fill: '#dc2626',
-                                textAnchor: 'start'
-                              }
-                            }}
-                          />
-                          
-                          {/* Actual spending line - BLACK SOLID */}
-                          <Line 
-                            type="monotone" 
-                            dataKey="cumulative" 
-                            stroke="#000000" 
-                            strokeWidth={2.5} 
-                            dot={{ 
-                              fill: '#000000', 
-                              stroke: '#ffffff',
-                              strokeWidth: 1, 
-                              r: 3
-                            }}
-                            activeDot={{ 
-                              r: 5, 
-                              fill: '#000000',
-                              stroke: '#ffffff',
-                              strokeWidth: 2
-                            }}
-                          />
-                          
-                          {/* Forecast line - BLACK DASHED */}
-                          <Line 
-                            type="monotone" 
-                            dataKey="forecast" 
-                            stroke="#000000" 
-                            strokeWidth={2} 
-                            strokeDasharray="6 3"
-                            dot={(props) => {
-                              const { payload, index } = props;
-                              if (payload?.riskAlert) {
-                                return (
-                                  <circle 
-                                    key={`risk-dot-${index}`}
-                                    cx={props.cx} 
-                                    cy={props.cy} 
-                                    r="6" 
-                                    fill="#9ca3af" 
-                                    stroke="#ffffff" 
-                                    strokeWidth="2"
-                                    style={{ cursor: 'pointer' }}
-                                    onClick={() => {
-                                      if (confirm(`Risk Alert: £${payload.riskAlert.overrun.toLocaleString()} overrun expected by ${payload.riskAlert.date} (${payload.riskAlert.confidence}% confidence)\n\nRecommended Action: ${payload.riskAlert.action}\n\nClick OK to implement this action.`)) {
-                                        console.log(`Action taken: ${payload.riskAlert.action} at ${new Date().toISOString()}`);
-                                        alert(`Action logged: ${payload.riskAlert.action}`);
-                                      }
-                                    }}
-                                  />
-                                );
-                              }
-                              return (
-                                <circle 
-                                  key={`forecast-dot-${index}`}
-                                  cx={props.cx} 
-                                  cy={props.cy} 
-                                  r="2" 
-                                  fill="#000000" 
-                                  stroke="#ffffff" 
-                                  strokeWidth="1"
-                                />
-                              );
-                            }}
-                            activeDot={{ 
-                              r: 4, 
-                              fill: '#000000',
-                              stroke: '#ffffff',
-                              strokeWidth: 1
-                            }}
-                          />
-                        </ComposedChart>
-                      </ResponsiveContainer>
+              {/* Top Left: Comprehensive Line Graph */}
+              <Card className="col-span-1">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">Henderson Golf Sim - Spending Analysis</CardTitle>
+                  <div className="flex items-center space-x-2">
+                    <Select value={timePeriod} onValueChange={handleTimePeriodChange}>
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="4week">4 Week</SelectItem>
+                        <SelectItem value="8week">8 Week</SelectItem>
+                        <SelectItem value="12week">12 Week</SelectItem>
+                        <SelectItem value="ytd">YTD</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="flex items-center space-x-1">
+                      <Button size="sm" variant="outline" onClick={exportToPDF}>
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="outline">
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={exportToPDF}>Export to PDF</DropdownMenuItem>
+                          <DropdownMenuItem onClick={exportToExcel}>Export to Excel</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <Button size="sm" variant="outline" onClick={handleRefresh}>
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
-
-                {/* Budget Breakdown */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Category Breakdown</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {projectData.expenses.map((expense, index) => (
-                      <div key={index} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">{expense.category}</span>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm text-muted-foreground">
-                              £{expense.spent.toLocaleString()} / £{expense.budgeted.toLocaleString()}
-                            </span>
-                            <Badge variant={expense.status === "Over Budget" ? "destructive" : "secondary"}>
-                              {expense.status}
-                            </Badge>
-                          </div>
-                        </div>
-                        <Progress
-                          value={(expense.spent / expense.budgeted) * 100}
-                          className={`h-2 ${expense.status === "Over Budget" ? "[&>div]:bg-red-500" : ""}`}
-                        />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Additional Forecasting Tools */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">Weekly Burn Rate</span>
-                    </div>
-                    <div className="text-2xl font-bold mt-2">£{projectData.budgetForecast?.currentBurnRate?.toLocaleString() || 'N/A'}</div>
-                    <div className="text-xs text-muted-foreground">Average weekly spend</div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">Completion Forecast</span>
-                    </div>
-                    <div className="text-2xl font-bold mt-2">
-                      {(projectData.budgetForecast?.daysUntilOverrun || 0) > 0 ? 
-                        `${projectData.budgetForecast.daysUntilOverrun}d` : 
-                        "Over"
-                      }
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {(projectData.budgetForecast?.daysUntilOverrun || 0) > 0 ? 
-                        "Until budget limit" : 
-                        "Budget exceeded"
-                      }
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">Forecast Confidence</span>
-                    </div>
-                    <div className="text-2xl font-bold mt-2">{projectData.budgetForecast?.confidence || 'N/A'}%</div>
-                    <div className="text-xs text-muted-foreground">Based on historical data</div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Recent Expenses Table */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Expenses</CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent>
-
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {projectData.recentExpenses.map((expense, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="text-xs">{new Date(expense.date).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-xs">{expense.description}</TableCell>
-                          <TableCell className="text-xs">
-                            £{expense.amount.toLocaleString()}
-                            <div className="text-muted-foreground">VAT: £{expense.vat.toLocaleString()}</div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={expense.status === "Pending Approval" ? "secondary" : "default"}
-                              className="text-xs"
-                            >
-                              {expense.status}
-                            </Badge>
-                            {expense.status === "Pending Approval" && (
-                              <div className="flex space-x-1 mt-1">
-                                <Button size="sm" className="h-6 text-xs px-2">
-                                  Approve
-                                </Button>
-                                <Button size="sm" variant="outline" className="h-6 text-xs px-2 bg-transparent">
-                                  Reject
-                                </Button>
-                              </div>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart 
+                        data={projectData.weeklySpending || []} 
+                        margin={{ top: 20, right: 80, left: 20, bottom: 5 }}
+                        onClick={(data) => handleDrillDown(data, 'line')}
+                      >
+                        <CartesianGrid strokeDasharray="2 2" stroke="#e5e7eb" strokeOpacity={0.4} />
+                        
+                        <XAxis 
+                          dataKey="week" 
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fontSize: 11, fill: '#1e3a8a', fontWeight: 500 }}
+                        />
+                        
+                        <YAxis 
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fontSize: 10, fill: '#1e3a8a', fontWeight: 400 }}
+                          tickFormatter={(value) => `£${(value / 1000).toFixed(0)}k`}
+                        />
+                        
+                        <RechartsTooltip 
+                          contentStyle={{
+                            backgroundColor: 'white',
+                            border: '1px solid #1e3a8a',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(30, 58, 138, 0.15)'
+                          }}
+                          formatter={(value: any, name: string, props: any) => {
+                            const payload = props.payload
+                            if (payload?.daily && name === 'actual') {
+                              const dailyTotal = payload.daily.reduce((sum: number, day: number) => sum + day, 0)
+                              return [
+                                <div key="daily-breakdown" className="space-y-1">
+                                  <div className="font-medium text-blue-900">£{Number(value).toLocaleString()}</div>
+                                  <div className="text-xs text-gray-600">Daily: £{(dailyTotal / 7).toLocaleString()}/day avg</div>
+                                  <div className="text-xs cursor-pointer text-blue-600 hover:text-blue-800" onClick={() => handleDrillDown(payload, 'line')}>Click for details →</div>
+                                </div>,
+                                'Actual Spend'
+                              ]
+                            }
+                            const displayName = name === 'actual' ? 'Actual Spend' : 
+                                              name === 'projected' ? 'Projected Spend' : 'Budget Allocation'
+                            return [`£${Number(value).toLocaleString()}`, displayName]
+                          }}
+                        />
+                        
+                        {/* Budget allocation (red horizontal line) */}
+                        <ReferenceLine y={45000} stroke="#dc2626" strokeWidth={2} strokeDasharray="4 4"
+                          label={{ value: "Budget: £45k", position: "right", style: { fill: '#dc2626', fontWeight: 600 } }} />
+                        
+                        {/* Lines */}
+                        <Line type="monotone" dataKey="actual" stroke="#1e40af" strokeWidth={3} name="actual" 
+                              dot={{ fill: '#1e40af', strokeWidth: 2, r: 4 }} activeDot={{ r: 6, stroke: '#1e40af', strokeWidth: 2, fill: 'white' }} />
+                        <Line type="monotone" dataKey="projected" stroke="#1e40af" strokeWidth={2} strokeDasharray="8 4" name="projected"
+                              dot={false} activeDot={{ r: 5, stroke: '#1e40af', strokeWidth: 2, fill: 'white' }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
                 </CardContent>
               </Card>
+
+              {/* Top Right: Cost Key Drivers */}
+              <Card className="col-span-1">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">Cost Key Drivers</CardTitle>
+                  <div className="flex items-center space-x-1">
+                    <Button size="sm" variant="outline" onClick={exportToPDF}>
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="sm" variant="outline">
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onClick={exportToPDF}>Export to PDF</DropdownMenuItem>
+                        <DropdownMenuItem onClick={exportToExcel}>Export to Excel</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {projectData.keyDrivers?.slice(0, 5).map((driver, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium text-blue-900">{driver.name}</span>
+                            {driver.status === 'under' && (
+                              <div className="w-3 h-3 bg-green-500 bg-opacity-30 rounded-full flex items-center justify-center">
+                                <TrendingDown className="w-2 h-2 text-green-700" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className={`text-sm font-medium ${driver.variance < 0 ? 'text-green-600' : driver.variance > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                              £{Math.abs(driver.variance).toLocaleString()}
+                            </span>
+                            <span className={`text-xs ${driver.variance < 0 ? 'text-green-600' : driver.variance > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                              {driver.variance < 0 ? 'Under' : driver.variance > 0 ? 'Over' : 'On'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="relative">
+                          <Progress
+                            value={Math.abs(driver.actual / driver.budget) * 100}
+                            className={`h-2 ${driver.status === 'under' ? '[&>div]:bg-green-500 opacity-70' : '[&>div]:bg-blue-600'}`}
+                          />
+                          <div className="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>£{driver.actual.toLocaleString()} actual</span>
+                            <span>£{driver.budget.toLocaleString()} budget</span>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto"
+                          onClick={() => handleDrillDown(driver, 'bar')}
+                        >
+                          View details <ChevronRight className="w-3 h-3 ml-1" />
+                        </Button>
+                      </div>
+                    )) || <p className="text-gray-500">No key drivers available</p>}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Bottom Left: Budget Risk Alerts */}
+              <Card className="col-span-1">
+                <CardHeader>
+                  <CardTitle className="text-lg">Budget Risk Alerts</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {filteredAlerts.map((alert) => (
+                      <Alert key={alert.id} className={`border-l-4 ${
+                        alert.level === 'red' ? 'border-red-500 bg-red-50' :
+                        alert.level === 'amber' ? 'border-amber-500 bg-amber-50' :
+                        'border-green-500 bg-green-50'
+                      }`}>
+                        <AlertTriangle className={`h-4 w-4 ${
+                          alert.level === 'red' ? 'text-red-500' :
+                          alert.level === 'amber' ? 'text-amber-500' :
+                          'text-green-500'
+                        }`} />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className={`text-sm font-medium ${
+                              alert.level === 'red' ? 'text-red-800' :
+                              alert.level === 'amber' ? 'text-amber-800' :
+                              'text-green-800'
+                            }`}>
+                              {alert.title}
+                            </h4>
+                            <div className="flex items-center space-x-2">
+                              <Badge className={`text-xs ${
+                                alert.level === 'red' ? 'bg-red-100 text-red-800 border-red-300' :
+                                alert.level === 'amber' ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                                'bg-green-100 text-green-800 border-green-300'
+                              }`}>
+                                {alert.confidence}% confidence
+                              </Badge>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => dismissAlert(alert.id)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                          <AlertDescription className={`text-xs mt-1 ${
+                            alert.level === 'red' ? 'text-red-700' :
+                            alert.level === 'amber' ? 'text-amber-700' :
+                            'text-green-700'
+                          }`}>
+                            {alert.message}
+                          </AlertDescription>
+                          <div className={`text-xs font-medium mt-2 ${
+                            alert.level === 'red' ? 'text-red-800' :
+                            alert.level === 'amber' ? 'text-amber-800' :
+                            'text-green-800'
+                          }`}>
+                            Impact: {alert.impact}
+                          </div>
+                        </div>
+                      </Alert>
+                    ))}
+                    {filteredAlerts.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        <CheckCircle className="h-12 w-12 mx-auto mb-2 text-green-500" />
+                        <p className="text-sm">No active risk alerts</p>
+                      </div>
+                    )}
+                    {dismissedAlerts.length > 0 && (
+                      <div className="mt-4 pt-4 border-t">
+                        <h5 className="text-xs font-medium text-gray-600 mb-2">Resolved Alerts ({dismissedAlerts.length})</h5>
+                        <p className="text-xs text-gray-500">Audit trail maintained for compliance</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Bottom Right: Cost Categories Bar Chart */}
+              <Card className="col-span-1">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">Cost Categories</CardTitle>
+                  <div className="flex items-center space-x-1">
+                    <Button size="sm" variant="outline" onClick={exportToPDF}>
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="sm" variant="outline">
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onClick={exportToPDF}>Export to PDF</DropdownMenuItem>
+                        <DropdownMenuItem onClick={exportToExcel}>Export to Excel</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={Object.entries(projectData.costBreakdown || {}).map(([category, data]) => ({
+                          category: category.charAt(0).toUpperCase() + category.slice(1),
+                          Budget: data.budget,
+                          Projected: data.projected, 
+                          Actual: data.actual
+                        }))}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        onClick={(data) => handleDrillDown(data, 'bar')}
+                      >
+                        <CartesianGrid strokeDasharray="2 2" stroke="#e5e7eb" strokeOpacity={0.4} />
+                        <XAxis dataKey="category" 
+                               tick={{ fontSize: 10, fill: '#1e3a8a', fontWeight: 500 }}
+                               angle={-45}
+                               textAnchor="end"
+                               height={80} />
+                        <YAxis tick={{ fontSize: 10, fill: '#1e3a8a', fontWeight: 400 }}
+                               tickFormatter={(value) => `£${(value / 1000).toFixed(0)}k`} />
+                        <RechartsTooltip 
+                          contentStyle={{
+                            backgroundColor: 'white',
+                            border: '1px solid #1e3a8a',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(30, 58, 138, 0.15)'
+                          }}
+                          formatter={(value: any, name: string) => [`£${Number(value).toLocaleString()}`, name]}
+                          labelStyle={{ color: '#1e3a8a', fontWeight: 600 }}
+                        />
+                        <Legend />
+                        <Bar dataKey="Budget" fill="#dc2626" name="Budget" />
+                        <Bar dataKey="Projected" fill="#1e40af" name="Projected" />
+                        <Bar dataKey="Actual" fill="#059669" name="Actual" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Auto-refresh indicator */}
+            <div className="flex items-center justify-between pt-4 text-xs text-gray-500">
+              <div className="flex items-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${autoRefresh ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                <span>Auto-refresh: {autoRefresh ? 'On' : 'Off'}</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setAutoRefresh(!autoRefresh)}
+                  className="text-xs h-auto p-1"
+                >
+                  {autoRefresh ? 'Disable' : 'Enable'}
+                </Button>
+              </div>
+              <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>
+            </div>
+
+            {/* Additional Forecasting Tools - Stats Cards (Moved to bottom) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Weekly Burn Rate</span>
+                  </div>
+                  <div className="text-2xl font-bold text-primary-900 mt-2">
+                    £{projectData.budgetForecast?.currentBurnRate?.toLocaleString() || 'N/A'}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Per week average</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Days to Budget Limit</span>
+                  </div>
+                  <div className={`text-2xl font-bold mt-2 ${
+                    (projectData.budgetForecast?.daysUntilOverrun || 0) < 30 
+                      ? "text-red-600" 
+                      : (projectData.budgetForecast?.daysUntilOverrun || 0) < 60 
+                        ? "text-amber-600" 
+                        : "text-green-600"
+                  }`}>
+                    {projectData.budgetForecast?.daysUntilOverrun === null || (projectData.budgetForecast?.daysUntilOverrun || 0) < 0
+                      ? "Under Budget" 
+                      : `${projectData.budgetForecast.daysUntilOverrun} days`}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {projectData.budgetForecast?.confidence}% confidence
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Projected Total</span>
+                  </div>
+                  <div className={`text-2xl font-bold mt-2 ${
+                    (projectData.budgetForecast?.projectedTotal || 0) > projectData.budget
+                      ? "text-red-600"
+                      : (projectData.budgetForecast?.projectedTotal || 0) > projectData.budget * 0.9
+                        ? "text-amber-600"
+                        : "text-green-600"
+                  }`}>
+                    £{projectData.budgetForecast?.projectedTotal?.toLocaleString() || 'N/A'}
+                  </div>
+                  <p className={`text-xs mt-1 ${
+                    (projectData.budgetForecast?.overrunAmount || 0) > 0
+                      ? "text-red-500"
+                      : "text-green-500"
+                  }`}>
+                    {(projectData.budgetForecast?.overrunAmount || 0) > 0
+                      ? `£${projectData.budgetForecast!.overrunAmount.toLocaleString()} over`
+                      : (projectData.budgetForecast?.overrunAmount || 0) < 0
+                        ? `£${Math.abs(projectData.budgetForecast!.overrunAmount).toLocaleString()} under`
+                        : "On budget"}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Pending Approvals (Moved to bottom) */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Pending Approvals</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <AlertTriangle className="h-5 w-5 text-amber-600" />
+                      <div>
+                        <p className="font-medium text-sm">Budget Increase Request</p>
+                        <p className="text-xs text-gray-600">Additional £5,000 for premium materials</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="text-amber-700 border-amber-300">Pending</Badge>
+                      <Button size="sm" variant="outline">Review</Button>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="font-medium text-sm">Material Specification Change</p>
+                        <p className="text-xs text-gray-600">Welsh slate tiles approved</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="text-green-700 border-green-300">Approved</Badge>
+                      <span className="text-xs text-gray-500">2 days ago</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Clock className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <p className="font-medium text-sm">Schedule Extension Request</p>
+                        <p className="text-xs text-gray-600">Weather delay compensation - 3 days</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="text-blue-700 border-blue-300">Under Review</Badge>
+                      <Button size="sm" variant="outline">Details</Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Professional Excel Spreadsheet Component */}
+            <Card className="mt-6">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center justify-between">
+                  <span>Project Workbook</span>
+                  <div className="flex items-center space-x-2">
+                    <Button size="sm" variant="outline" className="h-8 px-2 text-xs">
+                      Save
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-8 px-2 text-xs">
+                      Export
+                    </Button>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {/* Excel-like Interface */}
+                <div className="border rounded-lg bg-white overflow-hidden">
+                  {/* Toolbar */}
+                  <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b text-xs">
+                    <div className="flex items-center space-x-4">
+                      <span className="font-medium text-gray-700">Sheet: Budget Analysis</span>
+                      <div className="flex items-center space-x-1">
+                        <Button size="sm" variant="ghost" className="h-6 px-2 text-xs">Bold</Button>
+                        <Button size="sm" variant="ghost" className="h-6 px-2 text-xs">Italic</Button>
+                        <span className="text-gray-400">|</span>
+                        <Button size="sm" variant="ghost" className="h-6 px-2 text-xs">Sort</Button>
+                        <Button size="sm" variant="ghost" className="h-6 px-2 text-xs">Filter</Button>
+                      </div>
+                    </div>
+                    <div className="text-gray-500">Cell: A1</div>
+                  </div>
+                  
+                  {/* Spreadsheet Grid */}
+                  <div className="overflow-auto" style={{ height: '400px' }}>
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="w-12 h-8 border border-gray-300 text-xs font-medium text-gray-600 bg-gray-200"></th>
+                          {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map((col) => (
+                            <th key={col} className="min-w-24 h-8 border border-gray-300 text-xs font-medium text-gray-600 bg-gray-200 px-2">
+                              {col}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="w-12 h-8 border border-gray-300 text-xs text-center text-gray-600 bg-gray-100 font-medium">1</td>
+                          <td className="border border-gray-300 px-2 py-1 text-sm font-medium bg-blue-50">Category</td>
+                          <td className="border border-gray-300 px-2 py-1 text-sm font-medium bg-blue-50">Budget</td>
+                          <td className="border border-gray-300 px-2 py-1 text-sm font-medium bg-blue-50">Actual</td>
+                          <td className="border border-gray-300 px-2 py-1 text-sm font-medium bg-blue-50">Variance</td>
+                          <td className="border border-gray-300 px-2 py-1 text-sm font-medium bg-blue-50">% Complete</td>
+                          <td className="border border-gray-300 px-2 py-1 text-sm font-medium bg-blue-50">Forecast</td>
+                          <td className="border border-gray-300 px-2 py-1 text-sm font-medium bg-blue-50">Notes</td>
+                          <td className="border border-gray-300"></td>
+                        </tr>
+                        {[
+                          ['Materials', '£18,000', '£16,200', '-£1,800', '85%', '£19,500', 'Premium upgrade approved'],
+                          ['Labor', '£15,000', '£14,300', '-£700', '82%', '£16,800', 'Overtime for weather delays'],
+                          ['Equipment', '£8,000', '£7,500', '-£500', '90%', '£8,200', 'Installation on schedule'],
+                          ['Permits', '£2,000', '£2,000', '£0', '100%', '£2,000', 'All permits obtained'],
+                          ['Overhead', '£1,500', '£1,200', '-£300', '75%', '£1,800', 'Site management costs'],
+                          ['Contingency', '£500', '£0', '-£500', '0%', '£300', 'Reserved for final phase'],
+                          ['TOTAL', '£45,000', '£41,200', '-£3,800', '84%', '£48,600', 'Project tracking well']
+                        ].map((row, rowIndex) => (
+                          <tr key={rowIndex} className={rowIndex === 6 ? 'bg-blue-50 font-medium' : 'hover:bg-gray-50'}>
+                            <td className="w-12 h-8 border border-gray-300 text-xs text-center text-gray-600 bg-gray-100 font-medium">{rowIndex + 2}</td>
+                            {row.map((cell, cellIndex) => (
+                              <td 
+                                key={cellIndex} 
+                                className={`border border-gray-300 px-2 py-1 text-sm ${
+                                  cellIndex === 0 ? 'font-medium' : 
+                                  cellIndex === 3 ? (cell.startsWith('-') ? 'text-green-600' : cell === '£0' ? 'text-gray-600' : 'text-red-600') :
+                                  cellIndex === 4 ? 'text-center' :
+                                  cellIndex === 5 ? (cell.startsWith('£') ? 'font-medium text-blue-600' : 'text-gray-600') :
+                                  cellIndex === 6 ? 'text-xs text-gray-600' : ''
+                                }`}
+                              >
+                                {cell}
+                              </td>
+                            ))}
+                            <td className="border border-gray-300"></td>
+                          </tr>
+                        ))}
+                        {/* Empty rows */}
+                        {Array.from({ length: 8 }, (_, i) => (
+                          <tr key={`empty-${i}`}>
+                            <td className="w-12 h-8 border border-gray-300 text-xs text-center text-gray-600 bg-gray-100 font-medium">{i + 9}</td>
+                            {Array.from({ length: 8 }, (_, j) => (
+                              <td key={j} className="border border-gray-300 h-8"></td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {/* Formula Bar */}
+                  <div className="border-t bg-white px-3 py-2">
+                    <div className="flex items-center space-x-2 text-sm">
+                      <span className="text-gray-600 font-medium w-8">fx</span>
+                      <Input 
+                        className="flex-1 h-8 text-sm border-gray-300" 
+                        placeholder="Enter formula or value..."
+                        defaultValue="=SUM(B2:B7)"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
             </div>
           </TabsContent>
 
@@ -1848,6 +2155,63 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         projectName={projectData.name}
         technicalSpecifications={technicalSpecifications}
       />
+
+      {/* Drill-down Modal */}
+      <Dialog open={showDrillDownModal} onOpenChange={setShowDrillDownModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedDrillDown?.type === 'line' ? 'Daily Spending Breakdown' : 
+               selectedDrillDown?.name ? `${selectedDrillDown.name} Details` : 'Cost Details'}
+            </DialogTitle>
+            <DialogDescription>
+              Detailed breakdown and analysis
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedDrillDown?.type === 'line' && selectedDrillDown?.daily && (
+              <div>
+                <h4 className="font-medium mb-3">Daily Spending Pattern</h4>
+                <div className="grid grid-cols-7 gap-2 text-center text-sm">
+                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
+                    <div key={day} className="space-y-2">
+                      <div className="font-medium text-gray-600">{day}</div>
+                      <div className="bg-blue-100 rounded p-2">
+                        £{selectedDrillDown.daily[index]?.toLocaleString() || '0'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 text-sm text-gray-600">
+                  Total: £{selectedDrillDown.daily.reduce((sum: number, day: number) => sum + day, 0).toLocaleString()}
+                </div>
+              </div>
+            )}
+            {selectedDrillDown?.name && (
+              <div>
+                <h4 className="font-medium mb-3">Cost Driver Analysis</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Budgeted Amount:</span>
+                    <span>£{selectedDrillDown.budget?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Actual Spend:</span>
+                    <span>£{selectedDrillDown.actual?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between font-medium">
+                    <span>Variance:</span>
+                    <span className={selectedDrillDown.variance < 0 ? 'text-green-600' : 'text-red-600'}>
+                      £{Math.abs(selectedDrillDown.variance).toLocaleString()} 
+                      {selectedDrillDown.variance < 0 ? ' Under' : ' Over'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   )
 }
