@@ -62,6 +62,13 @@ import {
   TrendingDown,
   Filter,
   ChevronRight,
+  ChevronLeft,
+  BarChart3,
+  PieChart,
+  FileSpreadsheet,
+  StickyNote,
+  Target,
+  Activity,
 } from "lucide-react"
 import Link from "next/link"
 import { DocumentCreationModal } from "@/components/document-creation-modal"
@@ -126,14 +133,31 @@ const projects = [
       { id: 7, name: "Install lighting fixtures", category: "electrical", status: "pending", assignee: "John Smith", dueDate: "2024-03-20", description: "Install LED lighting system with dimmer controls", priority: "Medium", estimatedHours: 5, actualHours: 0, notes: "Fixtures selected and approved by client. Installation scheduled." },
     ],
     weeklySpending: [
-      { week: "Week 1", date: "Jan 15", actual: 8000, projected: 8500, budget: 9000, daily: [1200, 1100, 1400, 1300, 1500, 1000, 500] },
-      { week: "Week 2", date: "Jan 22", actual: 20000, projected: 19500, budget: 18000, daily: [2000, 1800, 2200, 1900, 2100, 1600, 400] },
-      { week: "Week 3", date: "Jan 29", actual: 29500, projected: 28800, budget: 27000, daily: [1600, 1400, 1800, 1500, 1700, 1200, 300] },
-      { week: "Week 4", date: "Feb 5", actual: 38000, projected: 37200, budget: 36000, daily: [1400, 1200, 1600, 1300, 1500, 1000, 500] },
-      { week: "Week 5", date: "Feb 12", actual: 38000, projected: 44500, budget: 45000, daily: [0, 0, 0, 0, 0, 0, 0] },
-      { week: "Week 6", date: "Feb 19", actual: 38000, projected: 51000, budget: 54000, daily: [0, 0, 0, 0, 0, 0, 0] },
-      { week: "Week 7", date: "Feb 26", actual: 38000, projected: 57500, budget: 63000, daily: [0, 0, 0, 0, 0, 0, 0] },
-      { week: "Week 8", date: "Mar 5", actual: 38000, projected: 64000, budget: 72000, daily: [0, 0, 0, 0, 0, 0, 0] },
+      // Historical cumulative data with more realistic fluctuations and plateaus
+      { week: "Week 1", date: "Oct 2", actual: 2800, projected: 2800, projectedUpper: null, projectedLower: null, budget: 4200, daily: [400, 350, 500, 450, 400, 350, 350] },
+      { week: "Week 2", date: "Oct 9", actual: 5600, projected: 5600, projectedUpper: null, projectedLower: null, budget: 7800, daily: [400, 350, 500, 450, 400, 400, 300] },
+      { week: "Week 3", date: "Oct 16", actual: 5600, projected: 5600, projectedUpper: null, projectedLower: null, budget: 10500, daily: [0, 0, 0, 0, 0, 0, 0] }, // Plateau - material delay
+      { week: "Week 4", date: "Oct 23", actual: 9800, projected: 9800, projectedUpper: null, projectedLower: null, budget: 13800, daily: [600, 550, 700, 650, 600, 550, 350] },
+      { week: "Week 5", date: "Oct 30", actual: 14200, projected: 14200, projectedUpper: null, projectedLower: null, budget: 16200, daily: [650, 600, 700, 650, 600, 500, 400] },
+      { week: "Week 6", date: "Nov 6", actual: 14200, projected: 14200, projectedUpper: null, projectedLower: null, budget: 19500, daily: [0, 0, 0, 0, 0, 0, 0] }, // Plateau - permit issues
+      { week: "Week 7", date: "Nov 13", actual: 18900, projected: 18900, projectedUpper: null, projectedLower: null, budget: 22100, daily: [700, 650, 800, 750, 700, 600, 500] },
+      { week: "Week 8", date: "Nov 20", actual: 24500, projected: 24500, projectedUpper: null, projectedLower: null, budget: 24800, daily: [800, 750, 900, 850, 800, 700, 500] },
+      { week: "Week 9", date: "Nov 27", actual: 27200, projected: 27200, projectedUpper: null, projectedLower: null, budget: 27200, daily: [400, 350, 500, 450, 400, 350, 350] }, // Holiday week slowdown
+      { week: "Week 10", date: "Dec 4", actual: 32800, projected: 32800, projectedUpper: null, projectedLower: null, budget: 30100, daily: [800, 750, 900, 850, 800, 700, 500] },
+      { week: "Week 11", date: "Dec 11", actual: 32800, projected: 32800, projectedUpper: null, projectedLower: null, budget: 32500, daily: [0, 0, 0, 0, 0, 0, 0] }, // Plateau - weather delays
+      { week: "Week 12", date: "Dec 18", actual: 35100, projected: 35100, projectedUpper: 35100, projectedLower: 35100, budget: 35200, daily: [350, 300, 400, 350, 300, 250, 250] }, // Current week - confidence starts at actual
+      // Future projections diverge gradually over time from actual spend
+      { week: "Week 13", date: "Dec 25", actual: null, projected: 36800, projectedUpper: 37200, projectedLower: 36400, budget: 37800, daily: [0, 0, 0, 0, 0, 0, 0] },
+      { week: "Week 14", date: "Jan 1", actual: null, projected: 38200, projectedUpper: 39000, projectedLower: 37400, budget: 39500, daily: [0, 0, 0, 0, 0, 0, 0] },
+      { week: "Week 15", date: "Jan 8", actual: null, projected: 39400, projectedUpper: 40600, projectedLower: 38200, budget: 41200, daily: [0, 0, 0, 0, 0, 0, 0] },
+      { week: "Week 16", date: "Jan 15", actual: null, projected: 40500, projectedUpper: 42100, projectedLower: 38900, budget: 42800, daily: [0, 0, 0, 0, 0, 0, 0] },
+      { week: "Week 17", date: "Jan 22", actual: null, projected: 41200, projectedUpper: 43200, projectedLower: 39200, budget: 43600, daily: [0, 0, 0, 0, 0, 0, 0] },
+      { week: "Week 18", date: "Jan 29", actual: null, projected: 41800, projectedUpper: 44100, projectedLower: 39500, budget: 43800, daily: [0, 0, 0, 0, 0, 0, 0] },
+      { week: "Week 19", date: "Feb 5", actual: null, projected: 42200, projectedUpper: 44800, projectedLower: 39600, budget: 44200, daily: [0, 0, 0, 0, 0, 0, 0] },
+      { week: "Week 20", date: "Feb 12", actual: null, projected: 42500, projectedUpper: 45300, projectedLower: 39700, budget: 44500, daily: [0, 0, 0, 0, 0, 0, 0] },
+      { week: "Week 21", date: "Feb 19", actual: null, projected: 42700, projectedUpper: 45600, projectedLower: 39800, budget: 44700, daily: [0, 0, 0, 0, 0, 0, 0] },
+      { week: "Week 22", date: "Feb 26", actual: null, projected: 42800, projectedUpper: 45800, projectedLower: 39800, budget: 44900, daily: [0, 0, 0, 0, 0, 0, 0] },
+      { week: "Week 23", date: "Mar 5", actual: null, projected: 42800, projectedUpper: 45800, projectedLower: 39800, budget: 45000, daily: [0, 0, 0, 0, 0, 0, 0] },
     ],
     costBreakdown: {
       materials: { budget: 18000, projected: 19500, actual: 16200 },
@@ -155,7 +179,7 @@ const projects = [
       { id: 2, type: "predictive", level: "green", confidence: 89, title: "Under Budget Projection", message: "Current spending trend indicates 8% under budget completion", impact: "£3,600 potential savings", dismissed: false }
     ],
     dismissedAlerts: [],
-    timePeriod: "8week",
+    timePeriod: "30days",
     currentWeekPosition: 4.3,
     budgetForecast: {
       projectedTotal: 42800,
@@ -355,7 +379,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [showProjectEditModal, setShowProjectEditModal] = useState(false)
   const [showAssistantModal, setShowAssistantModal] = useState(false)
   const [showTechnicalModal, setShowTechnicalModal] = useState(false)
-  const [timePeriod, setTimePeriod] = useState("8week")
+  const [timePeriod, setTimePeriod] = useState("30days")
   const [autoRefresh, setAutoRefresh] = useState(true)
   const [selectedDrillDown, setSelectedDrillDown] = useState<any>(null)
   const [showDrillDownModal, setShowDrillDownModal] = useState(false)
@@ -379,14 +403,173 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     // In a real app, this would trigger data refetch
   }
 
+  const getFilteredSpendingData = () => {
+    const fullData = projectData.weeklySpending || []
+    const currentDate = new Date()
+    const currentWeekIndex = 11 // We're currently at Week 12 (index 11) - moved to middle for demo
+    
+    // Process the data to separate actual vs projected based on current date
+    const processedData = fullData.map((week, index) => {
+      const budgetAllocation = week.budget || 0 // Budget allocation line data
+      
+      // Actual spending only shows for weeks up to the current week
+      const actual = index <= currentWeekIndex ? week.actual : null
+      
+      // Projected spending only shows from current week onwards (and only in lifetime view)
+      const projected = (index >= currentWeekIndex && timePeriod === 'lifetime') ? week.projected : null
+      const projectedUpper = (index >= currentWeekIndex && timePeriod === 'lifetime') ? week.projectedUpper : null
+      const projectedLower = (index >= currentWeekIndex && timePeriod === 'lifetime') ? week.projectedLower : null
+      
+      return {
+        ...week,
+        actual,
+        projected,
+        projectedUpper,
+        projectedLower,
+        budgetAllocation, // Budget allocation line (planned spending from project start)
+        budgetCeiling: 45000 // Total project budget ceiling
+      }
+    })
+    
+    switch (timePeriod) {
+      case '30days':
+        // Show last 4-5 weeks (approximately 30 days) - ending at current week
+        return processedData.slice(Math.max(0, currentWeekIndex - 4), currentWeekIndex + 1)
+      
+      case '90days':
+        // Show last 12-13 weeks (approximately 90 days) - ending at current week
+        return processedData.slice(Math.max(0, currentWeekIndex - 12), currentWeekIndex + 1)
+      
+      case 'lifetime':
+        // Show all project data
+        return processedData
+      
+      default:
+        return processedData.slice(Math.max(0, currentWeekIndex - 4), currentWeekIndex + 1)
+    }
+  }
+
   const handleRefresh = () => {
     setLastRefresh(new Date())
     // In a real app, this would trigger data refetch
   }
 
   const handleDrillDown = (data: any, type: 'line' | 'bar') => {
-    setSelectedDrillDown({ ...data, type })
+    // Handle spending trends chart clicks specifically
+    if (data && data.activePayload && data.activePayload[0]) {
+      const weekData = data.activePayload[0].payload
+      const clickedMetric = data.activePayload[0].dataKey || 'actual'
+      setSelectedDrillDown({ 
+        ...weekData, 
+        type, 
+        weekIndex: data.activeLabel,
+        clickedMetric: clickedMetric
+      })
+    } else {
+      setSelectedDrillDown({ ...data, type })
+    }
     setShowDrillDownModal(true)
+  }
+
+  // Generate detailed spending breakdown for the selected week
+  const getSpendingBreakdown = (weekData: any) => {
+    if (!weekData) return []
+    
+    const weekNumber = parseInt(weekData.week?.replace('Week ', '') || '1')
+    const baseAmounts = {
+      materials: Math.floor((weekData.actual || 25000) * 0.45),
+      labor: Math.floor((weekData.actual || 25000) * 0.35), 
+      equipment: Math.floor((weekData.actual || 25000) * 0.15),
+      overhead: Math.floor((weekData.actual || 25000) * 0.05)
+    }
+    
+    return [
+      { category: 'Materials', amount: baseAmounts.materials, budget: Math.floor(baseAmounts.materials * 1.1), variance: baseAmounts.materials - Math.floor(baseAmounts.materials * 1.1) },
+      { category: 'Labor', amount: baseAmounts.labor, budget: Math.floor(baseAmounts.labor * 0.95), variance: baseAmounts.labor - Math.floor(baseAmounts.labor * 0.95) },
+      { category: 'Equipment', amount: baseAmounts.equipment, budget: Math.floor(baseAmounts.equipment * 1.05), variance: baseAmounts.equipment - Math.floor(baseAmounts.equipment * 1.05) },
+      { category: 'Overhead', amount: baseAmounts.overhead, budget: Math.floor(baseAmounts.overhead * 0.9), variance: baseAmounts.overhead - Math.floor(baseAmounts.overhead * 0.9) }
+    ]
+  }
+
+  // Generate top cost drivers for the selected week
+  const getCostDrivers = (weekData: any) => {
+    if (!weekData) return []
+    
+    const weekNumber = parseInt(weekData.week?.replace('Week ', '') || '1')
+    const drivers = [
+      { name: 'Material Price Increase', impact: 1200, type: 'overrun', description: 'Steel prices up 8% from forecast' },
+      { name: 'Efficient Labor Usage', impact: -800, type: 'savings', description: 'Team ahead of schedule' },
+      { name: 'Equipment Rental', impact: 450, type: 'overrun', description: 'Extended crane rental needed' },
+      { name: 'Bulk Purchase Discount', impact: -300, type: 'savings', description: 'Volume discount achieved' }
+    ]
+    
+    return drivers.filter((_, i) => (weekNumber + i) % 3 === 0 || i < 2)
+  }
+
+  // Navigate between time periods
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    if (!selectedDrillDown?.week) return
+    
+    const filteredData = getFilteredSpendingData()
+    const weekIndex = filteredData.findIndex(d => d.week === selectedDrillDown.week)
+    
+    if (direction === 'prev' && weekIndex > 0) {
+      const newWeek = filteredData[weekIndex - 1]
+      setSelectedDrillDown({ 
+        ...newWeek, 
+        type: selectedDrillDown.type, 
+        weekIndex: newWeek.week,
+        clickedMetric: selectedDrillDown.clickedMetric || 'actual'
+      })
+    } else if (direction === 'next' && weekIndex < filteredData.length - 1) {
+      const newWeek = filteredData[weekIndex + 1]
+      setSelectedDrillDown({ 
+        ...newWeek, 
+        type: selectedDrillDown.type, 
+        weekIndex: newWeek.week,
+        clickedMetric: selectedDrillDown.clickedMetric || 'actual'
+      })
+    }
+  }
+
+  // Get previous week data for comparison
+  const getPreviousWeekData = (currentWeek: any) => {
+    if (!currentWeek?.week) return null
+    
+    const filteredData = getFilteredSpendingData()
+    const weekIndex = filteredData.findIndex(d => d.week === currentWeek.week)
+    
+    return weekIndex > 0 ? filteredData[weekIndex - 1] : null
+  }
+
+  // Calculate comprehensive metrics for the selected period
+  const getComprehensiveMetrics = (weekData: any) => {
+    if (!weekData) return null
+    
+    const totalBudget = 45000 // Project total budget
+    const weekNumber = parseInt(weekData.week?.replace('Week ', '') || '1')
+    const budgetRemaining = totalBudget - (weekData.actual || 0)
+    const prevWeek = getPreviousWeekData(weekData)
+    
+    return {
+      totalSpend: weekData.actual || 0,
+      budgetAllocation: weekData.budgetAllocation || 0,
+      projectedSpend: weekData.projected || 0,
+      budgetRemaining: budgetRemaining,
+      variance: {
+        amount: (weekData.actual || 0) - (weekData.budgetAllocation || 0),
+        percentage: weekData.budgetAllocation ? (((weekData.actual || 0) - weekData.budgetAllocation) / weekData.budgetAllocation) * 100 : 0
+      },
+      weekOverWeekChange: prevWeek ? {
+        amount: (weekData.actual || 0) - (prevWeek.actual || 0),
+        percentage: prevWeek.actual ? (((weekData.actual || 0) - prevWeek.actual) / prevWeek.actual) * 100 : 0
+      } : null,
+      budgetUtilization: (weekData.actual || 0) / totalBudget * 100,
+      confidenceInterval: {
+        upper: weekData.projectedUpper || 0,
+        lower: weekData.projectedLower || 0
+      }
+    }
   }
 
   const exportToPDF = () => {
@@ -1401,19 +1584,18 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               {/* 2x2 Dashboard Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Top Left: Comprehensive Line Graph */}
-              <Card className="col-span-1">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg">Henderson Golf Sim - Spending Analysis</CardTitle>
+              <Card className="col-span-1 h-[500px] flex flex-col">
+                <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
+                  <CardTitle className="text-lg">Spending Trends</CardTitle>
                   <div className="flex items-center space-x-2">
                     <Select value={timePeriod} onValueChange={handleTimePeriodChange}>
                       <SelectTrigger className="w-24">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="4week">4 Week</SelectItem>
-                        <SelectItem value="8week">8 Week</SelectItem>
-                        <SelectItem value="12week">12 Week</SelectItem>
-                        <SelectItem value="ytd">YTD</SelectItem>
+                        <SelectItem value="lifetime">Project Lifetime</SelectItem>
+                        <SelectItem value="30days">Last 30 Days</SelectItem>
+                        <SelectItem value="90days">Last 90 Days</SelectItem>
                       </SelectContent>
                     </Select>
                     <div className="flex items-center space-x-1">
@@ -1437,12 +1619,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1 min-h-0 overflow-auto">
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart 
-                        data={projectData.weeklySpending || []} 
-                        margin={{ top: 20, right: 80, left: 20, bottom: 5 }}
+                      <ComposedChart 
+                        data={getFilteredSpendingData()} 
+                        margin={{ top: 20, right: 120, left: 20, bottom: 5 }}
                         onClick={(data) => handleDrillDown(data, 'line')}
                       >
                         <CartesianGrid strokeDasharray="2 2" stroke="#e5e7eb" strokeOpacity={0.4} />
@@ -1452,6 +1634,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                           axisLine={false}
                           tickLine={false}
                           tick={{ fontSize: 11, fill: '#1e3a8a', fontWeight: 500 }}
+                          tickFormatter={(value) => value.replace('Week ', '')}
+                          label={{ value: 'Project Timeline (Weeks)', position: 'insideBottom', offset: -5, style: { textAnchor: 'middle', fill: '#1e3a8a', fontSize: 12, fontWeight: 600 } }}
                         />
                         
                         <YAxis 
@@ -1459,6 +1643,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                           tickLine={false}
                           tick={{ fontSize: 10, fill: '#1e3a8a', fontWeight: 400 }}
                           tickFormatter={(value) => `£${(value / 1000).toFixed(0)}k`}
+                          domain={[0, timePeriod === 'lifetime' ? 50000 : 40000]}
+                          label={{ value: 'Cumulative Cost (£)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#1e3a8a', fontSize: 12, fontWeight: 600 } }}
                         />
                         
                         <RechartsTooltip 
@@ -1468,44 +1654,95 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             borderRadius: '8px',
                             boxShadow: '0 4px 12px rgba(30, 58, 138, 0.15)'
                           }}
-                          formatter={(value: any, name: string, props: any) => {
-                            const payload = props.payload
-                            if (payload?.daily && name === 'actual') {
-                              const dailyTotal = payload.daily.reduce((sum: number, day: number) => sum + day, 0)
-                              return [
-                                <div key="daily-breakdown" className="space-y-1">
-                                  <div className="font-medium text-blue-900">£{Number(value).toLocaleString()}</div>
-                                  <div className="text-xs text-gray-600">Daily: £{(dailyTotal / 7).toLocaleString()}/day avg</div>
-                                  <div className="text-xs cursor-pointer text-blue-600 hover:text-blue-800" onClick={() => handleDrillDown(payload, 'line')}>Click for details →</div>
-                                </div>,
-                                'Actual Spend'
-                              ]
-                            }
-                            const displayName = name === 'actual' ? 'Actual Spend' : 
-                                              name === 'projected' ? 'Projected Spend' : 'Budget Allocation'
-                            return [`£${Number(value).toLocaleString()}`, displayName]
+                          content={({ active, payload, label }) => {
+                            if (!active || !payload || !payload.length) return null
+                            
+                            const data = payload[0].payload
+                            
+                            return (
+                              <div className="bg-white border border-blue-900 rounded-lg shadow-lg p-3">
+                                <p className="text-blue-900 font-semibold mb-2">{label}</p>
+                                
+                                {/* Show Actual Spend first if present */}
+                                {data.actual && (
+                                  <div className="mb-3">
+                                    <div className="font-medium text-blue-900 mb-1">Actual Spend</div>
+                                    <div className="space-y-1">
+                                      <div className="font-medium text-blue-900">£{Number(data.actual).toLocaleString()}</div>
+                                      {data.daily && (
+                                        <>
+                                          <div className="text-xs text-gray-600">Daily: £{(data.daily.reduce((sum: number, day: number) => sum + day, 0) / 7).toLocaleString()}/day avg</div>
+                                          <div className="text-xs cursor-pointer text-blue-600 hover:text-blue-800" onClick={() => handleDrillDown(data, 'line')}>Click for details →</div>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* Show Projected Spend if present */}
+                                {data.projected && (
+                                  <div className="mb-3">
+                                    <div className="font-medium text-blue-900 mb-1">Projected Spend</div>
+                                    <div className="space-y-0.5">
+                                      <div className="font-medium text-blue-900">£{Number(data.projected).toLocaleString()}</div>
+                                      {data.projectedUpper && data.projectedLower && (
+                                        <>
+                                          <div className="text-xs text-gray-600">Upper: £{Number(data.projectedUpper).toLocaleString()}</div>
+                                          <div className="text-xs text-gray-600">Lower: £{Number(data.projectedLower).toLocaleString()}</div>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* Show Budget Allocation last */}
+                                {data.budgetAllocation && (
+                                  <div>
+                                    <div className="font-medium text-red-600 mb-1">Budget Allocation</div>
+                                    <div className="font-medium text-red-600">£{Number(data.budgetAllocation).toLocaleString()}</div>
+                                  </div>
+                                )}
+                              </div>
+                            )
                           }}
                         />
                         
-                        {/* Budget allocation (red horizontal line) */}
+                        {/* Budget ceiling (red horizontal line) */}
                         <ReferenceLine y={45000} stroke="#dc2626" strokeWidth={2} strokeDasharray="4 4"
-                          label={{ value: "Budget: £45k", position: "right", style: { fill: '#dc2626', fontWeight: 600 } }} />
+                          label={{ value: "Budget", position: "right", style: { fill: '#dc2626', fontWeight: 600 } }} />
+                        
+                        {/* Vertical indicator at Week 12 to mark "today" - only visible on lifetime view */}
+                        {timePeriod === 'lifetime' && (
+                          <ReferenceLine x="Week 12" stroke="#9ca3af" strokeWidth={2} strokeDasharray="2 2"
+                            label={{ value: "Today", position: "top", offset: 10, style: { fill: '#6b7280', fontWeight: 500, fontSize: 11 } }} />
+                        )}
+                        
+                        {/* Shaded confidence interval for projections (only visible on lifetime view) */}
+                        {timePeriod === 'lifetime' && (
+                          <Area type="monotone" dataKey="projectedUpper" stroke="none" fill="#9ca3af" fillOpacity={0.15} connectNulls={false} />
+                        )}
+                        {timePeriod === 'lifetime' && (
+                          <Area type="monotone" dataKey="projectedLower" stroke="none" fill="white" fillOpacity={1} connectNulls={false} />
+                        )}
                         
                         {/* Lines */}
-                        <Line type="monotone" dataKey="actual" stroke="#1e40af" strokeWidth={3} name="actual" 
-                              dot={{ fill: '#1e40af', strokeWidth: 2, r: 4 }} activeDot={{ r: 6, stroke: '#1e40af', strokeWidth: 2, fill: 'white' }} />
-                        <Line type="monotone" dataKey="projected" stroke="#1e40af" strokeWidth={2} strokeDasharray="8 4" name="projected"
-                              dot={false} activeDot={{ r: 5, stroke: '#1e40af', strokeWidth: 2, fill: 'white' }} />
-                      </LineChart>
+                        <Line type="monotone" dataKey="actual" stroke="#000000" strokeWidth={3} name="actual" 
+                              dot={false} activeDot={{ r: 6, stroke: '#000000', strokeWidth: 2, fill: 'white' }}
+                              connectNulls={false} />
+                        <Line type="monotone" dataKey="projected" stroke="#000000" strokeWidth={2} strokeDasharray="8 4" name="projected"
+                              dot={false} activeDot={{ r: 5, stroke: '#000000', strokeWidth: 2, fill: 'white' }} connectNulls={false} />
+                        <Line type="monotone" dataKey="budgetAllocation" stroke="#dc2626" strokeWidth={2} name="budgetAllocation"
+                              dot={false} activeDot={{ r: 4, stroke: '#dc2626', strokeWidth: 1, fill: 'white' }} connectNulls={false} />
+                      </ComposedChart>
                     </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Top Right: Cost Key Drivers */}
-              <Card className="col-span-1">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg">Cost Key Drivers</CardTitle>
+              <Card className="col-span-1 h-[500px] flex flex-col">
+                <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
+                  <CardTitle className="text-lg">Key Cost Drivers</CardTitle>
                   <div className="flex items-center space-x-1">
                     <Button size="sm" variant="outline" onClick={exportToPDF}>
                       <Download className="h-4 w-4" />
@@ -1523,7 +1760,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     </DropdownMenu>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1 min-h-0 overflow-auto">
                   <div className="space-y-4">
                     {projectData.keyDrivers?.slice(0, 5).map((driver, index) => (
                       <div key={index} className="space-y-2">
@@ -1570,11 +1807,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </Card>
 
               {/* Bottom Left: Budget Risk Alerts */}
-              <Card className="col-span-1">
-                <CardHeader>
+              <Card className="col-span-1 h-[500px] flex flex-col">
+                <CardHeader className="flex-shrink-0">
                   <CardTitle className="text-lg">Budget Risk Alerts</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1 min-h-0 overflow-auto">
                   <div className="space-y-3">
                     {filteredAlerts.map((alert) => (
                       <Alert key={alert.id} className={`border-l-4 ${
@@ -1648,8 +1885,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </Card>
 
               {/* Bottom Right: Cost Categories Bar Chart */}
-              <Card className="col-span-1">
-                <CardHeader className="flex flex-row items-center justify-between">
+              <Card className="col-span-1 h-[500px] flex flex-col">
+                <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
                   <CardTitle className="text-lg">Cost Categories</CardTitle>
                   <div className="flex items-center space-x-1">
                     <Button size="sm" variant="outline" onClick={exportToPDF}>
@@ -1668,7 +1905,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     </DropdownMenu>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1 min-h-0 overflow-auto">
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
@@ -2156,60 +2393,424 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         technicalSpecifications={technicalSpecifications}
       />
 
-      {/* Drill-down Modal */}
+      {/* Redesigned Comprehensive Spending Analysis Modal */}
       <Dialog open={showDrillDownModal} onOpenChange={setShowDrillDownModal}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedDrillDown?.type === 'line' ? 'Daily Spending Breakdown' : 
-               selectedDrillDown?.name ? `${selectedDrillDown.name} Details` : 'Cost Details'}
-            </DialogTitle>
-            <DialogDescription>
-              Detailed breakdown and analysis
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            {selectedDrillDown?.type === 'line' && selectedDrillDown?.daily && (
-              <div>
-                <h4 className="font-medium mb-3">Daily Spending Pattern</h4>
-                <div className="grid grid-cols-7 gap-2 text-center text-sm">
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
-                    <div key={day} className="space-y-2">
-                      <div className="font-medium text-gray-600">{day}</div>
-                      <div className="bg-blue-100 rounded p-2">
-                        £{selectedDrillDown.daily[index]?.toLocaleString() || '0'}
+        <DialogContent className="!max-w-[98vw] !w-[98vw] max-h-[95vh] overflow-y-auto">
+          {(() => {
+            const metrics = getComprehensiveMetrics(selectedDrillDown)
+            const filteredData = getFilteredSpendingData()
+            const currentIndex = filteredData.findIndex(d => d.week === selectedDrillDown?.week)
+            const canGoPrev = currentIndex > 0
+            const canGoNext = currentIndex < filteredData.length - 1
+            
+            return (
+              <>
+                <DialogHeader className="sticky top-0 bg-white z-10 pb-6 border-b">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-6">
+                      <DialogTitle className="text-2xl font-bold text-gray-900">
+                        {selectedDrillDown?.week ? `${selectedDrillDown.week} - Spending Analysis` : 'Spending Analysis'}
+                      </DialogTitle>
+                      
+                      {/* Timeline Navigation */}
+                      <div className="flex items-center space-x-3 bg-gray-50 rounded-lg p-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => navigateWeek('prev')}
+                          disabled={!canGoPrev}
+                          className="h-9 w-9 p-0 hover:bg-white hover:shadow-sm transition-all"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm font-medium text-gray-700 min-w-[100px] text-center px-3 py-1 bg-white rounded border">
+                          {selectedDrillDown?.week || 'Select Period'}
+                        </span>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => navigateWeek('next')}
+                          disabled={!canGoNext}
+                          className="h-9 w-9 p-0 hover:bg-white hover:shadow-sm transition-all"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
                       </div>
+                      
+                      {/* Clicked Data Point Context */}
+                      {selectedDrillDown?.clickedMetric && (
+                        <div className="flex items-center space-x-2 bg-blue-50 rounded-lg px-3 py-2">
+                          <Target className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-medium text-blue-900">
+                            Clicked: {selectedDrillDown.clickedMetric === 'actual' ? 'Actual Spend' : 
+                                     selectedDrillDown.clickedMetric === 'projected' ? 'Projected Spend' : 
+                                     selectedDrillDown.clickedMetric === 'budgetAllocation' ? 'Budget Allocation' : 
+                                     selectedDrillDown.clickedMetric.charAt(0).toUpperCase() + selectedDrillDown.clickedMetric.slice(1)}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-                <div className="mt-4 text-sm text-gray-600">
-                  Total: £{selectedDrillDown.daily.reduce((sum: number, day: number) => sum + day, 0).toLocaleString()}
-                </div>
-              </div>
-            )}
-            {selectedDrillDown?.name && (
-              <div>
-                <h4 className="font-medium mb-3">Cost Driver Analysis</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Budgeted Amount:</span>
-                    <span>£{selectedDrillDown.budget?.toLocaleString()}</span>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowDrillDownModal(false)}
+                      className="h-10 w-10 p-0 hover:bg-gray-100 transition-colors"
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Actual Spend:</span>
-                    <span>£{selectedDrillDown.actual?.toLocaleString()}</span>
+                  <DialogDescription className="text-gray-600 mt-2">
+                    Comprehensive breakdown and analysis of spending patterns, cost drivers, and period-over-period trends
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid grid-cols-4 gap-8 pt-8">
+                  {/* Column 1: Summary Metrics (Enhanced) */}
+                  <div className="col-span-1 space-y-6">
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-lg font-semibold flex items-center">
+                          <Target className="h-5 w-5 mr-2 text-blue-600" />
+                          Key Metrics
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {metrics && (
+                          <>
+                            {/* Total Spend */}
+                            <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm font-medium text-blue-900">Total Spend</span>
+                                <span className="text-lg font-bold text-blue-900">£{metrics.totalSpend.toLocaleString()}</span>
+                              </div>
+                              <div className="text-xs text-blue-700">
+                                {metrics.budgetUtilization.toFixed(1)}% of total budget utilized
+                              </div>
+                            </div>
+                            
+                            {/* Budget Remaining */}
+                            <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200">
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm font-medium text-green-900">Budget Remaining</span>
+                                <span className="text-lg font-bold text-green-900">£{metrics.budgetRemaining.toLocaleString()}</span>
+                              </div>
+                              <div className="text-xs text-green-700">
+                                {(100 - metrics.budgetUtilization).toFixed(1)}% remaining of £45,000 total
+                              </div>
+                            </div>
+                            
+                            {/* Variance */}
+                            <div className={`p-4 rounded-lg border ${
+                              Math.abs(metrics.variance.percentage) < 5 ? 'bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200' :
+                              metrics.variance.amount < 0 ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-200' :
+                              'bg-gradient-to-r from-red-50 to-red-100 border-red-200'
+                            }`}>
+                              <div className="flex justify-between items-center mb-2">
+                                <span className={`text-sm font-medium ${
+                                  Math.abs(metrics.variance.percentage) < 5 ? 'text-amber-900' :
+                                  metrics.variance.amount < 0 ? 'text-green-900' : 'text-red-900'
+                                }`}>Variance vs Budget</span>
+                                <span className={`text-lg font-bold flex items-center ${
+                                  Math.abs(metrics.variance.percentage) < 5 ? 'text-amber-900' :
+                                  metrics.variance.amount < 0 ? 'text-green-900' : 'text-red-900'
+                                }`}>
+                                  {metrics.variance.amount < 0 ? <TrendingDown className="h-4 w-4 mr-1" /> : <TrendingUp className="h-4 w-4 mr-1" />}
+                                  {metrics.variance.amount < 0 ? '-' : '+'} £{Math.abs(metrics.variance.amount).toLocaleString()}
+                                </span>
+                              </div>
+                              <div className={`text-xs ${
+                                Math.abs(metrics.variance.percentage) < 5 ? 'text-amber-700' :
+                                metrics.variance.amount < 0 ? 'text-green-700' : 'text-red-700'
+                              }`}>
+                                {Math.abs(metrics.variance.percentage).toFixed(1)}% {metrics.variance.amount < 0 ? 'under' : 'over'} budget allocation
+                              </div>
+                            </div>
+                            
+                            {/* Week-over-Week Change */}
+                            {metrics.weekOverWeekChange && (
+                              <div className={`p-4 rounded-lg border ${
+                                Math.abs(metrics.weekOverWeekChange.percentage) < 10 ? 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200' :
+                                metrics.weekOverWeekChange.amount > 0 ? 'bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200' :
+                                'bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200'
+                              }`}>
+                                <div className="flex justify-between items-center mb-2">
+                                  <span className={`text-sm font-medium ${
+                                    Math.abs(metrics.weekOverWeekChange.percentage) < 10 ? 'text-gray-900' :
+                                    metrics.weekOverWeekChange.amount > 0 ? 'text-orange-900' : 'text-blue-900'
+                                  }`}>Week-over-Week</span>
+                                  <span className={`text-lg font-bold flex items-center ${
+                                    Math.abs(metrics.weekOverWeekChange.percentage) < 10 ? 'text-gray-900' :
+                                    metrics.weekOverWeekChange.amount > 0 ? 'text-orange-900' : 'text-blue-900'
+                                  }`}>
+                                    {metrics.weekOverWeekChange.amount > 0 ? <TrendingUp className="h-4 w-4 mr-1" /> : <TrendingDown className="h-4 w-4 mr-1" />}
+                                    {metrics.weekOverWeekChange.amount > 0 ? '+' : ''}{metrics.weekOverWeekChange.percentage.toFixed(1)}%
+                                  </span>
+                                </div>
+                                <div className={`text-xs ${
+                                  Math.abs(metrics.weekOverWeekChange.percentage) < 10 ? 'text-gray-700' :
+                                  metrics.weekOverWeekChange.amount > 0 ? 'text-orange-700' : 'text-blue-700'
+                                }`}>
+                                  {metrics.weekOverWeekChange.amount > 0 ? '+' : ''}£{metrics.weekOverWeekChange.amount.toLocaleString()} vs previous week
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Confidence Intervals */}
+                            {metrics.confidenceInterval.upper > 0 && (
+                              <div className="p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg border border-purple-200">
+                                <div className="text-sm font-medium text-purple-900 mb-2">Projection Confidence</div>
+                                <div className="space-y-2 text-sm">
+                                  <div className="flex justify-between">
+                                    <span className="text-purple-700">Upper Range:</span>
+                                    <span className="font-medium text-purple-900">£{metrics.confidenceInterval.upper.toLocaleString()}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-purple-700">Lower Range:</span>
+                                    <span className="font-medium text-purple-900">£{metrics.confidenceInterval.lower.toLocaleString()}</span>
+                                  </div>
+                                  <div className="text-xs text-purple-600 pt-1">
+                                    ±{(((metrics.confidenceInterval.upper - metrics.confidenceInterval.lower) / 2 / metrics.projectedSpend) * 100).toFixed(0)}% confidence range
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {/* Interactive Actions */}
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-lg font-semibold">Actions</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <Button size="sm" variant="outline" className="w-full justify-start hover:bg-blue-50 hover:border-blue-200 transition-colors">
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Details
+                        </Button>
+                        <Button size="sm" variant="outline" className="w-full justify-start hover:bg-green-50 hover:border-green-200 transition-colors">
+                          <FileSpreadsheet className="h-4 w-4 mr-2" />
+                          Export Data
+                        </Button>
+                        <Button size="sm" variant="outline" className="w-full justify-start hover:bg-orange-50 hover:border-orange-200 transition-colors">
+                          <Target className="h-4 w-4 mr-2" />
+                          Adjust Forecast
+                        </Button>
+                        <Button size="sm" variant="outline" className="w-full justify-start hover:bg-purple-50 hover:border-purple-200 transition-colors">
+                          <StickyNote className="h-4 w-4 mr-2" />
+                          Add Note
+                        </Button>
+                      </CardContent>
+                    </Card>
                   </div>
-                  <div className="flex justify-between font-medium">
-                    <span>Variance:</span>
-                    <span className={selectedDrillDown.variance < 0 ? 'text-green-600' : 'text-red-600'}>
-                      £{Math.abs(selectedDrillDown.variance).toLocaleString()} 
-                      {selectedDrillDown.variance < 0 ? ' Under' : ' Over'}
-                    </span>
+
+                  {/* Column 2: Enhanced Cost Breakdown */}
+                  <div className="col-span-1 space-y-6">
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-lg font-semibold flex items-center">
+                          <PieChart className="h-5 w-5 mr-2 text-green-600" />
+                          Cost Breakdown
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {getSpendingBreakdown(selectedDrillDown).map((item, index) => {
+                            const utilizationPercentage = (item.amount / item.budget) * 100
+                            const isOverBudget = utilizationPercentage > 100
+                            const isAtRisk = utilizationPercentage > 85 && utilizationPercentage <= 100
+                            
+                            return (
+                              <div key={index} className={`p-4 border rounded-lg hover:shadow-sm transition-all cursor-pointer ${
+                                isOverBudget ? 'border-red-200 hover:bg-red-25' :
+                                isAtRisk ? 'border-amber-200 hover:bg-amber-25' :
+                                'border-green-200 hover:bg-green-25'
+                              }`}>
+                                <div className="flex justify-between items-center mb-3">
+                                  <span className="font-semibold text-gray-900">{item.category}</span>
+                                  <div className="text-right">
+                                    <div className="text-lg font-bold text-gray-900">£{item.amount.toLocaleString()}</div>
+                                    <div className="text-xs text-gray-500">of £{item.budget.toLocaleString()}</div>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex justify-between items-center text-sm mb-3">
+                                  <span className="text-gray-600">Budget Utilization:</span>
+                                  <span className={`font-semibold ${
+                                    isOverBudget ? 'text-red-600' :
+                                    isAtRisk ? 'text-amber-600' :
+                                    'text-green-600'
+                                  }`}>
+                                    {utilizationPercentage.toFixed(1)}%
+                                  </span>
+                                </div>
+                                
+                                {/* Budget Utilization Progress Bar */}
+                                <div className="mb-3">
+                                  <div className="w-full bg-gray-200 rounded-full h-3">
+                                    <div 
+                                      className={`h-3 rounded-full transition-all ${
+                                        isOverBudget ? 'bg-red-500' :
+                                        isAtRisk ? 'bg-amber-500' :
+                                        'bg-green-500'
+                                      }`}
+                                      style={{ width: `${Math.min(100, utilizationPercentage)}%` }}
+                                    ></div>
+                                    {isOverBudget && (
+                                      <div 
+                                        className="h-3 bg-red-600 rounded-full -mt-3 opacity-75"
+                                        style={{ width: `${Math.min(100, (utilizationPercentage - 100))}%`, marginLeft: '100%' }}
+                                      ></div>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <div className="flex justify-between items-center text-sm">
+                                  <span className="text-gray-600">Variance:</span>
+                                  <span className={`font-semibold flex items-center ${
+                                    item.variance < 0 ? 'text-green-600' : 'text-red-600'
+                                  }`}>
+                                    {item.variance < 0 ? <TrendingDown className="h-3 w-3 mr-1" /> : <TrendingUp className="h-3 w-3 mr-1" />}
+                                    {item.variance < 0 ? '-' : '+'} £{Math.abs(item.variance).toLocaleString()}
+                                  </span>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Column 3: Enhanced Cost Drivers */}
+                  <div className="col-span-1 space-y-6">
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-lg font-semibold flex items-center">
+                          <Activity className="h-5 w-5 mr-2 text-orange-600" />
+                          Cost Drivers
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {getCostDrivers(selectedDrillDown).map((driver, index) => (
+                            <div key={index} className={`p-4 rounded-lg border hover:shadow-sm transition-all cursor-pointer ${
+                              driver.type === 'overrun' ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200 hover:from-red-100 hover:to-red-150' : 
+                              'bg-gradient-to-r from-green-50 to-green-100 border-green-200 hover:from-green-100 hover:to-green-150'
+                            }`}>
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="font-semibold text-sm">{driver.name}</span>
+                                <span className={`font-bold text-base flex items-center ${
+                                  driver.type === 'overrun' ? 'text-red-700' : 'text-green-700'
+                                }`}>
+                                  {driver.impact < 0 ? <TrendingDown className="h-4 w-4 mr-1" /> : <TrendingUp className="h-4 w-4 mr-1" />}
+                                  {driver.impact < 0 ? '-' : '+'} £{Math.abs(driver.impact).toLocaleString()}
+                                </span>
+                              </div>
+                              <p className={`text-xs leading-relaxed ${
+                                driver.type === 'overrun' ? 'text-red-600' : 'text-green-600'
+                              }`}>
+                                {driver.description}
+                              </p>
+                              <div className={`mt-2 text-xs font-medium ${
+                                driver.type === 'overrun' ? 'text-red-500' : 'text-green-500'
+                              }`}>
+                                Impact: {((Math.abs(driver.impact) / (selectedDrillDown?.actual || 25000)) * 100).toFixed(1)}% of total spend
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Column 4: Enhanced Trend Analysis */}
+                  <div className="col-span-1 space-y-6">
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-lg font-semibold flex items-center">
+                          <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
+                          Trend Analysis
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {/* Period-over-Period Comparison */}
+                          {metrics?.weekOverWeekChange && (
+                            <div className={`p-4 rounded-lg border ${
+                              Math.abs(metrics.weekOverWeekChange.percentage) < 5 ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200' :
+                              metrics.weekOverWeekChange.amount > 0 ? 'bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200' :
+                              'bg-gradient-to-r from-green-50 to-green-100 border-green-200'
+                            }`}>
+                              <div className="flex items-center justify-between mb-2">
+                                <span className={`text-sm font-semibold ${
+                                  Math.abs(metrics.weekOverWeekChange.percentage) < 5 ? 'text-blue-900' :
+                                  metrics.weekOverWeekChange.amount > 0 ? 'text-orange-900' : 'text-green-900'
+                                }`}>Period Comparison</span>
+                                <div className="flex items-center">
+                                  {metrics.weekOverWeekChange.amount > 0 ? <TrendingUp className="h-4 w-4 text-orange-600" /> : <TrendingDown className="h-4 w-4 text-green-600" />}
+                                  <span className={`ml-1 font-bold text-sm ${
+                                    Math.abs(metrics.weekOverWeekChange.percentage) < 5 ? 'text-blue-700' :
+                                    metrics.weekOverWeekChange.amount > 0 ? 'text-orange-700' : 'text-green-700'
+                                  }`}>
+                                    {metrics.weekOverWeekChange.amount > 0 ? '+' : ''}{metrics.weekOverWeekChange.percentage.toFixed(1)}%
+                                  </span>
+                                </div>
+                              </div>
+                              <p className={`text-xs leading-relaxed ${
+                                Math.abs(metrics.weekOverWeekChange.percentage) < 5 ? 'text-blue-700' :
+                                metrics.weekOverWeekChange.amount > 0 ? 'text-orange-700' : 'text-green-700'
+                              }`}>
+                                {metrics.weekOverWeekChange.amount > 0 ? 'Spending increased' : 'Spending decreased'} by £{Math.abs(metrics.weekOverWeekChange.amount).toLocaleString()} compared to previous week
+                              </p>
+                            </div>
+                          )}
+                          
+                          <div className="p-4 bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-lg border border-indigo-200">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-semibold text-indigo-900">Budget Performance</span>
+                              <Target className="h-4 w-4 text-indigo-600" />
+                            </div>
+                            <p className="text-xs text-indigo-700 leading-relaxed">
+                              {metrics?.variance.amount && metrics.variance.amount < 0 ? 
+                                `Tracking ${Math.abs(metrics.variance.percentage).toFixed(1)}% under budget allocation with strong cost control` :
+                                `Exceeding budget by ${metrics?.variance.percentage.toFixed(1) || '0'}% requiring attention to cost management`
+                              }
+                            </p>
+                          </div>
+                          
+                          <div className="p-4 bg-gradient-to-r from-teal-50 to-teal-100 rounded-lg border border-teal-200">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-semibold text-teal-900">Milestone Impact</span>
+                              <Activity className="h-4 w-4 text-teal-600" />
+                            </div>
+                            <p className="text-xs text-teal-700 leading-relaxed">
+                              Foundation work completion ahead of schedule enabling accelerated equipment mobilization and potential early delivery
+                            </p>
+                          </div>
+                          
+                          <div className="p-4 bg-gradient-to-r from-violet-50 to-violet-100 rounded-lg border border-violet-200">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-semibold text-violet-900">Forecast Accuracy</span>
+                              <BarChart3 className="h-4 w-4 text-violet-600" />
+                            </div>
+                            <p className="text-xs text-violet-700 leading-relaxed">
+                              {metrics?.confidenceInterval.upper && metrics.confidenceInterval.lower ? 
+                                `Projection confidence range of ±${(((metrics.confidenceInterval.upper - metrics.confidenceInterval.lower) / 2 / (selectedDrillDown?.projected || 1)) * 100).toFixed(0)}% indicates ${((metrics.confidenceInterval.upper - metrics.confidenceInterval.lower) / 2 / (selectedDrillDown?.projected || 1)) * 100 < 15 ? 'high' : 'moderate'} forecast reliability` :
+                                'Historical spending patterns suggest strong forecast reliability with minimal variance'
+                              }
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              </>
+            )
+          })()} 
         </DialogContent>
       </Dialog>
     </MainLayout>

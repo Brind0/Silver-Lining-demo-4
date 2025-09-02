@@ -6,7 +6,12 @@
       "Read(c:\\Users\\soggy\\OneDrive\\Pictures\\Screenshots/**)",
       "Bash(npm install:*)",
       "Bash(sed:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(git checkout:*)",
+      "Read(c:\\Users\\soggy\\OneDrive\\Pictures\\Screenshots/**)",
+      "Read(c:\\Users\\soggy\\OneDrive\\Pictures\\Screenshots/**)",
+      "Read(c:\\Users\\soggy\\OneDrive\\Pictures\\Screenshots/**)",
+      "Bash(claude doctor)"
     ],
     "deny": [],
     "ask": []
