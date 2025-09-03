@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { io } from "socket.io-client"
 import { MainLayout } from "@/components/main-layout"
 import { ReceiptUploadModal } from "@/components/receipt-upload-modal"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,106 +23,49 @@ import {
   Eye,
   FileText,
 } from "lucide-react"
+import { toast } from "sonner"
 
-const receipts = [
-  {
-    id: 1,
-    receiptNumber: "RCP-2024-001",
-    submittedBy: "John Smith",
-    submitterAvatar: "/placeholder.svg?height=32&width=32",
-    date: "2024-02-15",
-    vendor: "B&Q Hardware",
-    amount: 234.5,
-    category: "Materials",
-    project: "Kitchen Renovation - Maple Street",
-    status: "pending",
-    submittedDate: "2024-02-15T10:30:00Z",
-    description: "Screws, bolts, and hardware supplies",
-    hasImage: true,
-    ocrProcessed: true,
-    approver: null,
-  },
-  {
-    id: 2,
-    receiptNumber: "RCP-2024-002",
-    submittedBy: "Sarah Wilson",
-    submitterAvatar: "/placeholder.svg?height=32&width=32",
-    date: "2024-02-14",
-    vendor: "Wickes",
-    amount: 1250.0,
-    category: "Materials",
-    project: "Bathroom Refit - Oak Avenue",
-    status: "approved",
-    submittedDate: "2024-02-14T14:20:00Z",
-    description: "Bathroom tiles and adhesive",
-    hasImage: true,
-    ocrProcessed: true,
-    approver: "Emily Johnson",
-    approvedDate: "2024-02-14T16:45:00Z",
-  },
-  {
-    id: 3,
-    receiptNumber: "RCP-2024-003",
-    submittedBy: "Mike Johnson",
-    submitterAvatar: "/placeholder.svg?height=32&width=32",
-    date: "2024-02-13",
-    vendor: "Electrical Supplies Ltd",
-    amount: 89.99,
-    category: "Materials",
-    project: "Office Refurbishment",
-    status: "rejected",
-    submittedDate: "2024-02-13T09:15:00Z",
-    description: "Electrical cables and connectors",
-    hasImage: true,
-    ocrProcessed: true,
-    approver: "Emily Johnson",
-    rejectedDate: "2024-02-13T11:30:00Z",
-    rejectionReason: "Receipt unclear, please resubmit with better quality image",
-  },
-  {
-    id: 4,
-    receiptNumber: "RCP-2024-004",
-    submittedBy: "Emma Davis",
-    submitterAvatar: "/placeholder.svg?height=32&width=32",
-    date: "2024-02-12",
-    vendor: "Tool Station",
-    amount: 45.75,
-    category: "Equipment",
-    project: "Garden Landscaping",
-    status: "processing",
-    submittedDate: "2024-02-12T16:00:00Z",
-    description: "Hand tools and safety equipment",
-    hasImage: true,
-    ocrProcessed: false,
-  },
-  {
-    id: 5,
-    receiptNumber: "RCP-2024-005",
-    submittedBy: "Tom Brown",
-    submitterAvatar: "/placeholder.svg?height=32&width=32",
-    date: "2024-02-11",
-    vendor: "Screwfix",
-    amount: 156.3,
-    category: "Materials",
-    project: "Kitchen Renovation - Maple Street",
-    status: "approved",
-    submittedDate: "2024-02-11T13:45:00Z",
-    description: "Plumbing fittings and pipes",
-    hasImage: true,
-    ocrProcessed: true,
-    approver: "John Smith",
-    approvedDate: "2024-02-11T15:20:00Z",
-  },
-]
+interface Receipt {
+  id: string;
+  receiptNumber: string;
+  submittedBy: string;
+  submitterAvatar?: string;
+  date: string;
+  vendor: string;
+  amount: number;
+  category: string;
+  project: string;
+  status: 'pending' | 'approved' | 'rejected' | 'processing';
+  submittedDate: string;
+  description: string;
+  hasImage: boolean;
+  ocrProcessed: boolean;
+  approver?: string;
+  approvedDate?: string;
+  rejectedDate?: string;
+  rejectionReason?: string;
+}
 
-const receiptStats = {
-  total: receipts.length,
-  pending: receipts.filter((r) => r.status === "pending").length,
-  approved: receipts.filter((r) => r.status === "approved").length,
-  rejected: receipts.filter((r) => r.status === "rejected").length,
-  processing: receipts.filter((r) => r.status === "processing").length,
-  totalValue: receipts.reduce((sum, r) => sum + r.amount, 0),
-  pendingValue: receipts.filter((r) => r.status === "pending").reduce((sum, r) => sum + r.amount, 0),
+interface ReceiptStats {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  processing: number;
+  totalValue: number;
+  pendingValue: number;
+}
+
+function calculateStats(receipts: Receipt[]): ReceiptStats {
+  return {
+    total: receipts.length,
+    pending: receipts.filter((r) => r.status === "pending").length,
+    approved: receipts.filter((r) => r.status === "approved").length,
+    rejected: receipts.filter((r) => r.status === "rejected").length,
+    processing: receipts.filter((r) => r.status === "processing").length,
+    totalValue: receipts.reduce((sum, r) => sum + r.amount, 0),
+    pendingValue: receipts.filter((r) => r.status === "pending").reduce((sum, r) => sum + r.amount, 0),
+  };
 }
 
 function getStatusBadge(status: string) {
@@ -178,6 +122,104 @@ function getCategoryColor(category: string) {
 
 export default function ReceiptsPage() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
+  const [receipts, setReceipts] = useState<Receipt[]>([])
+  const [stats, setStats] = useState<ReceiptStats>({
+    total: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    processing: 0,
+    totalValue: 0,
+    pendingValue: 0,
+  })
+  const [isConnected, setIsConnected] = useState(false)
+  const [newReceiptIds, setNewReceiptIds] = useState<Set<string>>(new Set())
+
+  // Fetch initial receipts
+  useEffect(() => {
+    const fetchReceipts = async () => {
+      try {
+        const response = await fetch('/api/receipts?stats=true')
+        const data = await response.json()
+        setReceipts(data.receipts)
+        setStats(data.stats)
+      } catch (error) {
+        console.error('Failed to fetch receipts:', error)
+      }
+    }
+    
+    fetchReceipts()
+  }, [])
+
+  // WebSocket connection for real-time updates
+  useEffect(() => {
+    const socket = io('http://localhost:3001', {
+      transports: ['websocket', 'polling']
+    })
+
+    socket.on('connect', () => {
+      console.log('Connected to WebSocket server')
+      setIsConnected(true)
+    })
+
+    socket.on('disconnect', () => {
+      console.log('Disconnected from WebSocket server')
+      setIsConnected(false)
+    })
+
+    socket.on('new-receipt', (newReceipt: Receipt) => {
+      console.log('New receipt received:', newReceipt)
+      setReceipts(prev => {
+        const updated = [newReceipt, ...prev]
+        setStats(calculateStats(updated))
+        return updated
+      })
+      
+      // Show enhanced toast notification
+      toast.success(`📱 New receipt from ${newReceipt.submittedBy}`, {
+        description: `${newReceipt.vendor} - £${newReceipt.amount.toLocaleString()} | ${newReceipt.project}`,
+        duration: 5000,
+        action: {
+          label: "View",
+          onClick: () => window.location.reload()
+        }
+      })
+      
+      // Highlight new receipt temporarily
+      setNewReceiptIds(prev => new Set([...prev, newReceipt.id]))
+      setTimeout(() => {
+        setNewReceiptIds(prev => {
+          const updated = new Set(prev)
+          updated.delete(newReceipt.id)
+          return updated
+        })
+      }, 3000)
+    })
+
+    socket.on('receipt-processed', (updatedReceipt: Receipt) => {
+      console.log('Receipt processed:', updatedReceipt)
+      setReceipts(prev => {
+        const updated = prev.map(r => 
+          r.receiptNumber === updatedReceipt.receiptNumber ? updatedReceipt : r
+        )
+        setStats(calculateStats(updated))
+        return updated
+      })
+      
+      toast.success(`✅ Receipt processed: ${updatedReceipt.vendor}`, {
+        description: `£${updatedReceipt.amount.toLocaleString()} - Ready for approval | ${updatedReceipt.project}`,
+        duration: 5000,
+        action: {
+          label: "Approve",
+          onClick: () => console.log("Quick approve:", updatedReceipt.id)
+        }
+      })
+    })
+
+    return () => {
+      socket.disconnect()
+    }
+  }, [])
 
   const handleUploadSubmit = (data: any) => {
     console.log("Receipt uploaded:", data)
@@ -217,8 +259,8 @@ export default function ReceiptsPage() {
                 <Receipt className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Total Receipts</span>
               </div>
-              <div className="text-2xl font-bold mt-2">{receiptStats.total}</div>
-              <div className="text-xs text-muted-foreground">£{receiptStats.totalValue.toLocaleString()}</div>
+              <div className="text-2xl font-bold mt-2">{stats.total}</div>
+              <div className="text-xs text-muted-foreground">£{stats.totalValue.toLocaleString()}</div>
             </CardContent>
           </Card>
 
@@ -228,8 +270,8 @@ export default function ReceiptsPage() {
                 <Clock className="h-4 w-4 text-yellow-500" />
                 <span className="text-sm font-medium">Pending</span>
               </div>
-              <div className="text-2xl font-bold mt-2">{receiptStats.pending}</div>
-              <div className="text-xs text-muted-foreground">£{receiptStats.pendingValue.toLocaleString()}</div>
+              <div className="text-2xl font-bold mt-2">{stats.pending}</div>
+              <div className="text-xs text-muted-foreground">£{stats.pendingValue.toLocaleString()}</div>
             </CardContent>
           </Card>
 
@@ -239,7 +281,7 @@ export default function ReceiptsPage() {
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 <span className="text-sm font-medium">Approved</span>
               </div>
-              <div className="text-2xl font-bold mt-2">{receiptStats.approved}</div>
+              <div className="text-2xl font-bold mt-2">{stats.approved}</div>
             </CardContent>
           </Card>
 
@@ -249,7 +291,7 @@ export default function ReceiptsPage() {
                 <XCircle className="h-4 w-4 text-red-500" />
                 <span className="text-sm font-medium">Rejected</span>
               </div>
-              <div className="text-2xl font-bold mt-2">{receiptStats.rejected}</div>
+              <div className="text-2xl font-bold mt-2">{stats.rejected}</div>
             </CardContent>
           </Card>
 
@@ -259,7 +301,7 @@ export default function ReceiptsPage() {
                 <AlertTriangle className="h-4 w-4 text-blue-500" />
                 <span className="text-sm font-medium">Processing</span>
               </div>
-              <div className="text-2xl font-bold mt-2">{receiptStats.processing}</div>
+              <div className="text-2xl font-bold mt-2">{stats.processing}</div>
             </CardContent>
           </Card>
         </div>
@@ -287,8 +329,13 @@ export default function ReceiptsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {receipts.map((receipt) => (
-                  <TableRow key={receipt.id}>
+                {receipts.map((receipt) => {
+                  const isNew = newReceiptIds.has(receipt.id)
+                  return (
+                  <TableRow 
+                    key={receipt.id} 
+                    className={isNew ? "bg-green-50 dark:bg-green-950/20 transition-all duration-1000 animate-pulse" : "hover:bg-muted/50 transition-colors"}
+                  >
                     <TableCell className="font-medium">{receipt.receiptNumber}</TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
@@ -355,7 +402,8 @@ export default function ReceiptsPage() {
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ))}
+                )
+                })}
               </TableBody>
             </Table>
           </CardContent>

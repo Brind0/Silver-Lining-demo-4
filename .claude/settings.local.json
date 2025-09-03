@@ -11,7 +11,10 @@
       "Read(c:\\Users\\soggy\\OneDrive\\Pictures\\Screenshots/**)",
       "Read(c:\\Users\\soggy\\OneDrive\\Pictures\\Screenshots/**)",
       "Read(c:\\Users\\soggy\\OneDrive\\Pictures\\Screenshots/**)",
-      "Bash(claude doctor)"
+      "Bash(claude doctor)",
+      "Bash(lt:*)",
+      "Bash(curl:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []
