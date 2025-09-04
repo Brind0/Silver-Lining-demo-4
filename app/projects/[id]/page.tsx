@@ -161,7 +161,7 @@ const projects = [
     ],
     costBreakdown: {
       materials: { budget: 18000, projected: 19500, actual: 16200 },
-      labor: { budget: 15000, projected: 16800, actual: 14300 },
+      labour: { budget: 15000, projected: 16800, actual: 14300 },
       equipment: { budget: 8000, projected: 8200, actual: 7500 },
       permits: { budget: 2000, projected: 2100, actual: 0 },
       overhead: { budget: 1500, projected: 1600, actual: 0 },
@@ -169,7 +169,7 @@ const projects = [
     },
     keyDrivers: [
       { name: "Premium Equipment Upgrade", budget: 8000, actual: 7500, variance: -500, status: "under" },
-      { name: "Specialist Labor Premium", budget: 15000, actual: 14300, variance: -700, status: "under" },
+      { name: "Specialist Labour Premium", budget: 15000, actual: 14300, variance: -700, status: "under" },
       { name: "Custom Materials", budget: 18000, actual: 16200, variance: -1800, status: "under" },
       { name: "Extended Installation Time", budget: 0, actual: 0, variance: 0, status: "neutral" },
       { name: "Additional Safety Requirements", budget: 2000, actual: 0, variance: -2000, status: "under" }
@@ -216,7 +216,7 @@ const projects = [
     ],
     expenses: [
       { category: "Materials", budgeted: 80000, spent: 110000, status: "Over Budget" },
-      { category: "Labor", budgeted: 35000, spent: 45000, status: "Over Budget" },
+      { category: "Labour", budgeted: 35000, spent: 45000, status: "Over Budget" },
       { category: "Permits", budgeted: 5000, spent: 10000, status: "Over Budget" },
     ],
     recentExpenses: [
@@ -288,7 +288,7 @@ const projects = [
     ],
     expenses: [
       { category: "Materials", budgeted: 80000, spent: 110000, status: "Over Budget" },
-      { category: "Labor", budgeted: 35000, spent: 45000, status: "Over Budget" },
+      { category: "Labour", budgeted: 35000, spent: 45000, status: "Over Budget" },
       { category: "Permits", budgeted: 5000, spent: 10000, status: "Over Budget" },
     ],
     recentExpenses: [
@@ -383,6 +383,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [autoRefresh, setAutoRefresh] = useState(true)
   const [selectedDrillDown, setSelectedDrillDown] = useState<any>(null)
   const [showDrillDownModal, setShowDrillDownModal] = useState(false)
+  const [modalType, setModalType] = useState<'spending-trends' | 'cost-categories' | 'budget-alerts' | 'transactions'>('spending-trends')
+  const [selectedTimelineWeek, setSelectedTimelineWeek] = useState("Week 12")
   const [dismissedAlerts, setDismissedAlerts] = useState<number[]>([])
   const [lastRefresh, setLastRefresh] = useState(new Date())
 
@@ -410,10 +412,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     
     // Process the data to separate actual vs projected based on current date
     const processedData = fullData.map((week, index) => {
-      const budgetAllocation = week.budget || 0 // Budget allocation line data
+      const budgetAllocation = (week as any).budget || 0 // Budget allocation line data
       
       // Actual spending only shows for weeks up to the current week
-      const actual = index <= currentWeekIndex ? week.actual : null
+      const actual = index <= currentWeekIndex ? (week as any).actual : null
       
       // Projected spending only shows from current week onwards (and only in lifetime view)
       const projected = (index >= currentWeekIndex && timePeriod === 'lifetime') ? week.projected : null
@@ -454,20 +456,31 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     // In a real app, this would trigger data refetch
   }
 
-  const handleDrillDown = (data: any, type: 'line' | 'bar') => {
+  const handleDrillDown = (data: any, type: 'line' | 'bar', modalType: 'spending-trends' | 'cost-categories' | 'budget-alerts' | 'transactions' = 'spending-trends') => {
+    console.log('handleDrillDown called with data:', data, 'type:', type, 'modalType:', modalType)
+    
     // Handle spending trends chart clicks specifically
     if (data && data.activePayload && data.activePayload[0]) {
       const weekData = data.activePayload[0].payload
       const clickedMetric = data.activePayload[0].dataKey || 'actual'
+      console.log('Setting selectedDrillDown with weekData:', weekData, 'activeLabel:', data.activeLabel)
       setSelectedDrillDown({ 
         ...weekData, 
+        week: data.activeLabel, // Use activeLabel as the week property
         type, 
         weekIndex: data.activeLabel,
         clickedMetric: clickedMetric
       })
     } else {
-      setSelectedDrillDown({ ...data, type })
+      console.log('Setting selectedDrillDown with fallback data:', data)
+      // For fallback, ensure we have a week property
+      setSelectedDrillDown({ 
+        ...data, 
+        week: data.activeLabel || data.week,
+        type 
+      })
     }
+    setModalType(modalType)
     setShowDrillDownModal(true)
   }
 
@@ -478,14 +491,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     const weekNumber = parseInt(weekData.week?.replace('Week ', '') || '1')
     const baseAmounts = {
       materials: Math.floor((weekData.actual || 25000) * 0.45),
-      labor: Math.floor((weekData.actual || 25000) * 0.35), 
+      labour: Math.floor((weekData.actual || 25000) * 0.35), 
       equipment: Math.floor((weekData.actual || 25000) * 0.15),
       overhead: Math.floor((weekData.actual || 25000) * 0.05)
     }
     
     return [
       { category: 'Materials', amount: baseAmounts.materials, budget: Math.floor(baseAmounts.materials * 1.1), variance: baseAmounts.materials - Math.floor(baseAmounts.materials * 1.1) },
-      { category: 'Labor', amount: baseAmounts.labor, budget: Math.floor(baseAmounts.labor * 0.95), variance: baseAmounts.labor - Math.floor(baseAmounts.labor * 0.95) },
+      { category: 'Labour', amount: baseAmounts.labour, budget: Math.floor(baseAmounts.labour * 0.95), variance: baseAmounts.labour - Math.floor(baseAmounts.labour * 0.95) },
       { category: 'Equipment', amount: baseAmounts.equipment, budget: Math.floor(baseAmounts.equipment * 1.05), variance: baseAmounts.equipment - Math.floor(baseAmounts.equipment * 1.05) },
       { category: 'Overhead', amount: baseAmounts.overhead, budget: Math.floor(baseAmounts.overhead * 0.9), variance: baseAmounts.overhead - Math.floor(baseAmounts.overhead * 0.9) }
     ]
@@ -498,7 +511,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     const weekNumber = parseInt(weekData.week?.replace('Week ', '') || '1')
     const drivers = [
       { name: 'Material Price Increase', impact: 1200, type: 'overrun', description: 'Steel prices up 8% from forecast' },
-      { name: 'Efficient Labor Usage', impact: -800, type: 'savings', description: 'Team ahead of schedule' },
+      { name: 'Efficient Labour Usage', impact: -800, type: 'savings', description: 'Team ahead of schedule' },
       { name: 'Equipment Rental', impact: 450, type: 'overrun', description: 'Extended crane rental needed' },
       { name: 'Bulk Purchase Discount', impact: -300, type: 'savings', description: 'Volume discount achieved' }
     ]
@@ -508,13 +521,20 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   // Navigate between time periods
   const navigateWeek = (direction: 'prev' | 'next') => {
-    if (!selectedDrillDown?.week) return
+    console.log('navigateWeek called with:', direction, 'selectedDrillDown:', selectedDrillDown)
+    if (!selectedDrillDown?.week) {
+      console.log('No selectedDrillDown.week, returning early')
+      return
+    }
     
     const filteredData = getFilteredSpendingData()
+    console.log('filteredData:', filteredData)
     const weekIndex = filteredData.findIndex(d => d.week === selectedDrillDown.week)
+    console.log('current weekIndex:', weekIndex, 'for week:', selectedDrillDown.week)
     
     if (direction === 'prev' && weekIndex > 0) {
       const newWeek = filteredData[weekIndex - 1]
+      console.log('Navigating to previous week:', newWeek)
       setSelectedDrillDown({ 
         ...newWeek, 
         type: selectedDrillDown.type, 
@@ -523,12 +543,15 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       })
     } else if (direction === 'next' && weekIndex < filteredData.length - 1) {
       const newWeek = filteredData[weekIndex + 1]
+      console.log('Navigating to next week:', newWeek)
       setSelectedDrillDown({ 
         ...newWeek, 
         type: selectedDrillDown.type, 
         weekIndex: newWeek.week,
         clickedMetric: selectedDrillDown.clickedMetric || 'actual'
       })
+    } else {
+      console.log('Cannot navigate:', direction, 'weekIndex:', weekIndex, 'length:', filteredData.length)
     }
   }
 
@@ -1625,7 +1648,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       <ComposedChart 
                         data={getFilteredSpendingData()} 
                         margin={{ top: 20, right: 120, left: 20, bottom: 5 }}
-                        onClick={(data) => handleDrillDown(data, 'line')}
+                        onClick={(data) => handleDrillDown(data, 'line', 'spending-trends')}
                       >
                         <CartesianGrid strokeDasharray="2 2" stroke="#e5e7eb" strokeOpacity={0.4} />
                         
@@ -1672,7 +1695,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                       {data.daily && (
                                         <>
                                           <div className="text-xs text-gray-600">Daily: £{(data.daily.reduce((sum: number, day: number) => sum + day, 0) / 7).toLocaleString()}/day avg</div>
-                                          <div className="text-xs cursor-pointer text-blue-600 hover:text-blue-800" onClick={() => handleDrillDown(data, 'line')}>Click for details →</div>
+                                          <div className="text-xs cursor-pointer text-blue-600 hover:text-blue-800" onClick={() => handleDrillDown(data, 'line', 'spending-trends')}>Click for details →</div>
                                         </>
                                       )}
                                     </div>
@@ -1709,7 +1732,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         
                         {/* Budget ceiling (red horizontal line) */}
                         <ReferenceLine y={45000} stroke="#dc2626" strokeWidth={2} strokeDasharray="4 4"
-                          label={{ value: "Budget", position: "right", style: { fill: '#dc2626', fontWeight: 600 } }} />
+                          label={{ value: "Budget", position: "right", style: { fill: '#dc2626', fontWeight: 500, fontSize: 11 } }} />
                         
                         {/* Vertical indicator at Week 12 to mark "today" - only visible on lifetime view */}
                         {timePeriod === 'lifetime' && (
@@ -1736,13 +1759,42 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
+                  
+                  {/* Legend */}
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                    <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-0.5 bg-black"></div>
+                        <span className="text-gray-600">Actual Spend</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-0.5 relative">
+                          <div className="absolute inset-0 border-b-2 border-dashed border-black"></div>
+                        </div>
+                        <span className="text-gray-600">Projected Spend</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-0.5 bg-red-600"></div>
+                        <span className="text-gray-600">Budget Allocation</span>
+                      </div>
+                      {timePeriod === 'lifetime' && (
+                        <div className="flex items-center space-x-2">
+                          <div className="w-3 h-3 bg-gray-300 opacity-30"></div>
+                          <span className="text-gray-600">Confidence Range</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
-              {/* Top Right: Cost Key Drivers */}
+              {/* Top Right: Key Cost Drivers */}
               <Card className="col-span-1 h-[500px] flex flex-col">
                 <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
-                  <CardTitle className="text-lg">Key Cost Drivers</CardTitle>
+                  <CardTitle className="text-lg font-semibold flex items-center">
+                    <PieChart className="h-5 w-5 mr-2 text-green-600" />
+                    Key Cost Drivers
+                  </CardTitle>
                   <div className="flex items-center space-x-1">
                     <Button size="sm" variant="outline" onClick={exportToPDF}>
                       <Download className="h-4 w-4" />
@@ -1762,49 +1814,120 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 </CardHeader>
                 <CardContent className="flex-1 min-h-0 overflow-auto">
                   <div className="space-y-4">
-                    {projectData.keyDrivers?.slice(0, 5).map((driver, index) => (
-                      <div key={index} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium text-blue-900">{driver.name}</span>
-                            {driver.status === 'under' && (
-                              <div className="w-3 h-3 bg-green-500 bg-opacity-30 rounded-full flex items-center justify-center">
-                                <TrendingDown className="w-2 h-2 text-green-700" />
+                    {[
+                      { 
+                        driver: 'Material Price Increase', 
+                        description: 'Steel prices up 8% from forecast', 
+                        impact: 1200, 
+                        type: 'overrun',
+                        category: 'Materials',
+                        actionText: 'Contact Suppliers',
+                        actionDetails: 'SteelCorp Ltd: +44 1234 567890 | Alternative: MetalPro: +44 1234 567891'
+                      },
+                      { 
+                        driver: 'Equipment Rental Extension', 
+                        description: 'Extended crane rental needed', 
+                        impact: 450, 
+                        type: 'overrun',
+                        category: 'Equipment',
+                        actionText: 'Find Alternatives',
+                        actionDetails: 'CraneHire Plus: +44 1234 567892 | 15% cheaper rates available'
+                      },
+                      { 
+                        driver: 'Efficient Labour Usage', 
+                        description: 'Team ahead of schedule', 
+                        impact: -800, 
+                        type: 'saving',
+                        category: 'Labour',
+                        actionText: 'View Performance',
+                        actionDetails: 'Team efficiency up 12% | Consider bonus allocation'
+                      },
+                      { 
+                        driver: 'Weather Delays', 
+                        description: 'Additional waterproofing required', 
+                        impact: 650, 
+                        type: 'overrun',
+                        category: 'Materials',
+                        actionText: 'Adjust Timeline',
+                        actionDetails: 'Weather forecast shows clear 5 days ahead'
+                      },
+                      { 
+                        driver: 'Bulk Purchase Discount', 
+                        description: 'Volume discount on electrical components', 
+                        impact: -320, 
+                        type: 'saving',
+                        category: 'Materials',
+                        actionText: 'Expand Savings',
+                        actionDetails: 'ElectricPro offers 8% more discount on next order'
+                      },
+                      { 
+                        driver: 'Specialised Subcontractor', 
+                        description: 'Expert plumbing work required', 
+                        impact: 890, 
+                        type: 'overrun',
+                        category: 'Labour',
+                        actionText: 'Compare Quotes',
+                        actionDetails: 'PlumbPro: +44 1234 567893 | AquaExperts: +44 1234 567894'
+                      }
+                    ].map((driver, index) => {
+                      const isOverrun = driver.type === 'overrun'
+                      const impact = Math.abs(driver.impact)
+                      
+                      return (
+                        <div key={index} className={`p-4 border rounded-lg hover:shadow-sm transition-all cursor-pointer overflow-hidden ${
+                          isOverrun ? 'border-red-200 hover:bg-red-25' : 'border-green-200 hover:bg-green-25'
+                        }`}>
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-gray-900 truncate">{driver.driver}</div>
+                              <div className="text-sm text-gray-600 mt-1">{driver.description}</div>
+                            </div>
+                            <div className="text-right flex-shrink-0 ml-3">
+                              <div className={`text-lg font-bold ${
+                                isOverrun ? 'text-red-600' : 'text-green-600'
+                              }`}>
+                                {isOverrun ? '+' : '-'}£{impact.toLocaleString()}
                               </div>
-                            )}
+                              <div className="text-xs text-gray-500">{driver.category}</div>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <span className={`text-sm font-medium ${driver.variance < 0 ? 'text-green-600' : driver.variance > 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                              £{Math.abs(driver.variance).toLocaleString()}
-                            </span>
-                            <span className={`text-xs ${driver.variance < 0 ? 'text-green-600' : driver.variance > 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                              {driver.variance < 0 ? 'Under' : driver.variance > 0 ? 'Over' : 'On'}
-                            </span>
+                          
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              {isOverrun ? (
+                                <TrendingUp className="h-4 w-4 text-red-600" />
+                              ) : (
+                                <TrendingDown className="h-4 w-4 text-green-600" />
+                              )}
+                              <span className={`text-sm font-medium ${
+                                isOverrun ? 'text-red-600' : 'text-green-600'
+                              }`}>
+                                {isOverrun ? 'Cost Overrun' : 'Cost Saving'}
+                              </span>
+                            </div>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto"
+                                  onClick={() => handleDrillDown(driver, 'bar', 'cost-categories')}
+                                >
+                                  {driver.actionText} <ChevronRight className="w-3 h-3 ml-1" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-sm">
+                                <p className="text-sm">{driver.actionDetails}</p>
+                              </TooltipContent>
+                            </Tooltip>
                           </div>
                         </div>
-                        <div className="relative">
-                          <Progress
-                            value={Math.abs(driver.actual / driver.budget) * 100}
-                            className={`h-2 ${driver.status === 'under' ? '[&>div]:bg-green-500 opacity-70' : '[&>div]:bg-blue-600'}`}
-                          />
-                          <div className="flex justify-between text-xs text-gray-500 mt-1">
-                            <span>£{driver.actual.toLocaleString()} actual</span>
-                            <span>£{driver.budget.toLocaleString()} budget</span>
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto"
-                          onClick={() => handleDrillDown(driver, 'bar')}
-                        >
-                          View details <ChevronRight className="w-3 h-3 ml-1" />
-                        </Button>
-                      </div>
-                    )) || <p className="text-gray-500">No key drivers available</p>}
+                      )
+                    })}
                   </div>
                 </CardContent>
               </Card>
+
 
               {/* Bottom Left: Budget Risk Alerts */}
               <Card className="col-span-1 h-[500px] flex flex-col">
@@ -1812,74 +1935,135 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   <CardTitle className="text-lg">Budget Risk Alerts</CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1 min-h-0 overflow-auto">
-                  <div className="space-y-3">
-                    {filteredAlerts.map((alert) => (
-                      <Alert key={alert.id} className={`border-l-4 ${
+                  <div className="space-y-4">
+                    {/* Enhanced Risk Alerts with Actions */}
+                    {[
+                      {
+                        id: 1,
+                        level: 'amber',
+                        title: 'Material Cost Escalation',
+                        message: 'Steel prices trending upward, potential 5-8% impact on remaining materials budget',
+                        impact: '£2,400 potential increase',
+                        confidence: 85,
+                        recommendation: 'Secure pricing with alternative suppliers or accelerate material purchases',
+                        actions: [
+                          { label: 'Contact Alternative Suppliers', urgent: true },
+                          { label: 'Review Material Schedule', urgent: false }
+                        ],
+                        positiveContext: 'Current materials budget has 15% contingency buffer'
+                      },
+                      {
+                        id: 2,
+                        level: 'green',
+                        title: 'Labour Efficiency Gains',
+                        message: 'Team productivity 12% above forecast, creating schedule and cost benefits',
+                        impact: '£3,200 potential savings',
+                        confidence: 92,
+                        recommendation: 'Consider reallocating saved time to quality enhancements or early completion',
+                        actions: [
+                          { label: 'Review Team Performance', urgent: false },
+                          { label: 'Plan Early Completion', urgent: false }
+                        ],
+                        positiveContext: 'Strong team morale and no safety incidents reported'
+                      },
+                      {
+                        id: 3,
+                        level: 'red',
+                        title: 'Equipment Overrun Risk',
+                        message: 'Crane rental extended beyond planned duration due to weather delays',
+                        impact: '£1,800 additional cost',
+                        confidence: 78,
+                        recommendation: 'Negotiate extended rates or source alternative equipment for remaining work',
+                        actions: [
+                          { label: 'Negotiate Extended Rates', urgent: true },
+                          { label: 'Source Alternative Equipment', urgent: true }
+                        ],
+                        positiveContext: 'Weather forecast shows 7 consecutive clear days ahead'
+                      }
+                    ].map((alert) => (
+                      <div key={alert.id} className={`rounded-lg border-l-4 p-4 ${
                         alert.level === 'red' ? 'border-red-500 bg-red-50' :
                         alert.level === 'amber' ? 'border-amber-500 bg-amber-50' :
                         'border-green-500 bg-green-50'
                       }`}>
-                        <AlertTriangle className={`h-4 w-4 ${
-                          alert.level === 'red' ? 'text-red-500' :
-                          alert.level === 'amber' ? 'text-amber-500' :
-                          'text-green-500'
-                        }`} />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className={`text-sm font-medium ${
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center space-x-2">
+                            {alert.level === 'red' ? <AlertTriangle className="h-4 w-4 text-red-600" /> :
+                             alert.level === 'amber' ? <AlertTriangle className="h-4 w-4 text-amber-600" /> :
+                             <CheckCircle className="h-4 w-4 text-green-600" />}
+                            <h4 className={`font-semibold text-sm ${
                               alert.level === 'red' ? 'text-red-800' :
                               alert.level === 'amber' ? 'text-amber-800' :
                               'text-green-800'
                             }`}>
                               {alert.title}
                             </h4>
-                            <div className="flex items-center space-x-2">
-                              <Badge className={`text-xs ${
-                                alert.level === 'red' ? 'bg-red-100 text-red-800 border-red-300' :
-                                alert.level === 'amber' ? 'bg-amber-100 text-amber-800 border-amber-300' :
-                                'bg-green-100 text-green-800 border-green-300'
-                              }`}>
-                                {alert.confidence}% confidence
-                              </Badge>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => dismissAlert(alert.id)}
-                                className="h-6 w-6 p-0"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
                           </div>
-                          <AlertDescription className={`text-xs mt-1 ${
-                            alert.level === 'red' ? 'text-red-700' :
-                            alert.level === 'amber' ? 'text-amber-700' :
-                            'text-green-700'
+                          <Badge className={`text-xs ${
+                            alert.level === 'red' ? 'bg-red-100 text-red-800 border-red-300' :
+                            alert.level === 'amber' ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                            'bg-green-100 text-green-800 border-green-300'
                           }`}>
-                            {alert.message}
-                          </AlertDescription>
-                          <div className={`text-xs font-medium mt-2 ${
+                            {alert.confidence}% confidence
+                          </Badge>
+                        </div>
+                        
+                        <p className={`text-sm mb-2 ${
+                          alert.level === 'red' ? 'text-red-700' :
+                          alert.level === 'amber' ? 'text-amber-700' :
+                          'text-green-700'
+                        }`}>
+                          {alert.message}
+                        </p>
+                        
+                        <div className="flex justify-between items-center mb-3">
+                          <span className={`text-xs font-medium ${
                             alert.level === 'red' ? 'text-red-800' :
                             alert.level === 'amber' ? 'text-amber-800' :
                             'text-green-800'
                           }`}>
                             Impact: {alert.impact}
+                          </span>
+                          <span className="text-xs text-gray-600">
+                            {alert.positiveContext}
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-gray-700">
+                            Recommendation: {alert.recommendation}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {alert.actions.map((action, index) => (
+                              <Button
+                                key={index}
+                                size="sm"
+                                variant={action.urgent ? "default" : "outline"}
+                                className={`text-xs h-7 ${action.urgent ? 
+                                  (alert.level === 'red' ? 'bg-red-600 hover:bg-red-700' : 
+                                   alert.level === 'amber' ? 'bg-amber-600 hover:bg-amber-700' :
+                                   'bg-green-600 hover:bg-green-700') : ''
+                                }`}
+                              >
+                                {action.label}
+                              </Button>
+                            ))}
                           </div>
                         </div>
-                      </Alert>
+                      </div>
                     ))}
-                    {filteredAlerts.length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        <CheckCircle className="h-12 w-12 mx-auto mb-2 text-green-500" />
-                        <p className="text-sm">No active risk alerts</p>
+                    
+                    {/* Project Health Summary */}
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Target className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-medium text-blue-800">Project Health Score: 82%</span>
                       </div>
-                    )}
-                    {dismissedAlerts.length > 0 && (
-                      <div className="mt-4 pt-4 border-t">
-                        <h5 className="text-xs font-medium text-gray-600 mb-2">Resolved Alerts ({dismissedAlerts.length})</h5>
-                        <p className="text-xs text-gray-500">Audit trail maintained for compliance</p>
-                      </div>
-                    )}
+                      <p className="text-xs text-blue-700">
+                        Overall project remains on track with manageable risks and positive performance indicators.
+                        Labour efficiency gains are offsetting material cost pressures.
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1916,7 +2100,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                           Actual: data.actual
                         }))}
                         margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                        onClick={(data) => handleDrillDown(data, 'bar')}
+                        onClick={(data) => handleDrillDown(data, 'bar', 'cost-categories')}
                       >
                         <CartesianGrid strokeDasharray="2 2" stroke="#e5e7eb" strokeOpacity={0.4} />
                         <XAxis dataKey="category" 
@@ -1947,22 +2131,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </Card>
             </div>
             
-            {/* Auto-refresh indicator */}
-            <div className="flex items-center justify-between pt-4 text-xs text-gray-500">
-              <div className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full ${autoRefresh ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-                <span>Auto-refresh: {autoRefresh ? 'On' : 'Off'}</span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setAutoRefresh(!autoRefresh)}
-                  className="text-xs h-auto p-1"
-                >
-                  {autoRefresh ? 'Disable' : 'Enable'}
-                </Button>
-              </div>
-              <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>
-            </div>
 
             {/* Additional Forecasting Tools - Stats Cards (Moved to bottom) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
@@ -2031,6 +2199,96 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 </CardContent>
               </Card>
             </div>
+
+            {/* Project Transactions */}
+            <Card className="mt-6">
+              <CardHeader className="flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg font-semibold flex items-center">
+                    <FileText className="h-5 w-5 mr-2 text-blue-600" />
+                    Project Transactions
+                  </CardTitle>
+                  <div className="flex items-center space-x-3">
+                    {/* Week Filter */}
+                    <Select defaultValue="Week 12">
+                      <SelectTrigger className="w-32 h-9">
+                        <SelectValue placeholder="Week" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getFilteredSpendingData().map((weekData) => (
+                          <SelectItem key={weekData.week} value={weekData.week}>
+                            {weekData.week}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* Phase Filter */}
+                    <Select defaultValue="all">
+                      <SelectTrigger className="w-36 h-9">
+                        <SelectValue placeholder="Phase" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Phases</SelectItem>
+                        <SelectItem value="foundation">Foundation</SelectItem>
+                        <SelectItem value="framing">Framing</SelectItem>
+                        <SelectItem value="electrical">Electrical</SelectItem>
+                        <SelectItem value="finishing">Finishing</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Button size="sm" variant="outline" onClick={exportToPDF}>
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="overflow-auto" style={{ maxHeight: '350px' }}>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-6 gap-4 text-xs font-medium text-gray-600 pb-2 border-b">
+                    <div>Date</div>
+                    <div>Description</div>
+                    <div>Category</div>
+                    <div>Vendor</div>
+                    <div className="text-right">Amount</div>
+                    <div className="text-center">Status</div>
+                  </div>
+                  
+                  {/* Sample transaction data */}
+                  {[
+                    { date: '2024-03-15', description: 'Steel reinforcement bars', category: 'Materials', vendor: 'SteelCorp Ltd', amount: 2800, status: 'paid' },
+                    { date: '2024-03-14', description: 'Labour - Foundation work', category: 'Labour', vendor: 'BuildCrew Inc', amount: 1500, status: 'pending' },
+                    { date: '2024-03-13', description: 'Concrete mixer rental', category: 'Equipment', vendor: 'EquipRent', amount: 450, status: 'paid' },
+                    { date: '2024-03-12', description: 'Safety equipment', category: 'Materials', vendor: 'SafetyFirst', amount: 320, status: 'paid' },
+                    { date: '2024-03-11', description: 'Electrical components', category: 'Materials', vendor: 'ElectricPro', amount: 890, status: 'pending' },
+                    { date: '2024-03-10', description: 'Labour - Site preparation', category: 'Labour', vendor: 'BuildCrew Inc', amount: 1200, status: 'paid' },
+                  ].map((transaction, index) => (
+                    <div key={index} className="grid grid-cols-6 gap-4 text-sm py-2 hover:bg-gray-50 rounded transition-colors">
+                      <div className="text-gray-900">{new Date(transaction.date).toLocaleDateString()}</div>
+                      <div className="text-gray-900 truncate">{transaction.description}</div>
+                      <div>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          transaction.category === 'Materials' ? 'bg-blue-100 text-blue-800' :
+                          transaction.category === 'Labour' ? 'bg-green-100 text-green-800' :
+                          'bg-purple-100 text-purple-800'
+                        }`}>
+                          {transaction.category}
+                        </span>
+                      </div>
+                      <div className="text-gray-700 truncate">{transaction.vendor}</div>
+                      <div className="text-right font-medium">£{transaction.amount.toLocaleString()}</div>
+                      <div className="text-center">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          transaction.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {transaction.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Pending Approvals (Moved to bottom) */}
             <Card className="mt-6">
@@ -2144,7 +2402,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         </tr>
                         {[
                           ['Materials', '£18,000', '£16,200', '-£1,800', '85%', '£19,500', 'Premium upgrade approved'],
-                          ['Labor', '£15,000', '£14,300', '-£700', '82%', '£16,800', 'Overtime for weather delays'],
+                          ['Labour', '£15,000', '£14,300', '-£700', '82%', '£16,800', 'Overtime for weather delays'],
                           ['Equipment', '£8,000', '£7,500', '-£500', '90%', '£8,200', 'Installation on schedule'],
                           ['Permits', '£2,000', '£2,000', '£0', '100%', '£2,000', 'All permits obtained'],
                           ['Overhead', '£1,500', '£1,200', '-£300', '75%', '£1,800', 'Site management costs'],
@@ -2197,6 +2455,23 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 </div>
               </CardContent>
             </Card>
+
+            {/* Auto-refresh indicator */}
+            <div className="flex items-center justify-between pt-6 text-xs text-gray-500 mt-8 border-t border-gray-200">
+              <div className="flex items-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${autoRefresh ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                <span>Auto-refresh: {autoRefresh ? 'On' : 'Off'}</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setAutoRefresh(!autoRefresh)}
+                  className="text-xs h-auto p-1"
+                >
+                  {autoRefresh ? 'Disable' : 'Enable'}
+                </Button>
+              </div>
+              <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>
+            </div>
             </div>
           </TabsContent>
 
@@ -2393,60 +2668,153 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         technicalSpecifications={technicalSpecifications}
       />
 
-      {/* Redesigned Comprehensive Spending Analysis Modal */}
+      {/* Unified Modal System */}
       <Dialog open={showDrillDownModal} onOpenChange={setShowDrillDownModal}>
-        <DialogContent className="!max-w-[98vw] !w-[98vw] max-h-[95vh] overflow-y-auto">
+        <DialogContent className="!max-w-[70vw] !w-[70vw] max-h-[90vh] flex flex-col" showCloseButton={false}>
           {(() => {
+            console.log('Modal rendering with selectedDrillDown:', selectedDrillDown, 'modalType:', modalType)
             const metrics = getComprehensiveMetrics(selectedDrillDown)
             const filteredData = getFilteredSpendingData()
             const currentIndex = filteredData.findIndex(d => d.week === selectedDrillDown?.week)
             const canGoPrev = currentIndex > 0
             const canGoNext = currentIndex < filteredData.length - 1
             
+            // Modal titles and descriptions based on type
+            const modalConfig = {
+              'spending-trends': {
+                title: selectedDrillDown?.week ? `${selectedDrillDown.week} - Spending Trends` : 'Spending Trends',
+                description: 'Time-period analysis with milestone context and spending patterns'
+              },
+              'cost-categories': {
+                title: `Cost Categories - ${selectedTimelineWeek}`,
+                description: 'Weekly breakdown of materials, labour, and equipment costs'
+              },
+              'budget-alerts': {
+                title: 'Budget Risk Analysis',
+                description: 'Risk details, mitigation actions, and confidence intervals'
+              },
+              'transactions': {
+                title: selectedDrillDown?.week ? `${selectedDrillDown.week} - Transactions` : 'Transaction Details',
+                description: 'Detailed transaction history and cost driver breakdowns'
+              }
+            }
+            
+            const config = modalConfig[modalType]
+            
             return (
               <>
-                <DialogHeader className="sticky top-0 bg-white z-10 pb-6 border-b">
+                {/* Unified Modal Header - Fixed */}
+                <DialogHeader className="pb-4 border-b flex-shrink-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-6">
                       <DialogTitle className="text-2xl font-bold text-gray-900">
-                        {selectedDrillDown?.week ? `${selectedDrillDown.week} - Spending Analysis` : 'Spending Analysis'}
+                        {config.title}
                       </DialogTitle>
                       
-                      {/* Timeline Navigation */}
-                      <div className="flex items-center space-x-3 bg-gray-50 rounded-lg p-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => navigateWeek('prev')}
-                          disabled={!canGoPrev}
-                          className="h-9 w-9 p-0 hover:bg-white hover:shadow-sm transition-all"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <span className="text-sm font-medium text-gray-700 min-w-[100px] text-center px-3 py-1 bg-white rounded border">
-                          {selectedDrillDown?.week || 'Select Period'}
-                        </span>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => navigateWeek('next')}
-                          disabled={!canGoNext}
-                          className="h-9 w-9 p-0 hover:bg-white hover:shadow-sm transition-all"
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      {/* Timeline Navigation - shown for spending-trends and transactions */}
+                      {(modalType === 'spending-trends' || modalType === 'transactions') && (
+                        <div className="flex items-center space-x-3 bg-gray-50 rounded-lg p-2 relative z-10">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => navigateWeek('prev')}
+                            disabled={!canGoPrev}
+                            className="h-9 w-9 p-0 hover:bg-white hover:shadow-sm transition-all"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <Select value={selectedDrillDown?.week || ''} onValueChange={(value) => {
+                            const allData = projectData.weeklySpending || []
+                            const rawWeekData = allData.find(d => d.week === value)
+                            if (rawWeekData) {
+                              // Process the data to match the expected format
+                              const currentWeekIndex = 11
+                              const weekIndex = allData.findIndex(d => d.week === value)
+                              const processedWeekData = {
+                                ...rawWeekData,
+                                actual: weekIndex <= currentWeekIndex ? rawWeekData.actual : null,
+                                projected: weekIndex >= currentWeekIndex ? rawWeekData.projected : null,
+                                projectedUpper: weekIndex >= currentWeekIndex ? rawWeekData.projectedUpper : null,
+                                projectedLower: weekIndex >= currentWeekIndex ? rawWeekData.projectedLower : null,
+                                budgetAllocation: rawWeekData.budget || 0
+                              }
+                              setSelectedDrillDown({
+                                ...processedWeekData,
+                                week: value,
+                                type: selectedDrillDown?.type || 'line',
+                                clickedMetric: selectedDrillDown?.clickedMetric || 'actual'
+                              })
+                            }
+                          }}>
+                            <SelectTrigger className="min-w-[100px] h-9 text-sm">
+                              <SelectValue placeholder="Select Period" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {(projectData.weeklySpending || []).map((weekData) => (
+                                <SelectItem key={weekData.week} value={weekData.week}>
+                                  {weekData.week}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => navigateWeek('next')}
+                            disabled={!canGoNext}
+                            className="h-9 w-9 p-0 hover:bg-white hover:shadow-sm transition-all"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                       
-                      {/* Clicked Data Point Context */}
-                      {selectedDrillDown?.clickedMetric && (
-                        <div className="flex items-center space-x-2 bg-blue-50 rounded-lg px-3 py-2">
-                          <Target className="h-4 w-4 text-blue-600" />
-                          <span className="text-sm font-medium text-blue-900">
-                            Clicked: {selectedDrillDown.clickedMetric === 'actual' ? 'Actual Spend' : 
-                                     selectedDrillDown.clickedMetric === 'projected' ? 'Projected Spend' : 
-                                     selectedDrillDown.clickedMetric === 'budgetAllocation' ? 'Budget Allocation' : 
-                                     selectedDrillDown.clickedMetric.charAt(0).toUpperCase() + selectedDrillDown.clickedMetric.slice(1)}
-                          </span>
+                      {/* Timeline Slider - shown for cost-categories */}
+                      {modalType === 'cost-categories' && (
+                        <div className="flex items-center space-x-3 bg-gray-50 rounded-lg p-3 relative z-10">
+                          <span className="text-sm font-medium text-gray-700">Timeline:</span>
+                          <div className="flex items-center space-x-3 min-w-[300px]">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={() => {
+                                const filteredData = getFilteredSpendingData()
+                                const currentIndex = filteredData.findIndex(d => d.week === selectedTimelineWeek)
+                                if (currentIndex > 0) {
+                                  setSelectedTimelineWeek(filteredData[currentIndex - 1].week)
+                                }
+                              }}
+                              className="h-8 w-8 p-0"
+                            >
+                              <ChevronLeft className="h-3 w-3" />
+                            </Button>
+                            <Select value={selectedTimelineWeek} onValueChange={setSelectedTimelineWeek}>
+                              <SelectTrigger className="min-w-[120px] h-8 text-sm">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {getFilteredSpendingData().map((weekData) => (
+                                  <SelectItem key={weekData.week} value={weekData.week}>
+                                    {weekData.week}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={() => {
+                                const filteredData = getFilteredSpendingData()
+                                const currentIndex = filteredData.findIndex(d => d.week === selectedTimelineWeek)
+                                if (currentIndex < filteredData.length - 1) {
+                                  setSelectedTimelineWeek(filteredData[currentIndex + 1].week)
+                                }
+                              }}
+                              className="h-8 w-8 p-0"
+                            >
+                              <ChevronRight className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -2461,11 +2829,18 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     </Button>
                   </div>
                   <DialogDescription className="text-gray-600 mt-2">
-                    Comprehensive breakdown and analysis of spending patterns, cost drivers, and period-over-period trends
+                    {config.description}
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="grid grid-cols-4 gap-8 pt-8">
+                {/* Scrollable Modal Content */}
+                <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+                  <div className="space-y-6">
+                {/* Specialized Modal Content */}
+                {modalType === 'spending-trends' && (
+                  <div className="space-y-6">
+                    {/* Top Row: Two Column Layout */}
+                    <div className="grid grid-cols-2 gap-8">
                   {/* Column 1: Summary Metrics (Enhanced) */}
                   <div className="col-span-1 space-y-6">
                     <Card className="shadow-sm">
@@ -2579,154 +2954,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         )}
                       </CardContent>
                     </Card>
-
-                    {/* Interactive Actions */}
-                    <Card className="shadow-sm">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-lg font-semibold">Actions</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <Button size="sm" variant="outline" className="w-full justify-start hover:bg-blue-50 hover:border-blue-200 transition-colors">
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </Button>
-                        <Button size="sm" variant="outline" className="w-full justify-start hover:bg-green-50 hover:border-green-200 transition-colors">
-                          <FileSpreadsheet className="h-4 w-4 mr-2" />
-                          Export Data
-                        </Button>
-                        <Button size="sm" variant="outline" className="w-full justify-start hover:bg-orange-50 hover:border-orange-200 transition-colors">
-                          <Target className="h-4 w-4 mr-2" />
-                          Adjust Forecast
-                        </Button>
-                        <Button size="sm" variant="outline" className="w-full justify-start hover:bg-purple-50 hover:border-purple-200 transition-colors">
-                          <StickyNote className="h-4 w-4 mr-2" />
-                          Add Note
-                        </Button>
-                      </CardContent>
-                    </Card>
                   </div>
 
-                  {/* Column 2: Enhanced Cost Breakdown */}
-                  <div className="col-span-1 space-y-6">
-                    <Card className="shadow-sm">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-lg font-semibold flex items-center">
-                          <PieChart className="h-5 w-5 mr-2 text-green-600" />
-                          Cost Breakdown
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          {getSpendingBreakdown(selectedDrillDown).map((item, index) => {
-                            const utilizationPercentage = (item.amount / item.budget) * 100
-                            const isOverBudget = utilizationPercentage > 100
-                            const isAtRisk = utilizationPercentage > 85 && utilizationPercentage <= 100
-                            
-                            return (
-                              <div key={index} className={`p-4 border rounded-lg hover:shadow-sm transition-all cursor-pointer ${
-                                isOverBudget ? 'border-red-200 hover:bg-red-25' :
-                                isAtRisk ? 'border-amber-200 hover:bg-amber-25' :
-                                'border-green-200 hover:bg-green-25'
-                              }`}>
-                                <div className="flex justify-between items-center mb-3">
-                                  <span className="font-semibold text-gray-900">{item.category}</span>
-                                  <div className="text-right">
-                                    <div className="text-lg font-bold text-gray-900">£{item.amount.toLocaleString()}</div>
-                                    <div className="text-xs text-gray-500">of £{item.budget.toLocaleString()}</div>
-                                  </div>
-                                </div>
-                                
-                                <div className="flex justify-between items-center text-sm mb-3">
-                                  <span className="text-gray-600">Budget Utilization:</span>
-                                  <span className={`font-semibold ${
-                                    isOverBudget ? 'text-red-600' :
-                                    isAtRisk ? 'text-amber-600' :
-                                    'text-green-600'
-                                  }`}>
-                                    {utilizationPercentage.toFixed(1)}%
-                                  </span>
-                                </div>
-                                
-                                {/* Budget Utilization Progress Bar */}
-                                <div className="mb-3">
-                                  <div className="w-full bg-gray-200 rounded-full h-3">
-                                    <div 
-                                      className={`h-3 rounded-full transition-all ${
-                                        isOverBudget ? 'bg-red-500' :
-                                        isAtRisk ? 'bg-amber-500' :
-                                        'bg-green-500'
-                                      }`}
-                                      style={{ width: `${Math.min(100, utilizationPercentage)}%` }}
-                                    ></div>
-                                    {isOverBudget && (
-                                      <div 
-                                        className="h-3 bg-red-600 rounded-full -mt-3 opacity-75"
-                                        style={{ width: `${Math.min(100, (utilizationPercentage - 100))}%`, marginLeft: '100%' }}
-                                      ></div>
-                                    )}
-                                  </div>
-                                </div>
-                                
-                                <div className="flex justify-between items-center text-sm">
-                                  <span className="text-gray-600">Variance:</span>
-                                  <span className={`font-semibold flex items-center ${
-                                    item.variance < 0 ? 'text-green-600' : 'text-red-600'
-                                  }`}>
-                                    {item.variance < 0 ? <TrendingDown className="h-3 w-3 mr-1" /> : <TrendingUp className="h-3 w-3 mr-1" />}
-                                    {item.variance < 0 ? '-' : '+'} £{Math.abs(item.variance).toLocaleString()}
-                                  </span>
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  {/* Column 3: Enhanced Cost Drivers */}
-                  <div className="col-span-1 space-y-6">
-                    <Card className="shadow-sm">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-lg font-semibold flex items-center">
-                          <Activity className="h-5 w-5 mr-2 text-orange-600" />
-                          Cost Drivers
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          {getCostDrivers(selectedDrillDown).map((driver, index) => (
-                            <div key={index} className={`p-4 rounded-lg border hover:shadow-sm transition-all cursor-pointer ${
-                              driver.type === 'overrun' ? 'bg-gradient-to-r from-red-50 to-red-100 border-red-200 hover:from-red-100 hover:to-red-150' : 
-                              'bg-gradient-to-r from-green-50 to-green-100 border-green-200 hover:from-green-100 hover:to-green-150'
-                            }`}>
-                              <div className="flex justify-between items-start mb-2">
-                                <span className="font-semibold text-sm">{driver.name}</span>
-                                <span className={`font-bold text-base flex items-center ${
-                                  driver.type === 'overrun' ? 'text-red-700' : 'text-green-700'
-                                }`}>
-                                  {driver.impact < 0 ? <TrendingDown className="h-4 w-4 mr-1" /> : <TrendingUp className="h-4 w-4 mr-1" />}
-                                  {driver.impact < 0 ? '-' : '+'} £{Math.abs(driver.impact).toLocaleString()}
-                                </span>
-                              </div>
-                              <p className={`text-xs leading-relaxed ${
-                                driver.type === 'overrun' ? 'text-red-600' : 'text-green-600'
-                              }`}>
-                                {driver.description}
-                              </p>
-                              <div className={`mt-2 text-xs font-medium ${
-                                driver.type === 'overrun' ? 'text-red-500' : 'text-green-500'
-                              }`}>
-                                Impact: {((Math.abs(driver.impact) / (selectedDrillDown?.actual || 25000)) * 100).toFixed(1)}% of total spend
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  {/* Column 4: Enhanced Trend Analysis */}
+                  {/* Column 2: Enhanced Trend Analysis */}
                   <div className="col-span-1 space-y-6">
                     <Card className="shadow-sm">
                       <CardHeader className="pb-4">
@@ -2806,6 +3036,208 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                       </CardContent>
                     </Card>
+                  </div>
+                    </div>
+                    
+                    {/* Full Width Actions Section */}
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-lg font-semibold flex items-center">
+                          <Target className="h-5 w-5 mr-2 text-green-600" />
+                          Quick Actions
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-3 gap-4">
+                          <Button size="sm" variant="outline" className="justify-start hover:bg-green-50 hover:border-green-200 transition-colors">
+                            <FileSpreadsheet className="h-4 w-4 mr-2" />
+                            Export Data
+                          </Button>
+                          <Button size="sm" variant="outline" className="justify-start hover:bg-orange-50 hover:border-orange-200 transition-colors">
+                            <Target className="h-4 w-4 mr-2" />
+                            Adjust Forecast
+                          </Button>
+                          <Button size="sm" variant="outline" className="justify-start hover:bg-purple-50 hover:border-purple-200 transition-colors">
+                            <StickyNote className="h-4 w-4 mr-2" />
+                            Add Note
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+                
+                {/* Cost Categories Modal */}
+                {modalType === 'cost-categories' && (
+                  <div className="space-y-6">
+                    {/* Timeline Slider */}
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-lg font-semibold text-gray-900">Weekly Cost Breakdown</h3>
+                      <div className="flex items-center space-x-4">
+                        <span className="text-sm text-gray-600">Week:</span>
+                        <Select value={selectedTimelineWeek} onValueChange={setSelectedTimelineWeek}>
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getFilteredSpendingData().map((weekData) => (
+                              <SelectItem key={weekData.week} value={weekData.week}>
+                                {weekData.week}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* Cost Breakdown Cards */}
+                      <div className="lg:col-span-2 space-y-4">
+                        {getSpendingBreakdown({ week: selectedTimelineWeek }).map((item, index) => {
+                          const utilizationPercentage = (item.amount / item.budget) * 100
+                          const isOverBudget = utilizationPercentage > 100
+                          const isAtRisk = utilizationPercentage > 85 && utilizationPercentage <= 100
+                          
+                          return (
+                            <Card key={index} className="shadow-sm">
+                              <CardContent className="p-4">
+                                <div className={`border rounded-lg p-4 ${
+                                  isOverBudget ? 'border-red-200 bg-red-25' :
+                                  isAtRisk ? 'border-amber-200 bg-amber-25' :
+                                  'border-green-200 bg-green-25'
+                                }`}>
+                                  <div className="flex justify-between items-center mb-3">
+                                    <span className="font-semibold text-gray-900">{item.category}</span>
+                                    <div className="text-right">
+                                      <div className="text-lg font-bold text-gray-900">£{item.amount.toLocaleString()}</div>
+                                      <div className="text-xs text-gray-500">of £{item.budget.toLocaleString()}</div>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex justify-between items-center text-sm mb-3">
+                                    <span className="text-gray-600">Budget Utilisation:</span>
+                                    <span className={`font-semibold ${
+                                      isOverBudget ? 'text-red-600' :
+                                      isAtRisk ? 'text-amber-600' :
+                                      'text-green-600'
+                                    }`}>
+                                      {utilizationPercentage.toFixed(1)}%
+                                    </span>
+                                  </div>
+                                  
+                                  {/* Progress Bar */}
+                                  <div className="mb-3">
+                                    <div className="w-full bg-gray-200 rounded-full h-3">
+                                      <div 
+                                        className={`h-3 rounded-full transition-all ${
+                                          isOverBudget ? 'bg-red-500' :
+                                          isAtRisk ? 'bg-amber-500' :
+                                          'bg-green-500'
+                                        }`}
+                                        style={{ width: `${Math.min(100, utilizationPercentage)}%` }}
+                                      ></div>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-600">Variance:</span>
+                                    <span className={`font-semibold flex items-center ${
+                                      item.variance < 0 ? 'text-green-600' : 'text-red-600'
+                                    }`}>
+                                      {item.variance < 0 ? <TrendingDown className="h-3 w-3 mr-1" /> : <TrendingUp className="h-3 w-3 mr-1" />}
+                                      {item.variance < 0 ? '-' : '+'} £{Math.abs(item.variance).toLocaleString()}
+                                    </span>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )
+                        })}
+                      </div>
+
+                      {/* Bar Chart */}
+                      <div className="lg:col-span-1">
+                        <Card className="shadow-sm">
+                          <CardHeader className="pb-4">
+                            <CardTitle className="text-lg font-semibold">Budget vs Actual Comparison</CardTitle>
+                            <p className="text-sm text-gray-600">{selectedTimelineWeek}</p>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="h-80">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                  data={getSpendingBreakdown({ week: selectedTimelineWeek }).map(item => ({
+                                    category: item.category,
+                                    Budget: item.budget,
+                                    Actual: item.amount,
+                                    Projected: Math.round(item.amount * 1.1) // Simple projection
+                                  }))}
+                                  margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" />
+                                  <XAxis 
+                                    dataKey="category" 
+                                    angle={-45}
+                                    textAnchor="end"
+                                    height={80}
+                                    interval={0}
+                                  />
+                                  <YAxis tickFormatter={(value) => `£${(value / 1000).toFixed(0)}k`} />
+                                  <RechartsTooltip 
+                                    formatter={(value: number, name: string) => [`£${value.toLocaleString()}`, name]}
+                                    labelFormatter={(label) => `${label}`}
+                                  />
+                                  <Legend />
+                                  <Bar dataKey="Budget" fill="#ef4444" name="Budget" />
+                                  <Bar dataKey="Actual" fill="#059669" name="Actual" />
+                                  <Bar dataKey="Projected" fill="#3b82f6" name="Projected" />
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Budget Alerts Modal */}
+                {modalType === 'budget-alerts' && (
+                  <div className="space-y-6">
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-lg font-semibold">Risk Analysis & Mitigation</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="p-4 border border-amber-200 rounded-lg bg-amber-50">
+                            <h4 className="font-semibold text-amber-900 mb-2">Risk Details</h4>
+                            <p className="text-sm text-amber-800">Detailed risk assessment and confidence intervals will be displayed here.</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+                
+                {/* Transactions Modal */}
+                {modalType === 'transactions' && (
+                  <div className="space-y-6">
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-lg font-semibold">Transaction History</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
+                            <h4 className="font-semibold text-blue-900 mb-2">Detailed Transactions</h4>
+                            <p className="text-sm text-blue-800">Comprehensive transaction breakdown and cost driver analysis will be shown here.</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
                   </div>
                 </div>
               </>
