@@ -15,7 +15,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  BarChart3,
+  MessageSquare,
   FileText,
   Menu,
 } from "lucide-react"
@@ -42,9 +42,9 @@ const navigation = [
     icon: Receipt,
   },
   {
-    name: "Analytics",
-    href: "/analytics",
-    icon: BarChart3,
+    name: "Messages",
+    href: "/messages",
+    icon: MessageSquare,
   },
   {
     name: "Reports",
