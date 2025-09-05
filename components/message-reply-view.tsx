@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Message } from "@/lib/types/messages"
+import { MiniChatRAG } from "@/components/mini-chat-rag"
 
 interface MessageReplyViewProps {
   message: Message
@@ -35,14 +36,6 @@ interface MessageReplyViewProps {
   className?: string
 }
 
-interface BusinessInsight {
-  id: string
-  type: 'timeline' | 'history' | 'context' | 'workflow'
-  title: string
-  description: string
-  icon: typeof Clock
-  priority: 'high' | 'medium' | 'low'
-}
 
 export function MessageReplyView({ 
   message, 
@@ -52,120 +45,6 @@ export function MessageReplyView({
 }: MessageReplyViewProps) {
   const [replyContent, setReplyContent] = useState('')
   const [replySubject, setReplySubject] = useState('')
-  const [businessInsights, setBusinessInsights] = useState<BusinessInsight[]>([])
-
-  // Initialize reply subject and fetch business insights
-  useEffect(() => {
-    if (message) {
-      setReplySubject(`Re: ${message.subject}`)
-      
-      // Generate business insights based on message data
-      const insights = generateBusinessInsights(message)
-      setBusinessInsights(insights)
-    }
-  }, [message])
-
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isVisible) return
-
-      if (e.key === 'Escape') {
-        onClose()
-      }
-      
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        e.preventDefault()
-        handleSendReply()
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isVisible, onClose, handleSendReply])
-
-  const generateBusinessInsights = (message: Message): BusinessInsight[] => {
-    const insights: BusinessInsight[] = []
-
-    // Project timeline insight
-    if (message.project) {
-      insights.push({
-        id: 'timeline',
-        type: 'timeline',
-        title: 'Project Timeline',
-        description: `${message.project.name} is ${message.project.timeline.currentWeek} weeks into a ${message.project.timeline.totalWeeks}-week schedule`,
-        icon: Calendar,
-        priority: 'medium'
-      })
-    }
-
-    // Budget forecast insight
-    if (message.project) {
-      const spentPercentage = Math.round((message.project.spent / message.project.budget) * 100)
-      const remaining = message.project.budget - message.project.spent
-      const weeklyBurn = message.project.spent / message.project.timeline.currentWeek
-      const projectedTotal = weeklyBurn * message.project.timeline.totalWeeks
-      const projectedOverrun = projectedTotal > message.project.budget ? projectedTotal - message.project.budget : 0
-      
-      let forecastText = `${spentPercentage}% spent (£${remaining.toLocaleString()} remaining)`
-      if (projectedOverrun > 0) {
-        forecastText += ` - projected £${projectedOverrun.toLocaleString()} over budget`
-      } else {
-        forecastText += ` - on track for budget`
-      }
-
-      insights.push({
-        id: 'budget',
-        type: 'context',
-        title: 'Budget Forecast',
-        description: forecastText,
-        icon: TrendingUp,
-        priority: projectedOverrun > 0 ? 'high' : 'medium'
-      })
-    }
-
-    // Urgency insight
-    if (message.priority === 'urgent') {
-      insights.push({
-        id: 'urgency',
-        type: 'workflow',
-        title: 'Response Time',
-        description: 'Urgent priority - consider responding within 2 hours for optimal project flow',
-        icon: AlertCircle,
-        priority: 'high'
-      })
-    }
-
-    // Communication channel insight
-    const channelInsights = {
-      email: 'Formal documentation - responses typically expected within 24 hours',
-      whatsapp: 'Quick coordination - responses expected within 2-4 hours',
-      sms: 'Immediate coordination - responses expected within 1 hour',
-      phone: 'Follow-up call recommended - document outcome in project records'
-    }
-
-    insights.push({
-      id: 'channel',
-      type: 'context',
-      title: 'Communication Context',
-      description: channelInsights[message.source as keyof typeof channelInsights] || 'Standard business communication',
-      icon: getSourceIcon(message.source),
-      priority: 'medium'
-    })
-
-    return insights
-  }
-
-  const getSourceIcon = (source: string) => {
-    const iconMap = {
-      email: Mail,
-      whatsapp: MessageCircle,
-      sms: Smartphone,
-      call: Phone,
-      system: Settings
-    }
-    return iconMap[source as keyof typeof iconMap] || Mail
-  }
 
   const handleSendReply = async () => {
     if (!replyContent.trim()) return
@@ -196,6 +75,44 @@ export function MessageReplyView({
       console.error('Error sending message:', error)
       alert('Failed to send message. Please try again.')
     }
+  }
+
+  // Initialize reply subject
+  useEffect(() => {
+    if (message) {
+      setReplySubject(`Re: ${message.subject}`)
+    }
+  }, [message])
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isVisible) return
+
+      if (e.key === 'Escape') {
+        onClose()
+      }
+      
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault()
+        handleSendReply()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isVisible, onClose, handleSendReply])
+
+
+  const getSourceIcon = (source: string) => {
+    const iconMap = {
+      email: Mail,
+      whatsapp: MessageCircle,
+      sms: Smartphone,
+      call: Phone,
+      system: Settings
+    }
+    return iconMap[source as keyof typeof iconMap] || Mail
   }
 
   const formatTimeAgo = (timestamp: string) => {
@@ -290,41 +207,9 @@ export function MessageReplyView({
 
           <Separator />
 
-          {/* Business Insights - Scrollable */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Relevant Information
-            </h4>
-            <div className="space-y-3 pb-4">
-              {businessInsights.map((insight) => {
-                const IconComponent = insight.icon
-                return (
-                  <Card key={insight.id} className="bg-white">
-                    <CardContent className="p-4">
-                      <div className="flex items-start space-x-3">
-                        <div className={cn(
-                          "p-2 rounded-lg flex-shrink-0",
-                          insight.priority === 'high' ? 'bg-red-100 text-red-600' :
-                          insight.priority === 'medium' ? 'bg-blue-100 text-blue-600' :
-                          'bg-gray-100 text-gray-600'
-                        )}>
-                          <IconComponent className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h5 className="font-medium text-sm text-gray-900 mb-1">
-                            {insight.title}
-                          </h5>
-                          <p className="text-xs text-gray-600 leading-relaxed break-words">
-                            {insight.description}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
+          {/* Mini Chat RAG System */}
+          <div className="flex-1 overflow-hidden min-h-[400px]">
+            <MiniChatRAG message={message} className="h-full" />
           </div>
         </div>
 
