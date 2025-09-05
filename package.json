@@ -67,7 +67,7 @@
     "tesseract.js": "^6.0.1",
     "uuid": "^11.1.0",
     "vaul": "^0.9.9",
-    "zod": "3.25.67"
+    "zod": "^3.25.67"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",
