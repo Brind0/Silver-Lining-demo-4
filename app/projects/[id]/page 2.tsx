@@ -8,13 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -26,8 +23,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, Area, ComposedChart } from "recharts"
+import { Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, ComposedChart } from "recharts"
 import {
   ArrowLeft,
   Calendar,
@@ -41,8 +44,9 @@ import {
   Edit,
   FileText,
   ImageIcon,
-  Eye,
   Check,
+  ChevronDown,
+  Download,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -1000,8 +1004,32 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Spending Trends Chart */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Spending Trends</CardTitle>
+                  <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
+                    <div className="flex flex-col">
+                      <CardTitle className="text-lg font-semibold flex items-center">
+                        <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
+                        Spending Trends
+                      </CardTitle>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Weekly spending analysis and trend forecasting
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Button size="sm" variant="outline" onClick={exportToPDF}>
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="outline">
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={exportToPDF}>Export to PDF</DropdownMenuItem>
+                          <DropdownMenuItem onClick={exportToExcel}>Export to Excel</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="h-80">
@@ -1009,7 +1037,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         <ComposedChart 
                           data={projectData.weeklySpending || []} 
                           margin={{ top: 20, right: 80, left: 20, bottom: 5 }}
-                          onClick={(data) => {
+                          onClick={(data: any) => {
                             if (data?.activePayload?.[0]?.payload?.riskAlert) {
                               const alert = data.activePayload[0].payload.riskAlert;
                               if (confirm(`Risk Alert: £${alert.overrun.toLocaleString()} overrun expected by ${alert.date} (${alert.confidence}% confidence)\n\nRecommended Action: ${alert.action}\n\nClick OK to implement this action.`)) {

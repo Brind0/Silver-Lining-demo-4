@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, use } from "react"
+import React, { useState, useEffect, use } from "react"
 import { MainLayout } from "@/components/main-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,6 +70,10 @@ import {
   StickyNote,
   Target,
   Activity,
+  Mail,
+  Wrench,
+  Shield,
+  Phone,
 } from "lucide-react"
 import Link from "next/link"
 import { DocumentCreationModal } from "@/components/document-creation-modal"
@@ -384,9 +389,29 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [selectedDrillDown, setSelectedDrillDown] = useState<any>(null)
   const [showDrillDownModal, setShowDrillDownModal] = useState(false)
   const [modalType, setModalType] = useState<'spending-trends' | 'cost-categories' | 'budget-alerts' | 'transactions'>('spending-trends')
-  const [selectedTimelineWeek, setSelectedTimelineWeek] = useState("Week 12")
   const [dismissedAlerts, setDismissedAlerts] = useState<number[]>([])
   const [lastRefresh, setLastRefresh] = useState(new Date())
+  
+  // Temporal filter states for enhanced modals
+  const [temporalDateRange, setTemporalDateRange] = useState<'all' | 'last4' | 'last8'>('all')
+  const [temporalViewMode, setTemporalViewMode] = useState<'cumulative' | 'weekly'>('cumulative')
+  
+  // Timeline week selection state
+  const [selectedTimelineWeek, setSelectedTimelineWeek] = useState("")
+  
+  // Cost Categories modal state
+  const [varianceThreshold, setVarianceThreshold] = useState(5) // Show variances above 5%
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null) // Filter by category
+  const [showVarianceInvestigation, setShowVarianceInvestigation] = useState(false)
+  const [selectedVariancePoint, setSelectedVariancePoint] = useState<any>(null)
+
+  // Initialize selectedTimelineWeek with the first week
+  useEffect(() => {
+    const allData = getAllProjectData()
+    if (allData.length > 0 && !selectedTimelineWeek) {
+      setSelectedTimelineWeek(allData[0].week)
+    }
+  }, [selectedTimelineWeek])
 
   const toggleTaskCompletion = (taskId: number) => {
     setCompletedTasks(prev => 
@@ -449,6 +474,75 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       default:
         return processedData.slice(Math.max(0, currentWeekIndex - 4), currentWeekIndex + 1)
     }
+  }
+
+  // Get all project data independent of main dashboard timeline filter - for modals only
+  const getAllProjectData = () => {
+    const fullData = projectData.weeklySpending || []
+    const currentWeekIndex = 11 // Week 12 is current
+    
+    // Process the data to separate actual vs projected based on current date
+    const processedData = fullData.map((week, index) => {
+      const budgetAllocation = (week as any).budget || 0
+      const actual = index <= currentWeekIndex ? (week as any).actual : null
+      const projected = index >= currentWeekIndex ? (week as any).projected || (week as any).forecast : null
+      const projectedUpper = index >= currentWeekIndex ? (week as any).projectedUpper : null
+      const projectedLower = index >= currentWeekIndex ? (week as any).projectedLower : null
+      
+      return {
+        ...week,
+        actual,
+        projected,
+        projectedUpper,
+        projectedLower,
+        budgetAllocation,
+        budgetCeiling: 45000
+      }
+    })
+    
+    return processedData // Always return full project timeline for modals (all 23 weeks)
+  }
+
+  // Get temporally filtered data for Cost Categories modal with toggle controls
+  const getTemporallyFilteredData = () => {
+    const allData = getAllProjectData()
+    
+    // Apply date range filter
+    let filteredByRange = allData
+    if (temporalDateRange !== 'all') {
+      const currentWeekIndex = 11 // Week 12 is current
+      switch (temporalDateRange) {
+        case 'last4':
+          filteredByRange = allData.slice(Math.max(0, currentWeekIndex - 3), currentWeekIndex + 1)
+          break
+        case 'last8':
+          filteredByRange = allData.slice(Math.max(0, currentWeekIndex - 7), currentWeekIndex + 1)
+          break
+      }
+    }
+    
+    // Apply view mode transformation
+    if (temporalViewMode === 'weekly') {
+      // Convert cumulative data to weekly deltas
+      return filteredByRange.map((week, index) => {
+        const prevWeek = index > 0 ? filteredByRange[index - 1] : null
+        const weeklyActual = week.actual && prevWeek?.actual 
+          ? week.actual - prevWeek.actual 
+          : week.actual
+        const weeklyProjected = week.projected && prevWeek?.projected 
+          ? week.projected - prevWeek.projected 
+          : week.projected
+        
+        return {
+          ...week,
+          actual: weeklyActual,
+          projected: weeklyProjected,
+          budget: week.budget && prevWeek?.budget ? week.budget - prevWeek.budget : week.budget
+        }
+      })
+    }
+    
+    return filteredByRange // Return cumulative data (default)
   }
 
   const handleRefresh = () => {
@@ -519,6 +613,250 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     return drivers.filter((_, i) => (weekNumber + i) % 3 === 0 || i < 2)
   }
 
+  // Generate time-series data for variance analysis
+  const getVarianceTimeSeriesData = () => {
+    const allData = getAllProjectData()
+    return allData.map(weekData => {
+      const breakdown = getSpendingBreakdown(weekData)
+      return {
+        week: weekData.week,
+        date: weekData.date,
+        materials: breakdown.find(b => b.category === 'Materials')?.variance || 0,
+        labour: breakdown.find(b => b.category === 'Labour')?.variance || 0,
+        equipment: breakdown.find(b => b.category === 'Equipment')?.variance || 0,
+        overhead: breakdown.find(b => b.category === 'Overhead')?.variance || 0,
+        materialsPercent: breakdown.find(b => b.category === 'Materials')?.variance ? 
+          (breakdown.find(b => b.category === 'Materials')!.variance / breakdown.find(b => b.category === 'Materials')!.budget * 100) : 0,
+        labourPercent: breakdown.find(b => b.category === 'Labour')?.variance ? 
+          (breakdown.find(b => b.category === 'Labour')!.variance / breakdown.find(b => b.category === 'Labour')!.budget * 100) : 0,
+        equipmentPercent: breakdown.find(b => b.category === 'Equipment')?.variance ? 
+          (breakdown.find(b => b.category === 'Equipment')!.variance / breakdown.find(b => b.category === 'Equipment')!.budget * 100) : 0,
+        overheadPercent: breakdown.find(b => b.category === 'Overhead')?.variance ? 
+          (breakdown.find(b => b.category === 'Overhead')!.variance / breakdown.find(b => b.category === 'Overhead')!.budget * 100) : 0
+      }
+    })
+  }
+
+  // Get variance investigation data
+  const getVarianceInvestigation = (week: string, category: string) => {
+    const investigations = {
+      'Week 8-Materials': {
+        rootCause: 'Steel price increase due to supply chain disruption',
+        impact: '£1,200 over budget',
+        timeline: 'Price spike occurred on Oct 15th, affecting orders placed Oct 16-20',
+        invoices: ['INV-2024-1042', 'INV-2024-1055'],
+        suppliers: [
+          { name: 'SteelCorp Ltd', contact: '+44 1234 567890', action: 'Renegotiate rates' },
+          { name: 'MetalPro', contact: '+44 1234 567891', action: 'Alternative quotes' }
+        ],
+        scenarios: {
+          immediate: 'Act now: Save £800 by switching supplier',
+          delayed: 'Wait 2 weeks: Additional £400 cost risk'
+        }
+      },
+      'Week 12-Labour': {
+        rootCause: 'Weather delays causing overtime premiums',
+        impact: '£890 over budget',
+        timeline: 'Rain delays Oct 25-27 forced weekend overtime',
+        invoices: ['PAY-2024-0892', 'PAY-2024-0901'],
+        suppliers: [
+          { name: 'CrewForce Ltd', contact: '+44 1234 567895', action: 'Adjust schedule' },
+          { name: 'StaffingPro', contact: '+44 1234 567896', action: 'Backup crew' }
+        ],
+        scenarios: {
+          immediate: 'Reschedule: Avoid £500 future overtime',
+          delayed: 'Continue current: Risk £1,200 additional costs'
+        }
+      },
+      'Week 10-Equipment': {
+        rootCause: 'Concrete mixer breakdown requiring emergency rental',
+        impact: '£650 over budget',
+        timeline: 'Equipment failure on Nov 1st, rental secured same day',
+        invoices: ['RENT-2024-3341', 'REP-2024-2215'],
+        suppliers: [
+          { name: 'EquipRent Pro', contact: '+44 1234 567892', action: 'Extended rental discount' },
+          { name: 'MachineRepair Ltd', contact: '+44 1234 567893', action: 'Preventive maintenance plan' }
+        ],
+        scenarios: {
+          immediate: 'Purchase replacement: Save £300 long-term',
+          delayed: 'Continue rental: Additional £200 per week'
+        }
+      },
+      'Week 6-Materials': {
+        rootCause: 'Premium insulation required due to building regulation changes',
+        impact: '£1,450 over budget',
+        timeline: 'Regulation update published Oct 20th, implementation required',
+        invoices: ['INV-2024-1089', 'INV-2024-1094'],
+        suppliers: [
+          { name: 'InsulationPro', contact: '+44 1234 567894', action: 'Bulk discount negotiation' },
+          { name: 'BuildMaterials Ltd', contact: '+44 1234 567897', action: 'Alternative products' }
+        ],
+        scenarios: {
+          immediate: 'Negotiate bulk deal: Save £400 on remaining orders',
+          delayed: 'Standard pricing: Continue with 15% premium'
+        }
+      }
+    }
+    
+    return investigations[`${week}-${category}` as keyof typeof investigations] || {
+      rootCause: `${category} spending variance detected - investigating cost drivers and supplier performance`,
+      impact: 'Variance impact being quantified against project budget and timeline',
+      timeline: `${week} variance identified, full analysis expected within 24-48 hours`,
+      invoices: ['Analysis in progress'],
+      suppliers: [
+        { name: 'Primary Supplier Review', contact: 'Contact details being compiled', action: 'Performance assessment' },
+        { name: 'Alternative Quotes', contact: 'Market research underway', action: 'Cost comparison analysis' }
+      ],
+      scenarios: { 
+        immediate: 'Immediate action: Hold current orders pending analysis results', 
+        delayed: 'Wait for analysis: Risk of continued variance if root cause persists' 
+      }
+    }
+  }
+
+  // Handle chart point clicks for variance investigation
+  const handleVariancePointClick = (data: any, category: string) => {
+    setSelectedVariancePoint({ ...data, category })
+    setShowVarianceInvestigation(true)
+  }
+
+  // Get chart data with proper cumulative/weekly toggle and Other category - consistent with Spending Trends
+  const getCostCategoryChartData = () => {
+    const allData = getAllProjectData()
+    
+    // Apply date range filter
+    let filteredByRange = allData
+    if (temporalDateRange !== 'all') {
+      const currentWeekIndex = 11 // Week 12 is current
+      switch (temporalDateRange) {
+        case 'last4':
+          filteredByRange = allData.slice(Math.max(0, currentWeekIndex - 3), currentWeekIndex + 1)
+          break
+        case 'last8':
+          filteredByRange = allData.slice(Math.max(0, currentWeekIndex - 7), currentWeekIndex + 1)
+          break
+      }
+    }
+
+    return filteredByRange.map((weekData, index) => {
+      if (temporalViewMode === 'cumulative') {
+        // For cumulative view, use the actual cumulative data directly
+        // The weeklySpending data is already cumulative, so use it as-is
+        const cumulativeTotal = weekData.actual || 0
+        
+        return {
+          week: weekData.week,
+          date: weekData.date,
+          materials: Math.floor(cumulativeTotal * 0.40),    // 40% of cumulative spending
+          labour: Math.floor(cumulativeTotal * 0.35),       // 35% of cumulative spending
+          equipment: Math.floor(cumulativeTotal * 0.15),    // 15% of cumulative spending
+          other: Math.floor(cumulativeTotal * 0.10),        // 10% of cumulative spending
+          variance: cumulativeTotal - (weekData.budget || 0),
+          budget: weekData.budget || 0
+        }
+      } else {
+        // For weekly view, calculate actual weekly spending (delta from previous week)
+        const currentCumulative = weekData.actual || 0
+        const previousWeekData = index > 0 ? filteredByRange[index - 1] : null
+        const previousCumulative = previousWeekData ? (previousWeekData.actual || 0) : 0
+        const weeklySpending = currentCumulative - previousCumulative
+        
+        // Calculate weekly budget allocation (delta from previous week)
+        const currentBudget = weekData.budget || 0
+        const previousBudget = previousWeekData ? (previousWeekData.budget || 0) : 0
+        const weeklyBudget = currentBudget - previousBudget
+        
+        return {
+          week: weekData.week,
+          date: weekData.date,
+          materials: Math.floor(weeklySpending * 0.40),     // 40% of this week's spending
+          labour: Math.floor(weeklySpending * 0.35),        // 35% of this week's spending
+          equipment: Math.floor(weeklySpending * 0.15),     // 15% of this week's spending
+          other: Math.floor(weeklySpending * 0.10),         // 10% of this week's spending
+          variance: weeklySpending - weeklyBudget,
+          budget: weeklyBudget
+        }
+      }
+    })
+  }
+
+  // Get actionable variance breakdown with remediation steps
+  const getActionableVarianceBreakdown = () => {
+    // Use the same temporal filtering as the chart
+    const allData = getAllProjectData()
+    let filteredData = allData
+    
+    // Apply date range filter to match chart filtering
+    if (temporalDateRange !== 'all') {
+      const currentWeekIndex = 11 // Week 12 is current
+      switch (temporalDateRange) {
+        case 'last4':
+          filteredData = allData.slice(Math.max(0, currentWeekIndex - 3), currentWeekIndex + 1)
+          break
+        case 'last8':
+          filteredData = allData.slice(Math.max(0, currentWeekIndex - 7), currentWeekIndex + 1)
+          break
+      }
+    }
+    
+    // Generate variance time series data for the filtered period
+    const timeSeriesData = filteredData.map(weekData => {
+      const breakdown = getSpendingBreakdown(weekData)
+      return {
+        week: weekData.week,
+        date: weekData.date,
+        materials: breakdown.find(b => b.category === 'Materials')!.variance,
+        materialsPercent: breakdown.find(b => b.category === 'Materials')!.budget > 0 ? 
+          (breakdown.find(b => b.category === 'Materials')!.variance / breakdown.find(b => b.category === 'Materials')!.budget * 100) : 0,
+        labour: breakdown.find(b => b.category === 'Labour')!.variance,
+        labourPercent: breakdown.find(b => b.category === 'Labour')!.budget > 0 ? 
+          (breakdown.find(b => b.category === 'Labour')!.variance / breakdown.find(b => b.category === 'Labour')!.budget * 100) : 0,
+        equipment: breakdown.find(b => b.category === 'Equipment')!.variance,
+        equipmentPercent: breakdown.find(b => b.category === 'Equipment')!.budget > 0 ? 
+          (breakdown.find(b => b.category === 'Equipment')!.variance / breakdown.find(b => b.category === 'Equipment')!.budget * 100) : 0,
+        overhead: breakdown.find(b => b.category === 'Overhead')!.variance,
+        overheadPercent: breakdown.find(b => b.category === 'Overhead')!.budget > 0 ? 
+          (breakdown.find(b => b.category === 'Overhead')!.variance / breakdown.find(b => b.category === 'Overhead')!.budget * 100) : 0
+      }
+    })
+    
+    const significantVariances = []
+    
+    // Find significant variances above threshold
+    for (const weekData of timeSeriesData) {
+      const categories = [
+        { name: 'Materials', percent: weekData.materialsPercent, value: weekData.materials },
+        { name: 'Labour', percent: weekData.labourPercent, value: weekData.labour },
+        { name: 'Equipment', percent: weekData.equipmentPercent, value: weekData.equipment },
+        { name: 'Overhead', percent: weekData.overheadPercent, value: weekData.overhead }
+      ]
+      
+      for (const category of categories) {
+        if (Math.abs(category.percent) >= varianceThreshold) {
+          const investigation = getVarianceInvestigation(weekData.week, category.name)
+          significantVariances.push({
+            category: category.name,
+            week: weekData.week,
+            date: weekData.date,
+            variancePercent: category.percent,
+            varianceAmount: category.value,
+            investigation
+          })
+        }
+      }
+    }
+    
+    // Group by category and get most significant variance per category
+    const grouped = significantVariances.reduce((acc: any, variance) => {
+      if (!acc[variance.category] || Math.abs(variance.variancePercent) > Math.abs(acc[variance.category].variancePercent)) {
+        acc[variance.category] = variance
+      }
+      return acc
+    }, {})
+    
+    return Object.values(grouped)
+  }
+
   // Navigate between time periods
   const navigateWeek = (direction: 'prev' | 'next') => {
     console.log('navigateWeek called with:', direction, 'selectedDrillDown:', selectedDrillDown)
@@ -527,7 +865,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       return
     }
     
-    const filteredData = getFilteredSpendingData()
+    const filteredData = getAllProjectData()
     console.log('filteredData:', filteredData)
     const weekIndex = filteredData.findIndex(d => d.week === selectedDrillDown.week)
     console.log('current weekIndex:', weekIndex, 'for week:', selectedDrillDown.week)
@@ -559,7 +897,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const getPreviousWeekData = (currentWeek: any) => {
     if (!currentWeek?.week) return null
     
-    const filteredData = getFilteredSpendingData()
+    const filteredData = getAllProjectData()
     const weekIndex = filteredData.findIndex(d => d.week === currentWeek.week)
     
     return weekIndex > 0 ? filteredData[weekIndex - 1] : null
@@ -1791,10 +2129,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               {/* Top Right: Key Cost Drivers */}
               <Card className="col-span-1 h-[500px] flex flex-col">
                 <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
-                  <CardTitle className="text-lg font-semibold flex items-center">
-                    <PieChart className="h-5 w-5 mr-2 text-green-600" />
-                    Key Cost Drivers
-                  </CardTitle>
+                  <div>
+                    <CardTitle className="text-lg font-semibold flex items-center">
+                      <PieChart className="h-5 w-5 mr-2 text-green-600" />
+                      Budget Impact Analysis
+                    </CardTitle>
+                    <p className="text-sm text-gray-600 mt-1">Active cost overruns impacting budget with immediate remediation actions</p>
+                  </div>
                   <div className="flex items-center space-x-1">
                     <Button size="sm" variant="outline" onClick={exportToPDF}>
                       <Download className="h-4 w-4" />
@@ -1816,58 +2157,59 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   <div className="space-y-4">
                     {[
                       { 
-                        driver: 'Material Price Increase', 
-                        description: 'Steel prices up 8% from forecast', 
+                        driver: 'Steel Price Spike', 
+                        description: 'Price increase already applied to current orders', 
                         impact: 1200, 
                         type: 'overrun',
                         category: 'Materials',
-                        actionText: 'Contact Suppliers',
-                        actionDetails: 'SteelCorp Ltd: +44 1234 567890 | Alternative: MetalPro: +44 1234 567891'
+                        daysActive: 12,
+                        dailyImpact: 0,
+                        actionText: 'Renegotiate Contract',
+                        actionDetails: 'SteelCorp Ltd: +44 1234 567890 | Alternative: MetalPro: +44 1234 567891 | Contract renegotiation deadline: 3 days'
                       },
                       { 
-                        driver: 'Equipment Rental Extension', 
-                        description: 'Extended crane rental needed', 
+                        driver: 'Crane Rental Overrun', 
+                        description: 'Extended rental period already incurred', 
                         impact: 450, 
                         type: 'overrun',
                         category: 'Equipment',
-                        actionText: 'Find Alternatives',
-                        actionDetails: 'CraneHire Plus: +44 1234 567892 | 15% cheaper rates available'
+                        daysActive: 8,
+                        dailyImpact: 45,
+                        actionText: 'Switch Provider',
+                        actionDetails: 'CraneHire Plus: +44 1234 567892 | 15% cheaper rates available | Immediate availability confirmed'
                       },
                       { 
-                        driver: 'Efficient Labour Usage', 
-                        description: 'Team ahead of schedule', 
-                        impact: -800, 
-                        type: 'saving',
-                        category: 'Labour',
-                        actionText: 'View Performance',
-                        actionDetails: 'Team efficiency up 12% | Consider bonus allocation'
-                      },
-                      { 
-                        driver: 'Weather Delays', 
-                        description: 'Additional waterproofing required', 
-                        impact: 650, 
-                        type: 'overrun',
-                        category: 'Materials',
-                        actionText: 'Adjust Timeline',
-                        actionDetails: 'Weather forecast shows clear 5 days ahead'
-                      },
-                      { 
-                        driver: 'Bulk Purchase Discount', 
-                        description: 'Volume discount on electrical components', 
-                        impact: -320, 
-                        type: 'saving',
-                        category: 'Materials',
-                        actionText: 'Expand Savings',
-                        actionDetails: 'ElectricPro offers 8% more discount on next order'
-                      },
-                      { 
-                        driver: 'Specialised Subcontractor', 
-                        description: 'Expert plumbing work required', 
+                        driver: 'Overtime Labor Costs', 
+                        description: 'Weather delays causing daily overtime charges', 
                         impact: 890, 
                         type: 'overrun',
                         category: 'Labour',
+                        daysActive: 5,
+                        dailyImpact: 178,
+                        actionText: 'Adjust Schedule',
+                        actionDetails: 'Crew management portal: scheduletools.com | Emergency scheduling: +44 1234 567895'
+                      },
+                      { 
+                        driver: 'Emergency Waterproofing', 
+                        description: 'Additional materials already ordered due to rain damage', 
+                        impact: 650, 
+                        type: 'overrun',
+                        category: 'Materials',
+                        daysActive: 3,
+                        dailyImpact: 0,
+                        actionText: 'Insurance Claim',
+                        actionDetails: 'Claim #WX2024-1847 | Adjuster: Sarah Mills +44 1234 567896 | Documentation required by Friday'
+                      },
+                      { 
+                        driver: 'Specialized Subcontractor', 
+                        description: 'Expert plumbing work already commenced at premium rate', 
+                        impact: 890, 
+                        type: 'overrun',
+                        category: 'Labour',
+                        daysActive: 15,
+                        dailyImpact: 0,
                         actionText: 'Compare Quotes',
-                        actionDetails: 'PlumbPro: +44 1234 567893 | AquaExperts: +44 1234 567894'
+                        actionDetails: 'PlumbPro: +44 1234 567893 | AquaExperts: +44 1234 567894 | Current contract ends Monday'
                       }
                     ].map((driver, index) => {
                       const isOverrun = driver.type === 'overrun'
@@ -1881,6 +2223,20 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             <div className="flex-1 min-w-0">
                               <div className="font-semibold text-gray-900 truncate">{driver.driver}</div>
                               <div className="text-sm text-gray-600 mt-1">{driver.description}</div>
+                              {isOverrun && (
+                                <div className="flex items-center space-x-4 mt-2">
+                                  <div className="flex items-center space-x-1">
+                                    <Clock className="h-3 w-3 text-gray-400" />
+                                    <span className="text-xs text-gray-500">{driver.daysActive} days active</span>
+                                  </div>
+                                  {driver.dailyImpact > 0 && (
+                                    <div className="flex items-center space-x-1">
+                                      <AlertTriangle className="h-3 w-3 text-red-400" />
+                                      <span className="text-xs text-red-600 font-medium">£{driver.dailyImpact}/day</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                             <div className="text-right flex-shrink-0 ml-3">
                               <div className={`text-lg font-bold ${
@@ -1932,7 +2288,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               {/* Bottom Left: Budget Risk Alerts */}
               <Card className="col-span-1 h-[500px] flex flex-col">
                 <CardHeader className="flex-shrink-0">
-                  <CardTitle className="text-lg">Budget Risk Alerts</CardTitle>
+                  <CardTitle className="text-lg font-semibold flex items-center">
+                    <AlertTriangle className="h-5 w-5 mr-2 text-orange-600" />
+                    Budget Risk Alerts
+                  </CardTitle>
+                  <p className="text-sm text-gray-600 mt-1">Future trends and upcoming events that may impact project budget</p>
                 </CardHeader>
                 <CardContent className="flex-1 min-h-0 overflow-auto">
                   <div className="space-y-4">
@@ -1941,44 +2301,72 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       {
                         id: 1,
                         level: 'amber',
-                        title: 'Material Cost Escalation',
-                        message: 'Steel prices trending upward, potential 5-8% impact on remaining materials budget',
+                        title: 'Future Material Cost Risk',
+                        message: 'Market indicators suggest 5-8% steel price increase over next 6-8 weeks - proactive action recommended',
                         impact: '£2,400 potential increase',
                         confidence: 85,
-                        recommendation: 'Secure pricing with alternative suppliers or accelerate material purchases',
+                        recommendation: 'Lock in current pricing or establish hedging strategy to prevent budget overrun',
                         actions: [
-                          { label: 'Contact Alternative Suppliers', urgent: true },
-                          { label: 'Review Material Schedule', urgent: false }
+                          { label: 'Secure Fixed Pricing Contract', urgent: true },
+                          { label: 'Evaluate Alternative Materials', urgent: false }
                         ],
-                        positiveContext: 'Current materials budget has 15% contingency buffer'
+                        positiveContext: '15% contingency buffer available to absorb potential increases'
                       },
                       {
                         id: 2,
                         level: 'green',
-                        title: 'Labour Efficiency Gains',
-                        message: 'Team productivity 12% above forecast, creating schedule and cost benefits',
-                        impact: '£3,200 potential savings',
-                        confidence: 92,
-                        recommendation: 'Consider reallocating saved time to quality enhancements or early completion',
+                        title: 'Bulk Purchase Opportunity',
+                        message: 'ElectricPro offers 8% additional discount on next electrical component order if placed by month-end',
+                        impact: '£400 potential savings',
+                        confidence: 88,
+                        recommendation: 'Accelerate electrical component procurement to capture discount window',
                         actions: [
-                          { label: 'Review Team Performance', urgent: false },
-                          { label: 'Plan Early Completion', urgent: false }
+                          { label: 'Review Electrical Requirements', urgent: false },
+                          { label: 'Place Early Order', urgent: true }
                         ],
-                        positiveContext: 'Strong team morale and no safety incidents reported'
+                        positiveContext: 'Current electrical timeline allows for early procurement'
                       },
                       {
                         id: 3,
                         level: 'red',
-                        title: 'Equipment Overrun Risk',
-                        message: 'Crane rental extended beyond planned duration due to weather delays',
-                        impact: '£1,800 additional cost',
+                        title: 'Weather Risk Exposure',
+                        message: '40% chance of rainfall next week could impact crane operations and extend rental period',
+                        impact: '£1,800 potential additional cost',
                         confidence: 78,
-                        recommendation: 'Negotiate extended rates or source alternative equipment for remaining work',
+                        recommendation: 'Implement weather contingency plan: accelerate crane-dependent work or secure backup equipment',
                         actions: [
-                          { label: 'Negotiate Extended Rates', urgent: true },
-                          { label: 'Source Alternative Equipment', urgent: true }
+                          { label: 'Execute Weather Contingency Plan', urgent: true },
+                          { label: 'Secure Backup Equipment Options', urgent: true }
                         ],
-                        positiveContext: 'Weather forecast shows 7 consecutive clear days ahead'
+                        positiveContext: 'Alternative indoor work can progress during weather delays'
+                      },
+                      {
+                        id: 4,
+                        level: 'amber',
+                        title: 'Seasonal Supply Chain Disruption',
+                        message: 'Approaching holiday period (Dec 20-Jan 3) may cause 2-week delays in specialized equipment delivery',
+                        impact: '£1,200 potential storage and delay costs',
+                        confidence: 68,
+                        recommendation: 'Order critical equipment by Nov 30th to avoid seasonal delays, or plan alternative work sequences',
+                        actions: [
+                          { label: 'Accelerate Equipment Orders', urgent: true },
+                          { label: 'Develop Alternative Work Schedule', urgent: false }
+                        ],
+                        positiveContext: 'Most materials already secured, only specialized fittings at risk'
+                      },
+                      {
+                        id: 5,
+                        level: 'green',
+                        title: 'Energy Cost Optimization Window',
+                        message: 'Projected 15% drop in energy costs next month due to seasonal demand patterns',
+                        impact: '£800 potential savings',
+                        confidence: 73,
+                        recommendation: 'Schedule energy-intensive operations (concrete curing, heating) for optimal pricing window',
+                        actions: [
+                          { label: 'Reschedule Energy Operations', urgent: false },
+                          { label: 'Lock in Favorable Rates', urgent: false }
+                        ],
+                        positiveContext: 'Flexible timeline allows optimization for cost savings'
                       }
                     ].map((alert) => (
                       <div key={alert.id} className={`rounded-lg border-l-4 p-4 ${
@@ -2071,7 +2459,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               {/* Bottom Right: Cost Categories Bar Chart */}
               <Card className="col-span-1 h-[500px] flex flex-col">
                 <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
-                  <CardTitle className="text-lg">Cost Categories</CardTitle>
+                  <CardTitle className="text-lg font-semibold flex items-center">
+                    <PieChart className="h-5 w-5 mr-2 text-slate-600" />
+                    Cost Categories
+                  </CardTitle>
                   <div className="flex items-center space-x-1">
                     <Button size="sm" variant="outline" onClick={exportToPDF}>
                       <Download className="h-4 w-4" />
@@ -2104,25 +2495,25 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       >
                         <CartesianGrid strokeDasharray="2 2" stroke="#e5e7eb" strokeOpacity={0.4} />
                         <XAxis dataKey="category" 
-                               tick={{ fontSize: 10, fill: '#1e3a8a', fontWeight: 500 }}
+                               tick={{ fontSize: 10, fill: '#475569', fontWeight: 500 }}
                                angle={-45}
                                textAnchor="end"
                                height={80} />
-                        <YAxis tick={{ fontSize: 10, fill: '#1e3a8a', fontWeight: 400 }}
+                        <YAxis tick={{ fontSize: 10, fill: '#475569', fontWeight: 400 }}
                                tickFormatter={(value) => `£${(value / 1000).toFixed(0)}k`} />
                         <RechartsTooltip 
                           contentStyle={{
                             backgroundColor: 'white',
-                            border: '1px solid #1e3a8a',
+                            border: '1px solid #475569',
                             borderRadius: '8px',
-                            boxShadow: '0 4px 12px rgba(30, 58, 138, 0.15)'
+                            boxShadow: '0 4px 12px rgba(71, 85, 105, 0.15)'
                           }}
                           formatter={(value: any, name: string) => [`£${Number(value).toLocaleString()}`, name]}
-                          labelStyle={{ color: '#1e3a8a', fontWeight: 600 }}
+                          labelStyle={{ color: '#475569', fontWeight: 600 }}
                         />
                         <Legend />
                         <Bar dataKey="Budget" fill="#dc2626" name="Budget" />
-                        <Bar dataKey="Projected" fill="#1e40af" name="Projected" />
+                        <Bar dataKey="Projected" fill="#475569" name="Projected" />
                         <Bar dataKey="Actual" fill="#059669" name="Actual" />
                       </BarChart>
                     </ResponsiveContainer>
@@ -2674,7 +3065,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           {(() => {
             console.log('Modal rendering with selectedDrillDown:', selectedDrillDown, 'modalType:', modalType)
             const metrics = getComprehensiveMetrics(selectedDrillDown)
-            const filteredData = getFilteredSpendingData()
+            const filteredData = getAllProjectData()
             const currentIndex = filteredData.findIndex(d => d.week === selectedDrillDown?.week)
             const canGoPrev = currentIndex > 0
             const canGoNext = currentIndex < filteredData.length - 1
@@ -2686,8 +3077,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 description: 'Time-period analysis with milestone context and spending patterns'
               },
               'cost-categories': {
-                title: `Cost Categories - ${selectedTimelineWeek}`,
-                description: 'Weekly breakdown of materials, labour, and equipment costs'
+                title: `Cost Categories Analysis - ${temporalDateRange === 'last4' ? 'Last 4 Weeks' : temporalDateRange === 'last8' ? 'Last 8 Weeks' : 'All Previous Weeks'}`,
+                description: 'Category breakdown analysis with variance investigation'
               },
               'budget-alerts': {
                 title: 'Budget Risk Analysis',
@@ -2707,9 +3098,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 <DialogHeader className="pb-4 border-b flex-shrink-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-6">
-                      <DialogTitle className="text-2xl font-bold text-gray-900">
-                        {config.title}
-                      </DialogTitle>
+                      <div>
+                        <DialogTitle className="text-2xl font-bold text-gray-900">
+                          {config.title}
+                        </DialogTitle>
+                        <p className="text-sm text-gray-600 mt-1">{config.description}</p>
+                      </div>
                       
                       {/* Timeline Navigation - shown for spending-trends and transactions */}
                       {(modalType === 'spending-trends' || modalType === 'transactions') && (
@@ -2769,31 +3163,31 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                       )}
                       
-                      {/* Timeline Slider - shown for cost-categories */}
+                      {/* Simple Timeline Navigation - shown for cost-categories */}
                       {modalType === 'cost-categories' && (
-                        <div className="flex items-center space-x-3 bg-gray-50 rounded-lg p-3 relative z-10">
-                          <span className="text-sm font-medium text-gray-700">Timeline:</span>
-                          <div className="flex items-center space-x-3 min-w-[300px]">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-sm text-gray-600">Timeline:</span>
+                          <div className="flex items-center space-x-2">
                             <Button 
                               size="sm" 
-                              variant="outline" 
+                              variant="ghost" 
                               onClick={() => {
-                                const filteredData = getFilteredSpendingData()
+                                const filteredData = getAllProjectData()
                                 const currentIndex = filteredData.findIndex(d => d.week === selectedTimelineWeek)
                                 if (currentIndex > 0) {
                                   setSelectedTimelineWeek(filteredData[currentIndex - 1].week)
                                 }
                               }}
-                              className="h-8 w-8 p-0"
+                              className="h-8 w-8 p-0 hover:bg-gray-100"
                             >
-                              <ChevronLeft className="h-3 w-3" />
+                              <ChevronLeft className="h-4 w-4" />
                             </Button>
                             <Select value={selectedTimelineWeek} onValueChange={setSelectedTimelineWeek}>
-                              <SelectTrigger className="min-w-[120px] h-8 text-sm">
+                              <SelectTrigger className="min-w-[100px] h-8 text-sm border-none shadow-none bg-transparent">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {getFilteredSpendingData().map((weekData) => (
+                                {getAllProjectData().map((weekData) => (
                                   <SelectItem key={weekData.week} value={weekData.week}>
                                     {weekData.week}
                                   </SelectItem>
@@ -2802,17 +3196,17 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             </Select>
                             <Button 
                               size="sm" 
-                              variant="outline" 
+                              variant="ghost"
                               onClick={() => {
-                                const filteredData = getFilteredSpendingData()
+                                const filteredData = getAllProjectData()
                                 const currentIndex = filteredData.findIndex(d => d.week === selectedTimelineWeek)
                                 if (currentIndex < filteredData.length - 1) {
                                   setSelectedTimelineWeek(filteredData[currentIndex + 1].week)
                                 }
                               }}
-                              className="h-8 w-8 p-0"
+                              className="h-8 w-8 p-0 hover:bg-gray-100"
                             >
-                              <ChevronRight className="h-3 w-3" />
+                              <ChevronRight className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
@@ -2944,7 +3338,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                     <span className="text-purple-700">Lower Range:</span>
                                     <span className="font-medium text-purple-900">£{metrics.confidenceInterval.lower.toLocaleString()}</span>
                                   </div>
-                                  <div className="text-xs text-purple-600 pt-1">
+                                  <div className="text-xs text-slate-600 pt-1">
                                     ±{(((metrics.confidenceInterval.upper - metrics.confidenceInterval.lower) / 2 / metrics.projectedSpend) * 100).toFixed(0)}% confidence range
                                   </div>
                                 </div>
@@ -2961,7 +3355,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     <Card className="shadow-sm">
                       <CardHeader className="pb-4">
                         <CardTitle className="text-lg font-semibold flex items-center">
-                          <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
+                          <BarChart3 className="h-5 w-5 mr-2 text-slate-600" />
                           Trend Analysis
                         </CardTitle>
                       </CardHeader>
@@ -3064,140 +3458,490 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                       </CardContent>
                     </Card>
+                    
+                    {/* Week-by-Week Breakdown Cards */}
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-lg font-semibold flex items-center">
+                          <Activity className="h-5 w-5 mr-2 text-green-600" />
+                          Week-by-Week Breakdown
+                        </CardTitle>
+                        <p className="text-sm text-gray-600">Detailed spending analysis across project timeline</p>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                          {getAllProjectData().map((weekData, index) => {
+                            const currentWeekIndex = 11 // Week 12 is current
+                            const isCurrentWeek = index === currentWeekIndex
+                            const isPastWeek = index < currentWeekIndex
+                            const isFutureWeek = index > currentWeekIndex
+                            const weekSpend = weekData.actual || weekData.projected || 0
+                            const budgetForWeek = weekData.budget || 0
+                            const variance = weekSpend - budgetForWeek
+                            const variancePercent = budgetForWeek > 0 ? (variance / budgetForWeek) * 100 : 0
+                            
+                            return (
+                              <div key={weekData.week} 
+                                className={`p-4 rounded-lg border transition-all hover:shadow-md ${
+                                  isCurrentWeek ? 'bg-blue-50 border-blue-200 shadow-md' :
+                                  isPastWeek ? 'bg-gray-50 border-gray-200' :
+                                  'bg-orange-50 border-orange-200'
+                                }`}
+                              >
+                                <div className="flex justify-between items-start mb-2">
+                                  <div>
+                                    <div className="font-semibold text-sm flex items-center">
+                                      {weekData.week}
+                                      {isCurrentWeek && <span className="ml-2 px-2 py-1 text-xs bg-blue-600 text-white rounded">Current</span>}
+                                      {isPastWeek && <CheckCircle className="ml-2 h-3 w-3 text-green-600" />}
+                                      {isFutureWeek && <Clock className="ml-2 h-3 w-3 text-orange-600" />}
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      {isPastWeek ? 'Actual' : isFutureWeek ? 'Projected' : 'Current'}
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="font-bold text-sm">£{weekSpend.toLocaleString()}</div>
+                                    <div className={`text-xs ${
+                                      Math.abs(variancePercent) < 5 ? 'text-gray-600' :
+                                      variancePercent > 0 ? 'text-red-600' : 'text-green-600'
+                                    }`}>
+                                      {variance > 0 ? '+' : ''}£{variance.toLocaleString()}
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                  {/* Budget vs Actual/Projected Bar */}
+                                  <div>
+                                    <div className="flex justify-between text-xs mb-1">
+                                      <span>vs Budget</span>
+                                      <span>{Math.abs(variancePercent).toFixed(0)}% {variancePercent > 0 ? 'over' : 'under'}</span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                      <div 
+                                        className={`h-2 rounded-full ${
+                                          variancePercent > 10 ? 'bg-red-500' :
+                                          variancePercent > 0 ? 'bg-orange-500' :
+                                          variancePercent > -10 ? 'bg-green-500' : 'bg-blue-500'
+                                        }`}
+                                        style={{ width: `${Math.min(100, Math.max(10, (weekSpend / Math.max(budgetForWeek, weekSpend)) * 100))}%` }}
+                                      ></div>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Key Categories */}
+                                  <div className="grid grid-cols-3 gap-1 text-xs">
+                                    <div className="text-center p-1 bg-blue-100 rounded">
+                                      <div className="font-medium">Materials</div>
+                                      <div>£{Math.floor(weekSpend * 0.45).toLocaleString()}</div>
+                                    </div>
+                                    <div className="text-center p-1 bg-green-100 rounded">
+                                      <div className="font-medium">Labor</div>
+                                      <div>£{Math.floor(weekSpend * 0.35).toLocaleString()}</div>
+                                    </div>
+                                    <div className="text-center p-1 bg-orange-100 rounded">
+                                      <div className="font-medium">Equipment</div>
+                                      <div>£{Math.floor(weekSpend * 0.20).toLocaleString()}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 )}
                 
                 {/* Cost Categories Modal */}
                 {modalType === 'cost-categories' && (
                   <div className="space-y-6">
-                    {/* Timeline Slider */}
-                    <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-lg font-semibold text-gray-900">Weekly Cost Breakdown</h3>
-                      <div className="flex items-center space-x-4">
-                        <span className="text-sm text-gray-600">Week:</span>
-                        <Select value={selectedTimelineWeek} onValueChange={setSelectedTimelineWeek}>
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {getFilteredSpendingData().map((weekData) => (
-                              <SelectItem key={weekData.week} value={weekData.week}>
-                                {weekData.week}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    {/* Cost Categories Analysis Section */}
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">Cost Categories Analysis</h3>
+                          <p className="text-sm text-gray-600">Track spending patterns by category and investigate variances</p>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <Button
+                            size="sm"
+                            variant={temporalViewMode === 'cumulative' ? 'default' : 'ghost'}
+                            onClick={() => setTemporalViewMode('cumulative')}
+                            className={`text-sm px-4 ${
+                              temporalViewMode === 'cumulative' 
+                                ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                          >
+                            Cumulative
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={temporalViewMode === 'weekly' ? 'default' : 'ghost'}
+                            onClick={() => setTemporalViewMode('weekly')}
+                            className={`text-sm px-4 ${
+                              temporalViewMode === 'weekly' 
+                                ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                          >
+                            Weekly
+                          </Button>
+                          <Select value={temporalDateRange} onValueChange={(value: string) => value && setTemporalDateRange(value as 'all' | 'last4' | 'last8')}>
+                            <SelectTrigger className="w-36 h-8 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="last4">Last 4 Weeks</SelectItem>
+                              <SelectItem value="last8">Last 8 Weeks</SelectItem>
+                              <SelectItem value="all">All Previous Weeks</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      {/* Cost Breakdown Cards */}
-                      <div className="lg:col-span-2 space-y-4">
-                        {getSpendingBreakdown({ week: selectedTimelineWeek }).map((item, index) => {
-                          const utilizationPercentage = (item.amount / item.budget) * 100
-                          const isOverBudget = utilizationPercentage > 100
-                          const isAtRisk = utilizationPercentage > 85 && utilizationPercentage <= 100
-                          
-                          return (
-                            <Card key={index} className="shadow-sm">
-                              <CardContent className="p-4">
-                                <div className={`border rounded-lg p-4 ${
-                                  isOverBudget ? 'border-red-200 bg-red-25' :
-                                  isAtRisk ? 'border-amber-200 bg-amber-25' :
-                                  'border-green-200 bg-green-25'
-                                }`}>
-                                  <div className="flex justify-between items-center mb-3">
-                                    <span className="font-semibold text-gray-900">{item.category}</span>
-                                    <div className="text-right">
-                                      <div className="text-lg font-bold text-gray-900">£{item.amount.toLocaleString()}</div>
-                                      <div className="text-xs text-gray-500">of £{item.budget.toLocaleString()}</div>
-                                    </div>
+                    {/* Cost Category Trends Chart */}
+                    <Card className="shadow-sm">
+                      <CardContent className="p-6">
+                        
+                        <div className="h-96">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <ComposedChart data={getCostCategoryChartData()} margin={{ top: 20, right: 60, left: 60, bottom: 80 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                              <XAxis 
+                                dataKey="week" 
+                                tick={{ fontSize: 11 }} 
+                                angle={-45}
+                                textAnchor="end"
+                                height={80}
+                                interval={0}
+                              />
+                              <YAxis 
+                                yAxisId="left"
+                                tick={{ fontSize: 11 }}
+                                tickFormatter={(value) => `£${(value/1000).toFixed(0)}k`}
+                                label={{ value: 'Cost Categories (£)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' } }}
+                                domain={[0, temporalViewMode === 'cumulative' ? 50000 : 5000]}
+                              />
+                              <YAxis 
+                                yAxisId="right"
+                                orientation="right"
+                                tick={{ fontSize: 11 }}
+                                tickFormatter={(value) => `£${(value/1000).toFixed(0)}k`}
+                                label={{ value: 'Budget Variance (£)', angle: 90, position: 'insideRight', style: { textAnchor: 'middle' } }}
+                                domain={temporalViewMode === 'cumulative' ? [-5000, 5000] : [-2000, 2000]}
+                              />
+                              <RechartsTooltip 
+                                formatter={(value: any, name: string) => [
+                                  `£${Number(value || 0).toLocaleString()}`, 
+                                  name.charAt(0).toUpperCase() + name.slice(1)
+                                ]}
+                                labelFormatter={(label) => `${label}`}
+                              />
+                              <Legend />
+                              <Area 
+                                yAxisId="left"
+                                type="monotone" 
+                                dataKey="materials" 
+                                stackId="1"
+                                stroke="#10b981" 
+                                fill="#86efac"
+                                name="Materials"
+                              />
+                              <Area 
+                                yAxisId="left"
+                                type="monotone" 
+                                dataKey="labour" 
+                                stackId="1"
+                                stroke="#3b82f6" 
+                                fill="#93c5fd"
+                                name="Labour"
+                              />
+                              <Area 
+                                yAxisId="left"
+                                type="monotone" 
+                                dataKey="equipment" 
+                                stackId="1"
+                                stroke="#f59e0b" 
+                                fill="#fcd34d"
+                                name="Equipment"
+                              />
+                              <Area 
+                                yAxisId="left"
+                                type="monotone" 
+                                dataKey="other" 
+                                stackId="1"
+                                stroke="#8b5cf6" 
+                                fill="#c4b5fd"
+                                name="Other"
+                              />
+                              <Line 
+                                yAxisId="right"
+                                type="monotone" 
+                                dataKey="variance" 
+                                stroke="#ef4444" 
+                                strokeWidth={2} 
+                                name="TotalVariance"
+                                dot={{ fill: '#ef4444', strokeWidth: 2, r: 4, cursor: 'pointer' }}
+                                activeDot={{ 
+                                  r: 6, 
+                                  cursor: 'pointer', 
+                                  onClick: (data: any) => handleVariancePointClick(data.payload, 'Total') 
+                                }}
+                              />
+                              
+                              {/* Project Phase Markers */}
+                              <ReferenceLine x="Week 4" stroke="#6b7280" strokeWidth={2} strokeDasharray="4 4"
+                                label={{ value: "Foundation Complete", position: "topLeft", offset: 10, style: { fill: '#374151', fontWeight: 500, fontSize: 10 } }} />
+                              <ReferenceLine x="Week 8" stroke="#6b7280" strokeWidth={2} strokeDasharray="4 4"
+                                label={{ value: "Installation Phase", position: "topLeft", offset: 10, style: { fill: '#374151', fontWeight: 500, fontSize: 10 } }} />
+                              <ReferenceLine x="Week 16" stroke="#6b7280" strokeWidth={2} strokeDasharray="4 4"
+                                label={{ value: "Completion Target", position: "topLeft", offset: 10, style: { fill: '#374151', fontWeight: 500, fontSize: 10 } }} />
+                            </ComposedChart>
+                          </ResponsiveContainer>
+                        </div>
+                        
+                      </CardContent>
+                    </Card>
+
+                    {/* Actionable Variance Breakdown Cards */}
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold text-gray-900">Significant Variances Requiring Action</h3>
+                        <div className="text-sm text-gray-600">
+                          Showing variances ≥{varianceThreshold}% threshold
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {getActionableVarianceBreakdown().map((variance: any, index) => (
+                          <Card 
+                            key={index} 
+                            className={`shadow-sm border-l-4 cursor-pointer hover:shadow-md transition-shadow ${
+                              variance.variancePercent >= 0 ? 'border-l-red-500' : 'border-l-green-500'
+                            }`}
+                            onClick={() => handleVariancePointClick(variance, variance.category)}
+                          >
+                            <CardContent className="p-4">
+                              <div className="space-y-3">
+                                {/* Header */}
+                                <div>
+                                  <h4 className="font-semibold text-gray-900">{variance.category} Variance</h4>
+                                  <p className="text-sm text-gray-500">{variance.week}</p>
+                                </div>
+                                
+                                {/* Amount and Percentage */}
+                                <div className="text-right">
+                                  <div className={`text-2xl font-bold ${
+                                    variance.variancePercent >= 0 ? 'text-red-600' : 'text-green-600'
+                                  }`}>
+                                    £{Math.abs(variance.varianceAmount).toLocaleString()}
                                   </div>
-                                  
-                                  <div className="flex justify-between items-center text-sm mb-3">
-                                    <span className="text-gray-600">Budget Utilisation:</span>
-                                    <span className={`font-semibold ${
-                                      isOverBudget ? 'text-red-600' :
-                                      isAtRisk ? 'text-amber-600' :
-                                      'text-green-600'
-                                    }`}>
-                                      {utilizationPercentage.toFixed(1)}%
-                                    </span>
-                                  </div>
-                                  
-                                  {/* Progress Bar */}
-                                  <div className="mb-3">
-                                    <div className="w-full bg-gray-200 rounded-full h-3">
-                                      <div 
-                                        className={`h-3 rounded-full transition-all ${
-                                          isOverBudget ? 'bg-red-500' :
-                                          isAtRisk ? 'bg-amber-500' :
-                                          'bg-green-500'
-                                        }`}
-                                        style={{ width: `${Math.min(100, utilizationPercentage)}%` }}
-                                      ></div>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-600">Variance:</span>
-                                    <span className={`font-semibold flex items-center ${
-                                      item.variance < 0 ? 'text-green-600' : 'text-red-600'
-                                    }`}>
-                                      {item.variance < 0 ? <TrendingDown className="h-3 w-3 mr-1" /> : <TrendingUp className="h-3 w-3 mr-1" />}
-                                      {item.variance < 0 ? '-' : '+'} £{Math.abs(item.variance).toLocaleString()}
-                                    </span>
+                                  <div className={`text-sm ${
+                                    variance.variancePercent >= 0 ? 'text-red-600' : 'text-green-600'
+                                  }`}>
+                                    ({variance.variancePercent >= 0 ? '+' : ''}{variance.variancePercent.toFixed(1)}% variance)
                                   </div>
                                 </div>
-                              </CardContent>
-                            </Card>
-                          )
-                        })}
-                      </div>
 
-                      {/* Bar Chart */}
-                      <div className="lg:col-span-1">
-                        <Card className="shadow-sm">
-                          <CardHeader className="pb-4">
-                            <CardTitle className="text-lg font-semibold">Budget vs Actual Comparison</CardTitle>
-                            <p className="text-sm text-gray-600">{selectedTimelineWeek}</p>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="h-80">
-                              <ResponsiveContainer width="100%" height="100%">
-                                <BarChart
-                                  data={getSpendingBreakdown({ week: selectedTimelineWeek }).map(item => ({
-                                    category: item.category,
-                                    Budget: item.budget,
-                                    Actual: item.amount,
-                                    Projected: Math.round(item.amount * 1.1) // Simple projection
-                                  }))}
-                                  margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                                >
-                                  <CartesianGrid strokeDasharray="3 3" />
-                                  <XAxis 
-                                    dataKey="category" 
-                                    angle={-45}
-                                    textAnchor="end"
-                                    height={80}
-                                    interval={0}
-                                  />
-                                  <YAxis tickFormatter={(value) => `£${(value / 1000).toFixed(0)}k`} />
-                                  <RechartsTooltip 
-                                    formatter={(value: number, name: string) => [`£${value.toLocaleString()}`, name]}
-                                    labelFormatter={(label) => `${label}`}
-                                  />
-                                  <Legend />
-                                  <Bar dataKey="Budget" fill="#ef4444" name="Budget" />
-                                  <Bar dataKey="Actual" fill="#059669" name="Actual" />
-                                  <Bar dataKey="Projected" fill="#3b82f6" name="Projected" />
-                                </BarChart>
-                              </ResponsiveContainer>
-                            </div>
-                          </CardContent>
-                        </Card>
+                                {/* Description */}
+                                <p className="text-sm text-gray-600 leading-relaxed">
+                                  {variance.investigation.rootCause}
+                                </p>
+
+                                {/* Quick Action Indicators */}
+                                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                                  <div className="flex items-center text-xs text-gray-500">
+                                    <Phone className="h-3 w-3 mr-1" />
+                                    {variance.investigation.suppliers.length} contacts
+                                  </div>
+                                  <div className="flex items-center text-xs text-blue-600">
+                                    <Search className="h-3 w-3 mr-1" />
+                                    Click to investigate
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                        
+                        {getActionableVarianceBreakdown().length === 0 && (
+                          <Card className="shadow-sm">
+                            <CardContent className="p-6 text-center">
+                              <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                              <h4 className="text-lg font-medium text-gray-900 mb-2">No Significant Variances</h4>
+                              <p className="text-gray-600">
+                                All cost categories are within ±{varianceThreshold}% threshold. 
+                                Adjust the threshold slider above to see smaller variances.
+                              </p>
+                            </CardContent>
+                          </Card>
+                        )}
                       </div>
                     </div>
+
+                    {/* Variance Investigation Popup */}
+                    <Dialog open={showVarianceInvestigation} onOpenChange={setShowVarianceInvestigation}>
+                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center">
+                            <Search className="h-5 w-5 mr-2 text-blue-600" />
+                            Variance Investigation: {selectedVariancePoint?.category} - {selectedVariancePoint?.week}
+                          </DialogTitle>
+                        </DialogHeader>
+                        
+                        {selectedVariancePoint && (
+                          <div className="space-y-6">
+                            {/* Investigation Summary */}
+                            <div className="bg-gray-50 rounded-lg p-4">
+                              <div className="grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                  <div className="text-2xl font-bold text-red-600">
+                                    {selectedVariancePoint.variancePercent >= 0 ? '+' : ''}{selectedVariancePoint.variancePercent?.toFixed(1)}%
+                                  </div>
+                                  <div className="text-sm text-gray-600">Variance</div>
+                                </div>
+                                <div>
+                                  <div className="text-2xl font-bold text-gray-900">
+                                    £{Math.abs(selectedVariancePoint.varianceAmount || 0).toLocaleString()}
+                                  </div>
+                                  <div className="text-sm text-gray-600">Impact</div>
+                                </div>
+                                <div>
+                                  <div className="text-2xl font-bold text-blue-600">
+                                    {selectedVariancePoint.date}
+                                  </div>
+                                  <div className="text-sm text-gray-600">Date</div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {(() => {
+                              const investigation = getVarianceInvestigation(selectedVariancePoint.week, selectedVariancePoint.category)
+                              return (
+                                <div className="space-y-6">
+                                  {/* Root Cause Analysis */}
+                                  <Card>
+                                    <CardHeader>
+                                      <CardTitle className="flex items-center">
+                                        <AlertTriangle className="h-5 w-5 mr-2 text-amber-600" />
+                                        Root Cause Analysis
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <div className="space-y-4">
+                                        <div>
+                                          <h4 className="font-medium text-gray-900 mb-2">What Happened:</h4>
+                                          <p className="text-gray-700">{investigation.rootCause}</p>
+                                        </div>
+                                        <div>
+                                          <h4 className="font-medium text-gray-900 mb-2">Timeline:</h4>
+                                          <p className="text-gray-700">{investigation.timeline}</p>
+                                        </div>
+                                        {investigation.invoices.length > 0 && (
+                                          <div>
+                                            <h4 className="font-medium text-gray-900 mb-2">Related Documentation:</h4>
+                                            <div className="flex flex-wrap gap-2">
+                                              {investigation.invoices.map((invoice: string) => (
+                                                <span key={invoice} className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                                                  Invoice #{invoice}
+                                                </span>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+
+                                  {/* Remediation Actions */}
+                                  <Card>
+                                    <CardHeader>
+                                      <CardTitle className="flex items-center">
+                                        <Wrench className="h-5 w-5 mr-2 text-green-600" />
+                                        Immediate Actions Required
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <div className="space-y-4">
+                                        {investigation.suppliers.map((supplier: any, i: number) => (
+                                          <div key={i} className="border rounded-lg p-4">
+                                            <div className="flex items-center justify-between mb-3">
+                                              <div>
+                                                <h4 className="font-medium text-gray-900">{supplier.name}</h4>
+                                                <p className="text-sm text-gray-600">{supplier.action}</p>
+                                              </div>
+                                              <div className="flex space-x-2">
+                                                <Button
+                                                  size="sm"
+                                                  variant="outline"
+                                                  onClick={() => window.open(`tel:${supplier.contact}`, '_self')}
+                                                >
+                                                  <Phone className="h-4 w-4 mr-1" />
+                                                  Call
+                                                </Button>
+                                                <Button
+                                                  size="sm"
+                                                  variant="outline"
+                                                  onClick={() => navigator.clipboard.writeText(supplier.contact)}
+                                                >
+                                                  Copy Contact
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+
+                                  {/* Scenario Analysis */}
+                                  <Card>
+                                    <CardHeader>
+                                      <CardTitle className="flex items-center">
+                                        <Target className="h-5 w-5 mr-2 text-purple-600" />
+                                        Decision Impact Analysis
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="border-2 border-green-200 rounded-lg p-4 bg-green-50">
+                                          <h4 className="font-medium text-green-900 mb-2 flex items-center">
+                                            <CheckCircle className="h-4 w-4 mr-1" />
+                                            Take Action Now
+                                          </h4>
+                                          <p className="text-green-800">{investigation.scenarios.immediate}</p>
+                                        </div>
+                                        <div className="border-2 border-red-200 rounded-lg p-4 bg-red-50">
+                                          <h4 className="font-medium text-red-900 mb-2 flex items-center">
+                                            <XCircle className="h-4 w-4 mr-1" />
+                                            Delay Decision
+                                          </h4>
+                                          <p className="text-red-800">{investigation.scenarios.delayed}</p>
+                                        </div>
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+                                </div>
+                              )
+                            })()}
+                          </div>
+                        )}
+                        
+                        <div className="flex justify-end space-x-2 pt-4 border-t">
+                          <Button variant="outline" onClick={() => setShowVarianceInvestigation(false)}>
+                            Close Investigation
+                          </Button>
+                          <Button>
+                            Export Report
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 )}
                 

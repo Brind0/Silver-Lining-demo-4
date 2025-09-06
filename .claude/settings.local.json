@@ -14,7 +14,14 @@
       "Bash(claude doctor)",
       "Bash(lt:*)",
       "Bash(curl:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "mcp__ide__getDiagnostics",
+      "Read(/c:\\Users\\soggy\\OneDrive\\Pictures\\Screenshots/**)",
+      "Bash(grep:*)",
+      "Read(/c:\\Users\\soggy\\OneDrive\\Pictures\\Screenshots/**)",
+      "Bash(powershell:*)",
+      "Read(//c/Users/soggy/OneDrive/Pictures/Screenshots/**)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []
