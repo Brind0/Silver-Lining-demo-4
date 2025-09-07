@@ -81,6 +81,9 @@ import { ProjectEditModal } from "@/components/project-edit-modal"
 import { AssistantEditModal } from "@/components/assistant-edit-modal"
 import { TechnicalSpecificationsModal } from "@/components/technical-specifications-modal"
 import { ActivityTooltip } from "@/components/activity-tooltip"
+import { ProfessionalVarianceCard, ProfessionalVarianceGrid } from "@/components/professional-variance-cards"
+import { ProfessionalInvestigationModal } from "@/components/professional-investigation-modal"
+import { formatCurrency } from "@/lib/evm-calculations"
 
 const projects = [
   {
@@ -193,7 +196,58 @@ const projects = [
       currentBurnRate: 5500,
       daysUntilOverrun: null,
       confidence: 87
-    }
+    },
+    // EVM and Professional Analysis Data
+    projectType: 'luxury' as const,
+    physicalProgress: 82, // From site surveys - physical completion percentage
+    plannedProgress: 84, // Planned progress at this stage
+    evmMetrics: {
+      standardPrice: 850, // Standard material price per unit
+      actualPrice: 920, // Actual price paid per unit
+      standardQuantity: 45, // Planned material quantity
+      actualQuantity: 42, // Actual quantity used
+      standardLaborRate: 75, // Standard hourly rate
+      actualLaborRate: 68, // Actual rate negotiated
+      laborHours: 180 // Total labor hours
+    },
+    suppliers: [
+      {
+        name: 'Premium Golf Tech Ltd',
+        onTimeDelivery: 94.2,
+        qualityCompliance: 98.5,
+        defectRate: 1.8,
+        costCompetitiveness: 4 as const,
+        contractCompliance: 96.8,
+        bsCompliance: ['BS6576', 'BS8102'],
+        leadTimeReliability: 102.3,
+        trend: 'STABLE' as const,
+        riskLevel: 'LOW' as const
+      },
+      {
+        name: 'Elite Installations Co',
+        onTimeDelivery: 89.1,
+        qualityCompliance: 95.2,
+        defectRate: 3.1,
+        costCompetitiveness: 3 as const,
+        contractCompliance: 91.4,
+        bsCompliance: ['BS8102'],
+        leadTimeReliability: 97.8,
+        trend: 'DECLINING' as const,
+        riskLevel: 'MEDIUM' as const
+      },
+      {
+        name: 'Henderson Flooring Specialists',
+        onTimeDelivery: 97.8,
+        qualityCompliance: 99.1,
+        defectRate: 0.9,
+        costCompetitiveness: 5 as const,
+        contractCompliance: 98.7,
+        bsCompliance: ['BS6576', 'BS8102', 'PAS2035'],
+        leadTimeReliability: 101.2,
+        trend: 'IMPROVING' as const,
+        riskLevel: 'LOW' as const
+      }
+    ]
   },
   {
     id: 2,
@@ -265,78 +319,58 @@ const projects = [
       currentBurnRate: 6500,
       daysUntilOverrun: 21,
       confidence: 85
-    }
-  },
-  {
-    id: 2,
-    name: "Marchmont Historic",
-    budget: 120000,
-    spent: 165000,
-    status: "RED",
-    statusPhrase: "Critical overrun",
-    overrunPercentage: 37.5,
-    progress: 75,
-    client: "Marchmont Trust",
-    startDate: "2023-11-01",
-    endDate: "2024-05-15",
-    description: "Historic building restoration with period-appropriate materials and modern safety standards.",
-    team: [
-      { name: "Emma Davis", role: "Heritage Specialist", avatar: "/placeholder.svg?height=40&width=40" },
-      { name: "Tom Brown", role: "Restoration Lead", avatar: "/placeholder.svg?height=40&width=40" },
-      { name: "Alice Cooper", role: "Project Coordinator", avatar: "/placeholder.svg?height=40&width=40" },
-    ],
-    phases: [
-      { name: "Assessment", status: "completed", progress: 100 },
-      { name: "Structural Work", status: "completed", progress: 100 },
-      { name: "Restoration", status: "in-progress", progress: 75 },
-      { name: "Final Inspection", status: "pending", progress: 0 },
-    ],
-    expenses: [
-      { category: "Materials", budgeted: 80000, spent: 110000, status: "Over Budget" },
-      { category: "Labour", budgeted: 35000, spent: 45000, status: "Over Budget" },
-      { category: "Permits", budgeted: 5000, spent: 10000, status: "Over Budget" },
-    ],
-    recentExpenses: [
-      { date: "2024-02-12", description: "Period stone materials", amount: 15000, vat: 3000, status: "Approved" },
-      { date: "2024-02-05", description: "Specialist craftsman", amount: 8500, vat: 1700, status: "Approved" },
-      { date: "2024-01-28", description: "Additional permits", amount: 3200, vat: 640, status: "Pending Approval" },
-    ],
-    documents: [
-      { name: "Heritage Assessment.pdf", uploadDate: "2023-10-15" },
-      { name: "Building Plans.pdf", uploadDate: "2023-11-01" },
-      { name: "Conservation Report.pdf", uploadDate: "2023-12-10" },
-    ],
-    photos: [
-      { name: "Before Restoration.jpg", uploadDate: "2023-11-05" },
-      { name: "Structural Work Progress.jpg", uploadDate: "2024-01-15" },
-      { name: "Material Samples.jpg", uploadDate: "2024-02-01" },
-    ],
-    tasks: [
-      { id: 1, name: "Restore period stonework", category: "carpenter", status: "completed", assignee: "Emma Davis", dueDate: "2024-01-20", description: "Restore original limestone facade using traditional techniques", priority: "High", estimatedHours: 40, actualHours: 38, notes: "Restoration completed to heritage standards. Stone color perfectly matched." },
-      { id: 2, name: "Update electrical systems", category: "electrical", status: "completed", assignee: "Tom Brown", dueDate: "2024-02-01", description: "Upgrade electrical systems while maintaining period aesthetics", priority: "High", estimatedHours: 24, actualHours: 26, notes: "All wiring hidden within walls. Modern safety standards met." },
-      { id: 3, name: "Repair roof drainage", category: "plumbing", status: "in-progress", assignee: "Alice Cooper", dueDate: "2024-02-28", description: "Repair and upgrade roof drainage system with period-appropriate materials", priority: "High", estimatedHours: 16, actualHours: 12, notes: "75% complete. Custom lead work in progress." },
-      { id: 4, name: "Install heritage windows", category: "carpenter", status: "in-progress", assignee: "Emma Davis", dueDate: "2024-03-15", description: "Install custom-made sash windows matching original specifications", priority: "Medium", estimatedHours: 32, actualHours: 20, notes: "First floor windows installed. Ground floor in progress." },
-      { id: 5, name: "Conservation cleaning", category: "other", status: "pending", assignee: "Tom Brown", dueDate: "2024-04-01", description: "Gentle cleaning of historic surfaces using approved conservation methods", priority: "Low", estimatedHours: 20, actualHours: 0, notes: "Awaiting completion of other work. Cleaning products approved by heritage officer." },
-      { id: 6, name: "Install period plumbing", category: "plumbing", status: "pending", assignee: "Alice Cooper", dueDate: "2024-03-30", description: "Install modern plumbing systems concealed within period fixtures", priority: "Medium", estimatedHours: 18, actualHours: 0, notes: "Period fixtures sourced and ready. Installation follows drainage completion." },
-    ],
-    weeklySpending: [
-      { week: "Week 1", spent: 20000, cumulative: 20000, forecast: 18000 },
-      { week: "Week 2", spent: 25000, cumulative: 45000, forecast: 36000 },
-      { week: "Week 3", spent: 30000, cumulative: 75000, forecast: 54000 },
-      { week: "Week 4", spent: 28000, cumulative: 103000, forecast: 72000 },
-      { week: "Week 5", spent: 35000, cumulative: 138000, forecast: 90000 },
-      { week: "Week 6", spent: 27000, cumulative: 165000, forecast: 108000 },
-      { week: "Week 7", spent: 0, cumulative: 165000, forecast: 126000 },
-      { week: "Week 8", spent: 0, cumulative: 165000, forecast: 144000 },
-    ],
-    budgetForecast: {
-      projectedTotal: 195000,
-      overrunAmount: 75000,
-      overrunDate: "2024-01-28",
-      currentBurnRate: 28500,
-      daysUntilOverrun: -30,
-      confidence: 92
-    }
+    },
+    // EVM and Professional Analysis Data
+    projectType: 'heritage' as const,
+    physicalProgress: 75, // From heritage surveys - physical completion percentage
+    plannedProgress: 80, // Planned progress at this stage
+    evmMetrics: {
+      standardPrice: 1200, // Standard heritage material price per unit
+      actualPrice: 1450, // Actual specialized material price per unit
+      standardQuantity: 85, // Planned material quantity
+      actualQuantity: 92, // Actual quantity used (higher due to waste)
+      standardLaborRate: 95, // Standard specialist craftsman rate
+      actualLaborRate: 108, // Actual rate for heritage specialists
+      laborHours: 420 // Total specialized labor hours
+    },
+    suppliers: [
+      {
+        name: 'Heritage Stone Ltd',
+        onTimeDelivery: 87.3,
+        qualityCompliance: 94.1,
+        defectRate: 4.2,
+        costCompetitiveness: 2 as const,
+        contractCompliance: 89.6,
+        bsCompliance: ['BS6576', 'BS8102', 'PAS2035'],
+        leadTimeReliability: 89.4,
+        trend: 'DECLINING' as const,
+        riskLevel: 'HIGH' as const
+      },
+      {
+        name: 'Cotswold Conservation Materials',
+        onTimeDelivery: 96.8,
+        qualityCompliance: 99.2,
+        defectRate: 0.8,
+        costCompetitiveness: 5 as const,
+        contractCompliance: 97.3,
+        bsCompliance: ['BS6576', 'BS8102', 'PAS2035'],
+        leadTimeReliability: 103.2,
+        trend: 'IMPROVING' as const,
+        riskLevel: 'LOW' as const
+      },
+      {
+        name: 'Traditional Craftsmen Guild',
+        onTimeDelivery: 91.5,
+        qualityCompliance: 97.8,
+        defectRate: 2.1,
+        costCompetitiveness: 3 as const,
+        contractCompliance: 94.7,
+        bsCompliance: ['BS8102'],
+        leadTimeReliability: 95.6,
+        trend: 'STABLE' as const,
+        riskLevel: 'MEDIUM' as const
+      }
+    ]
   },
 ]
 
@@ -404,6 +438,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null) // Filter by category
   const [showVarianceInvestigation, setShowVarianceInvestigation] = useState(false)
   const [selectedVariancePoint, setSelectedVariancePoint] = useState<any>(null)
+  
+  // Professional Analysis modal state
+  const [showProfessionalModal, setShowProfessionalModal] = useState(false)
+  const [selectedProfessionalAnalysis, setSelectedProfessionalAnalysis] = useState<any>(null)
 
   // Initialize selectedTimelineWeek with the first week
   useEffect(() => {
@@ -509,16 +547,18 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     
     // Apply date range filter
     let filteredByRange = allData
-    if (temporalDateRange !== 'all') {
-      const currentWeekIndex = 11 // Week 12 is current
-      switch (temporalDateRange) {
-        case 'last4':
-          filteredByRange = allData.slice(Math.max(0, currentWeekIndex - 3), currentWeekIndex + 1)
-          break
-        case 'last8':
-          filteredByRange = allData.slice(Math.max(0, currentWeekIndex - 7), currentWeekIndex + 1)
-          break
-      }
+    const currentWeekIndex = 11 // Week 12 is current
+    switch (temporalDateRange) {
+      case 'last4':
+        filteredByRange = allData.slice(Math.max(0, currentWeekIndex - 3), currentWeekIndex + 1)
+        break
+      case 'last8':
+        filteredByRange = allData.slice(Math.max(0, currentWeekIndex - 7), currentWeekIndex + 1)
+        break
+      case 'all':
+        // Show all weeks including current week (weeks 1-12)
+        filteredByRange = allData.slice(0, currentWeekIndex + 1)
+        break
     }
     
     // Apply view mode transformation
@@ -726,16 +766,18 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     
     // Apply date range filter
     let filteredByRange = allData
-    if (temporalDateRange !== 'all') {
-      const currentWeekIndex = 11 // Week 12 is current
-      switch (temporalDateRange) {
-        case 'last4':
-          filteredByRange = allData.slice(Math.max(0, currentWeekIndex - 3), currentWeekIndex + 1)
-          break
-        case 'last8':
-          filteredByRange = allData.slice(Math.max(0, currentWeekIndex - 7), currentWeekIndex + 1)
-          break
-      }
+    const currentWeekIndex = 11 // Week 12 is current
+    switch (temporalDateRange) {
+      case 'last4':
+        filteredByRange = allData.slice(Math.max(0, currentWeekIndex - 3), currentWeekIndex + 1)
+        break
+      case 'last8':
+        filteredByRange = allData.slice(Math.max(0, currentWeekIndex - 7), currentWeekIndex + 1)
+        break
+      case 'all':
+        // Show all weeks including current week (weeks 1-12)
+        filteredByRange = allData.slice(0, currentWeekIndex + 1)
+        break
     }
 
     return filteredByRange.map((weekData, index) => {
@@ -787,16 +829,18 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     let filteredData = allData
     
     // Apply date range filter to match chart filtering
-    if (temporalDateRange !== 'all') {
-      const currentWeekIndex = 11 // Week 12 is current
-      switch (temporalDateRange) {
-        case 'last4':
-          filteredData = allData.slice(Math.max(0, currentWeekIndex - 3), currentWeekIndex + 1)
-          break
-        case 'last8':
-          filteredData = allData.slice(Math.max(0, currentWeekIndex - 7), currentWeekIndex + 1)
-          break
-      }
+    const currentWeekIndex = 11 // Week 12 is current
+    switch (temporalDateRange) {
+      case 'last4':
+        filteredData = allData.slice(Math.max(0, currentWeekIndex - 3), currentWeekIndex + 1)
+        break
+      case 'last8':
+        filteredData = allData.slice(Math.max(0, currentWeekIndex - 7), currentWeekIndex + 1)
+        break
+      case 'all':
+        // Show all weeks including current week (weeks 1-12)
+        filteredData = allData.slice(0, currentWeekIndex + 1)
+        break
     }
     
     // Generate variance time series data for the filtered period
@@ -1373,6 +1417,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
             <TabsTrigger value="team">Team</TabsTrigger>
             <TabsTrigger value="budget">Budget</TabsTrigger>
+            <TabsTrigger value="professional">Professional Analysis</TabsTrigger>
             <TabsTrigger value="files">Files</TabsTrigger>
           </TabsList>
 
@@ -2032,7 +2077,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                       <div className="font-medium text-blue-900">£{Number(data.actual).toLocaleString()}</div>
                                       {data.daily && (
                                         <>
-                                          <div className="text-xs text-gray-600">Daily: £{(data.daily.reduce((sum: number, day: number) => sum + day, 0) / 7).toLocaleString()}/day avg</div>
+                                          <div className="text-xs text-gray-600">Weekly: £{data.daily.reduce((sum: number, day: number) => sum + day, 0).toLocaleString()}</div>
                                           <div className="text-xs cursor-pointer text-blue-600 hover:text-blue-800" onClick={() => handleDrillDown(data, 'line', 'spending-trends')}>Click for details →</div>
                                         </>
                                       )}
@@ -3017,6 +3062,189 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </div>
             )}
           </TabsContent>
+
+          <TabsContent value="professional" className="space-y-6">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Professional Variance Analysis</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Earned Value Management (EVM) analysis compliant with UK construction industry standards
+                  </p>
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  BS6576 | BS8102 | PAS2035 Compliant
+                </Badge>
+              </div>
+
+              {/* Professional Variance Cards */}
+              {projectData.projectType && projectData.physicalProgress && projectData.evmMetrics && (
+                <ProfessionalVarianceCard
+                  projectName={projectData.name}
+                  projectType={projectData.projectType}
+                  budgetAtCompletion={projectData.budget}
+                  physicalProgress={projectData.physicalProgress}
+                  plannedProgress={projectData.plannedProgress}
+                  actualCost={projectData.spent}
+                  standardPrice={projectData.evmMetrics?.standardPrice}
+                  actualPrice={projectData.evmMetrics?.actualPrice}
+                  standardQuantity={projectData.evmMetrics?.standardQuantity}
+                  actualQuantity={projectData.evmMetrics?.actualQuantity}
+                  standardLaborRate={projectData.evmMetrics?.standardLaborRate}
+                  actualLaborRate={projectData.evmMetrics?.actualLaborRate}
+                  laborHours={projectData.evmMetrics?.laborHours}
+                  suppliers={projectData.suppliers}
+                  onInvestigate={(metrics) => {
+                    setSelectedProfessionalAnalysis({
+                      metrics,
+                      category: 'Cost Performance',
+                      varianceAmount: metrics.CV,
+                      investigationData: {
+                        rootCause: `${projectData.projectType === 'heritage' ? 'Heritage material' : 'Premium equipment'} price escalation due to supply chain constraints and specialist supplier premium. Market conditions have driven 15% increase in material costs since project baseline, with limited alternative suppliers meeting ${projectData.projectType === 'heritage' ? 'conservation standards' : 'luxury specification requirements'}.`,
+                        timeline: 'Price escalation commenced Week 8 following supplier notification. Impact accumulated over 4-week period with 68% contribution to total variance. Current trajectory indicates continued pressure through Q2.',
+                        industryContext: `${projectData.projectType === 'heritage' ? 'Heritage restoration sector' : 'Luxury construction market'} experiencing 12-18% material cost inflation. Brexit supply chain disruption and specialist skill shortages driving premium rates. Industry CPI average 0.92 for comparable projects.`,
+                        trendAnalysis: `${projectData.CPI < 0.90 ? 'Declining performance trend requires immediate intervention' : 'Performance within manageable parameters but trending negative'}. 30-day moving average shows ${projectData.CPI < 0.95 ? 'deteriorating' : 'stable'} cost control.`,
+                        benchmarking: {
+                          projectCPI: metrics.CPI,
+                          industryStandard: projectData.projectType === 'heritage' ? '0.90-1.05' : '0.95-1.10',
+                          similarProjects: `Peer analysis: ${projectData.projectType === 'heritage' ? 'Heritage projects' : 'Luxury installations'} averaging ${projectData.projectType === 'heritage' ? '12%' : '8%'} variance. Project ranks ${metrics.CPI < 0.92 ? 'bottom quartile' : 'median'} for cost performance.`,
+                          supplierPerformance: `Key suppliers ${projectData.suppliers?.[0]?.riskLevel === 'HIGH' ? 'underperforming' : 'meeting'} SLA requirements. ${projectData.suppliers?.filter(s => s.riskLevel === 'HIGH').length || 0} high-risk suppliers requiring management attention.`
+                        },
+                        remediationOptions: [
+                          {
+                            title: 'Switch to Alternative Supplier',
+                            description: `Transition to ${projectData.projectType === 'heritage' ? 'Cotswold Conservation Materials' : 'Premium Golf Tech Ltd'} for remaining 40% of materials. Verified supplier with superior performance metrics and 8% cost advantage.`,
+                            investment: 2500,
+                            netBenefit: 8200,
+                            timeframe: 2,
+                            successProbability: 85,
+                            riskLevel: 'LOW' as const,
+                            criticalPathImpact: 3,
+                            implementation: '3-day transition period',
+                            owner: 'Procurement Manager',
+                            deadline: '14 days from approval'
+                          },
+                          {
+                            title: 'Renegotiate Current Contract',
+                            description: 'Leverage project scale and payment terms to secure 5-7% price reduction. Include volume commitment and early payment incentives.',
+                            investment: 800,
+                            netBenefit: 4200,
+                            timeframe: 1.5,
+                            successProbability: 65,
+                            riskLevel: 'MEDIUM' as const,
+                            criticalPathImpact: 0,
+                            implementation: '2-week negotiation cycle',
+                            owner: 'Commercial Manager',
+                            deadline: '10 days from approval'
+                          },
+                          {
+                            title: 'Value Engineering Optimization',
+                            description: 'Technical review of specifications to identify cost-neutral alternatives maintaining quality standards. Focus on material quantities and installation methods.',
+                            investment: 1500,
+                            netBenefit: 6800,
+                            timeframe: 3,
+                            successProbability: 78,
+                            riskLevel: 'LOW' as const,
+                            criticalPathImpact: -2,
+                            implementation: '1-week technical review',
+                            owner: 'Technical Director',
+                            deadline: '21 days from approval'
+                          }
+                        ],
+                        relatedDocumentation: [
+                          `Invoice #${Math.floor(Math.random() * 9000) + 1000}`,
+                          'Supplier Performance Report',
+                          'Market Price Analysis',
+                          `${projectData.projectType === 'heritage' ? 'Conservation Standards Compliance' : 'Quality Specification Document'}`
+                        ],
+                        impactedSuppliers: projectData.suppliers?.filter(s => s.riskLevel !== 'LOW') || []
+                      }
+                    })
+                    setShowProfessionalModal(true)
+                  }}
+                  onContactSupplier={(supplier) => {
+                    // Handle supplier contact
+                    console.log('Contacting supplier:', supplier.name)
+                  }}
+                />
+              )}
+
+              {/* Industry Benchmarking Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <BarChart3 className="h-5 w-5 mr-2 text-green-600" />
+                    Industry Benchmarking Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-gray-900">Project Classification</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Type:</span>
+                          <span className="font-medium capitalize">{projectData.projectType}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Budget Range:</span>
+                          <span className="font-medium">{formatCurrency(projectData.budget)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Complexity:</span>
+                          <span className="font-medium">
+                            {projectData.projectType === 'heritage' ? 'High (Conservation)' : 
+                             projectData.projectType === 'luxury' ? 'High (Premium)' : 'Standard'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-gray-900">Performance vs Peers</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Industry CPI Range:</span>
+                          <span className="font-medium">
+                            {projectData.projectType === 'heritage' ? '0.85-1.05' : '0.95-1.10'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Typical Variance:</span>
+                          <span className="font-medium">
+                            {projectData.projectType === 'heritage' ? '10-15%' : '5-10%'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Project Ranking:</span>
+                          <span className="font-medium">
+                            {Math.abs(projectData.spent - projectData.budget) / projectData.budget < 0.1 ? 'Top Quartile' : 'Median'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-gray-900">Compliance Standards</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {projectData.suppliers?.[0]?.bsCompliance?.map(standard => (
+                          <Badge key={standard} variant="outline" className="text-xs">
+                            {standard}
+                          </Badge>
+                        )) || [
+                          <Badge key="default" variant="outline" className="text-xs">BS8102</Badge>
+                        ]}
+                      </div>
+                      <p className="text-xs text-gray-600">
+                        All suppliers verified compliant with relevant British Standards
+                        {projectData.projectType === 'heritage' && ' and conservation requirements'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
         </Tabs>
       </div>
       
@@ -3077,7 +3305,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 description: 'Time-period analysis with milestone context and spending patterns'
               },
               'cost-categories': {
-                title: `Cost Categories Analysis - ${temporalDateRange === 'last4' ? 'Last 4 Weeks' : temporalDateRange === 'last8' ? 'Last 8 Weeks' : 'All Previous Weeks'}`,
+                title: `Cost Categories Analysis - ${temporalDateRange === 'last4' ? 'Last 4 Weeks' : temporalDateRange === 'last8' ? 'Last 8 Weeks' : 'All Weeks'}`,
                 description: 'Category breakdown analysis with variance investigation'
               },
               'budget-alerts': {
@@ -3163,54 +3391,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                       )}
                       
-                      {/* Simple Timeline Navigation - shown for cost-categories */}
-                      {modalType === 'cost-categories' && (
-                        <div className="flex items-center space-x-3">
-                          <span className="text-sm text-gray-600">Timeline:</span>
-                          <div className="flex items-center space-x-2">
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              onClick={() => {
-                                const filteredData = getAllProjectData()
-                                const currentIndex = filteredData.findIndex(d => d.week === selectedTimelineWeek)
-                                if (currentIndex > 0) {
-                                  setSelectedTimelineWeek(filteredData[currentIndex - 1].week)
-                                }
-                              }}
-                              className="h-8 w-8 p-0 hover:bg-gray-100"
-                            >
-                              <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <Select value={selectedTimelineWeek} onValueChange={setSelectedTimelineWeek}>
-                              <SelectTrigger className="min-w-[100px] h-8 text-sm border-none shadow-none bg-transparent">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {getAllProjectData().map((weekData) => (
-                                  <SelectItem key={weekData.week} value={weekData.week}>
-                                    {weekData.week}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Button 
-                              size="sm" 
-                              variant="ghost"
-                              onClick={() => {
-                                const filteredData = getAllProjectData()
-                                const currentIndex = filteredData.findIndex(d => d.week === selectedTimelineWeek)
-                                if (currentIndex < filteredData.length - 1) {
-                                  setSelectedTimelineWeek(filteredData[currentIndex + 1].week)
-                                }
-                              }}
-                              className="h-8 w-8 p-0 hover:bg-gray-100"
-                            >
-                              <ChevronRight className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      )}
                     </div>
                     
                     <Button
@@ -3563,7 +3743,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       <div className="flex items-center justify-between mb-4">
                         <div>
                           <h3 className="text-lg font-semibold text-gray-900">Cost Categories Analysis</h3>
-                          <p className="text-sm text-gray-600">Track spending patterns by category and investigate variances</p>
                         </div>
                         <div className="flex items-center space-x-3">
                           <Button
@@ -3597,7 +3776,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             <SelectContent>
                               <SelectItem value="last4">Last 4 Weeks</SelectItem>
                               <SelectItem value="last8">Last 8 Weeks</SelectItem>
-                              <SelectItem value="all">All Previous Weeks</SelectItem>
+                              <SelectItem value="all">All Weeks</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -3608,32 +3787,40 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     <Card className="shadow-sm">
                       <CardContent className="p-6">
                         
-                        <div className="h-96">
+                        <div className="h-[400px]">
                           <ResponsiveContainer width="100%" height="100%">
-                            <ComposedChart data={getCostCategoryChartData()} margin={{ top: 20, right: 60, left: 60, bottom: 80 }}>
+                            <ComposedChart data={getCostCategoryChartData()} margin={{ top: 20, right: 70, left: 70, bottom: 90 }}>
                               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                               <XAxis 
                                 dataKey="week" 
-                                tick={{ fontSize: 11 }} 
+                                tick={{ fontSize: 10 }} 
                                 angle={-45}
                                 textAnchor="end"
-                                height={80}
-                                interval={0}
+                                height={90}
+                                interval={temporalViewMode === 'weekly' && temporalDateRange === 'all' ? 1 : 0}
                               />
                               <YAxis 
                                 yAxisId="left"
                                 tick={{ fontSize: 11 }}
-                                tickFormatter={(value) => `£${(value/1000).toFixed(0)}k`}
+                                tickFormatter={(value) => {
+                                  const absValue = Math.abs(value)
+                                  if (absValue >= 1000) return `£${(value/1000).toFixed(1)}k`
+                                  return `£${value.toLocaleString()}`
+                                }}
                                 label={{ value: 'Cost Categories (£)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' } }}
-                                domain={[0, temporalViewMode === 'cumulative' ? 50000 : 5000]}
+                                domain={[0, temporalViewMode === 'cumulative' ? 50000 : temporalDateRange === 'all' ? 6000 : 4000]}
                               />
                               <YAxis 
                                 yAxisId="right"
                                 orientation="right"
                                 tick={{ fontSize: 11 }}
-                                tickFormatter={(value) => `£${(value/1000).toFixed(0)}k`}
+                                tickFormatter={(value) => {
+                                  const absValue = Math.abs(value)
+                                  if (absValue >= 1000) return `£${(value/1000).toFixed(1)}k`
+                                  return `£${value.toLocaleString()}`
+                                }}
                                 label={{ value: 'Budget Variance (£)', angle: 90, position: 'insideRight', style: { textAnchor: 'middle' } }}
-                                domain={temporalViewMode === 'cumulative' ? [-5000, 5000] : [-2000, 2000]}
+                                domain={temporalViewMode === 'cumulative' ? [-5000, 5000] : temporalDateRange === 'all' ? [-1500, 1500] : [-1000, 1000]}
                               />
                               <RechartsTooltip 
                                 formatter={(value: any, name: string) => [
@@ -3989,6 +4176,26 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           })()} 
         </DialogContent>
       </Dialog>
+
+      {/* Professional Investigation Modal */}
+      {selectedProfessionalAnalysis && (
+        <ProfessionalInvestigationModal
+          open={showProfessionalModal}
+          onOpenChange={setShowProfessionalModal}
+          projectName={projectData.name}
+          metrics={selectedProfessionalAnalysis.metrics}
+          category={selectedProfessionalAnalysis.category}
+          varianceAmount={selectedProfessionalAnalysis.varianceAmount}
+          investigationData={selectedProfessionalAnalysis.investigationData}
+          onSelectOption={(option) => {
+            console.log('Selected remediation option:', option.title)
+            setShowProfessionalModal(false)
+          }}
+          onContactSupplier={(supplier) => {
+            console.log('Contacting supplier:', supplier.name)
+          }}
+        />
+      )}
     </MainLayout>
   )
 }
