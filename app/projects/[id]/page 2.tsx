@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, ComposedChart } from "recharts"
 import {
   ArrowLeft,
@@ -47,6 +48,12 @@ import {
   Check,
   ChevronDown,
   Download,
+  TrendingUp,
+  ChevronLeft,
+  ChevronRight,
+  BarChart3,
+  Eye,
+  X
 } from "lucide-react"
 import Link from "next/link"
 
@@ -308,6 +315,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [completedTasks, setCompletedTasks] = useState<number[]>([])
   const [selectedTask, setSelectedTask] = useState<any>(null)
   const [taskAssignments, setTaskAssignments] = useState<{[key: number]: string}>({})
+  
+  // Budget page enhancements state
+  const [selectedWeekDetail, setSelectedWeekDetail] = useState<any>(null)
+  const [showWeekDetailCard, setShowWeekDetailCard] = useState(false)
+  const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0)
 
   const toggleTaskCompletion = (taskId: number) => {
     setCompletedTasks(prev => 
@@ -356,6 +368,63 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     if (days <= 30) return `£${overrun.toLocaleString()} Overrun Forecast in ${days} days`
     return `£${overrun.toLocaleString()} Projected Overrun`
   }
+
+  // Enhanced budget functionality helpers
+  const handleWeekClick = (data: any) => {
+    if (data?.activePayload?.[0]?.payload) {
+      const weekData = data.activePayload[0].payload
+      const topExpenses = [
+        { category: 'Materials', amount: Math.floor(weekData.spent * 0.4) },
+        { category: 'Labour', amount: Math.floor(weekData.spent * 0.35) },
+        { category: 'Equipment', amount: Math.floor(weekData.spent * 0.25) }
+      ]
+      setSelectedWeekDetail({
+        ...weekData,
+        topExpenses,
+        variance: weekData.spent - (projectData.budget / 8) // Approximate weekly budget
+      })
+      setShowWeekDetailCard(true)
+    }
+  }
+
+  const exportToPDF = () => {
+    console.log('Exporting to PDF...')
+  }
+
+  const exportToExcel = () => {
+    console.log('Exporting to Excel...')
+  }
+
+  // Cost categories data for swipeable component
+  const costCategoriesData = [
+    {
+      title: 'Materials Breakdown',
+      data: [
+        { name: 'Steel', value: 12000, color: '#1e3a8a' },
+        { name: 'Concrete', value: 8500, color: '#3b82f6' },
+        { name: 'Finishes', value: 6200, color: '#60a5fa' },
+        { name: 'Other', value: 3800, color: '#93c5fd' }
+      ]
+    },
+    {
+      title: 'Labour Analysis', 
+      data: [
+        { name: 'Skilled Labour', value: 15000, color: '#059669' },
+        { name: 'General Labour', value: 8000, color: '#10b981' },
+        { name: 'Specialists', value: 5500, color: '#34d399' },
+        { name: 'Supervision', value: 2800, color: '#6ee7b7' }
+      ]
+    },
+    {
+      title: 'Equipment Costs',
+      data: [
+        { name: 'Rental Equipment', value: 9500, color: '#dc2626' },
+        { name: 'Fuel & Operations', value: 3200, color: '#ef4444' },
+        { name: 'Maintenance', value: 1800, color: '#f87171' },
+        { name: 'Transport', value: 1200, color: '#fca5a5' }
+      ]
+    }
+  ]
 
   return (
     <MainLayout>
@@ -1038,12 +1107,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                           data={projectData.weeklySpending || []} 
                           margin={{ top: 20, right: 80, left: 20, bottom: 5 }}
                           onClick={(data: any) => {
-                            if (data?.activePayload?.[0]?.payload?.riskAlert) {
-                              const alert = data.activePayload[0].payload.riskAlert;
-                              if (confirm(`Risk Alert: £${alert.overrun.toLocaleString()} overrun expected by ${alert.date} (${alert.confidence}% confidence)\n\nRecommended Action: ${alert.action}\n\nClick OK to implement this action.`)) {
-                                console.log(`Action taken: ${alert.action} at ${new Date().toISOString()}`);
-                                alert(`Action logged: ${alert.action}`);
-                              }
+                            if (data?.activePayload?.[0]?.payload) {
+                              handleWeekClick(data.activePayload[0].payload);
                             }
                           }}
                         >
@@ -1234,31 +1299,82 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   </CardContent>
                 </Card>
 
-                {/* Budget Breakdown */}
+                {/* Swipeable Cost Categories */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Category Breakdown</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {projectData.expenses.map((expense, index) => (
-                      <div key={index} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">{expense.category}</span>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm text-muted-foreground">
-                              £{expense.spent.toLocaleString()} / £{expense.budgeted.toLocaleString()}
-                            </span>
-                            <Badge variant={expense.status === "Over Budget" ? "destructive" : "secondary"}>
-                              {expense.status}
-                            </Badge>
-                          </div>
-                        </div>
-                        <Progress
-                          value={(expense.spent / expense.budgeted) * 100}
-                          className={`h-2 ${expense.status === "Over Budget" ? "[&>div]:bg-red-500" : ""}`}
-                        />
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                    <div className="flex flex-col">
+                      <CardTitle className="text-lg font-semibold flex items-center">
+                        <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
+                        {costCategoriesData[currentCategoryIndex].title}
+                      </CardTitle>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Swipe to view different category breakdowns
                       </div>
-                    ))}
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCurrentCategoryIndex(Math.max(0, currentCategoryIndex - 1))}
+                        disabled={currentCategoryIndex === 0}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-xs text-muted-foreground px-2">
+                        {currentCategoryIndex + 1} / {costCategoriesData.length}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCurrentCategoryIndex(Math.min(costCategoriesData.length - 1, currentCategoryIndex + 1))}
+                        disabled={currentCategoryIndex === costCategoriesData.length - 1}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={costCategoriesData[currentCategoryIndex].data} margin={{ top: 20, right: 20, bottom: 5, left: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" strokeOpacity={0.3} />
+                          <XAxis 
+                            dataKey="name" 
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 500 }}
+                            interval={0}
+                            angle={-45}
+                            textAnchor="end"
+                            height={60}
+                          />
+                          <YAxis 
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fontSize: 10, fill: '#6b7280', fontWeight: 400 }}
+                            tickFormatter={(value) => `£${(value / 1000).toFixed(0)}k`}
+                          />
+                          <RechartsTooltip 
+                            contentStyle={{
+                              backgroundColor: '#ffffff',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '6px',
+                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                              fontSize: '11px'
+                            }}
+                            formatter={(value) => [`£${Number(value).toLocaleString()}`, 'Cost']}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="value" 
+                            stroke="#1e3a8a" 
+                            strokeWidth={2.5}
+                            dot={{ fill: '#1e3a8a', strokeWidth: 2, r: 4 }}
+                            activeDot={{ r: 6, fill: '#1e3a8a' }}
+                          />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -1309,6 +1425,32 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 </Card>
               </div>
 
+              {/* Professional Analysis Navigation */}
+              <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="p-3 bg-blue-100 rounded-lg">
+                        <Eye className="h-6 w-6 text-blue-700" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-blue-900">Professional Analysis</h3>
+                        <p className="text-sm text-blue-600">
+                          Advanced EVM metrics, variance decomposition, and strategic insights
+                        </p>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={() => setActiveTab('professional-analysis')}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      View Analysis
+                      <ChevronRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Recent Expenses Table */}
               <Card>
                 <CardHeader>
@@ -1358,7 +1500,134 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   </Table>
                 </CardContent>
               </Card>
+              
+              {/* Scrollable Information Summary Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold flex items-center">
+                    📊 Budget Intelligence Summary
+                  </CardTitle>
+                  <div className="text-sm text-muted-foreground">
+                    Key insights and metrics for operational decision-making
+                  </div>
+                </CardHeader>
+                <CardContent className="max-h-64 overflow-y-auto space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="text-sm font-medium text-green-800">Performance Indicators</div>
+                        <ul className="text-xs text-green-700 mt-2 space-y-1">
+                          <li>• Weekly burn rate: £{projectData.budgetForecast?.currentBurnRate?.toLocaleString() || 'N/A'}</li>
+                          <li>• Budget utilization: {((projectData.totalSpent / projectData.budget) * 100).toFixed(1)}%</li>
+                          <li>• Days remaining: {projectData.budgetForecast?.daysUntilOverrun || 'N/A'}</li>
+                        </ul>
+                      </div>
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="text-sm font-medium text-blue-800">Trend Analysis</div>
+                        <ul className="text-xs text-blue-700 mt-2 space-y-1">
+                          <li>• Spending trend: {projectData.weeklySpending?.length > 2 ? 
+                            (projectData.weeklySpending[projectData.weeklySpending.length - 1]?.weekly > 
+                             projectData.weeklySpending[projectData.weeklySpending.length - 2]?.weekly ? 'Increasing' : 'Stable') 
+                            : 'Stable'}</li>
+                          <li>• Forecast confidence: {projectData.budgetForecast?.confidence || 'N/A'}%</li>
+                          <li>• Risk level: {projectData.weeklySpending?.some(w => w.riskAlert) ? 'High' : 'Moderate'}</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <div className="text-sm font-medium text-amber-800">Category Analysis</div>
+                        <ul className="text-xs text-amber-700 mt-2 space-y-1">
+                          {projectData.expenses.slice(0, 3).map((expense, idx) => (
+                            <li key={idx}>• {expense.category}: {((expense.spent / expense.budgeted) * 100).toFixed(0)}% utilized</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <div className="text-sm font-medium text-gray-800">Quick Actions</div>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <Button size="sm" variant="outline" className="h-6 text-xs">Export Data</Button>
+                          <Button size="sm" variant="outline" className="h-6 text-xs">Send Report</Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-t pt-3">
+                    <div className="text-xs text-muted-foreground">
+                      Last updated: {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+            
+            {/* Week Detail Card Popup */}
+            {showWeekDetailCard && selectedWeekDetail && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <Card className="w-full max-w-md mx-4">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                    <CardTitle className="text-lg font-semibold">
+                      Week {selectedWeekDetail.week} Details
+                    </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowWeekDetailCard(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Period</label>
+                        <p className="text-sm text-gray-900">{selectedWeekDetail.date}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Weekly Spend</label>
+                        <p className="text-sm text-gray-900 font-semibold">
+                          £{selectedWeekDetail.weekly?.toLocaleString() || 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Cumulative</label>
+                        <p className="text-sm text-gray-900 font-semibold">
+                          £{selectedWeekDetail.cumulative?.toLocaleString() || 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Forecast</label>
+                        <p className="text-sm text-gray-900">
+                          £{selectedWeekDetail.forecast?.toLocaleString() || 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    {selectedWeekDetail.riskAlert && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <div className="text-red-600 font-medium">⚠️ Risk Alert</div>
+                        </div>
+                        <div className="text-sm text-red-700 space-y-1">
+                          <p>£{selectedWeekDetail.riskAlert.overrun.toLocaleString()} overrun expected by {selectedWeekDetail.riskAlert.date}</p>
+                          <p className="text-xs">Confidence: {selectedWeekDetail.riskAlert.confidence}%</p>
+                          <p className="font-medium">Action: {selectedWeekDetail.riskAlert.action}</p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex space-x-2">
+                      <Button size="sm" className="flex-1" onClick={() => exportToPDF()}>
+                        Export PDF
+                      </Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => exportToExcel()}>
+                        Export Excel
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="files" className="space-y-4">

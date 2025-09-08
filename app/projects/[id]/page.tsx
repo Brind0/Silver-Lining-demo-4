@@ -48,8 +48,14 @@ import {
   Plus,
   Edit,
   FileText,
-  ImageIcon,
+  TrendingUp,
+  TrendingDown,
+  ChevronLeft,
+  ChevronRight,
+  BarChart3,
   Eye,
+  X,
+  ImageIcon,
   Check,
   Search,
   Settings,
@@ -58,13 +64,7 @@ import {
   MessageSquare,
   Download,
   RefreshCw,
-  X,
-  TrendingUp,
-  TrendingDown,
   Filter,
-  ChevronRight,
-  ChevronLeft,
-  BarChart3,
   PieChart,
   FileSpreadsheet,
   StickyNote,
@@ -413,6 +413,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [selectedTask, setSelectedTask] = useState<any>(null)
   const [taskAssignments, setTaskAssignments] = useState<{[key: number]: string}>({})
   const [searchTerm, setSearchTerm] = useState("")
+  
+  // Enhanced Phase 1 State Management
+  const [selectedWeekDetail, setSelectedWeekDetail] = useState<any>(null)
+  const [showWeekDetailCard, setShowWeekDetailCard] = useState(false)
+  const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0)
   const [createdDocuments, setCreatedDocuments] = useState<any[]>([])
   const [showDocumentModal, setShowDocumentModal] = useState(false)
   const [showProjectEditModal, setShowProjectEditModal] = useState(false)
@@ -1240,6 +1245,46 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     if (days <= 30) return `£${overrun.toLocaleString()} Overrun Forecast in ${days} days`
     return `£${overrun.toLocaleString()} Projected Overrun`
   }
+
+  // Phase 1 Helper Functions
+  const handleWeekClick = (weekData: any) => {
+    setSelectedWeekDetail(weekData)
+    setShowWeekDetailCard(true)
+  }
+
+
+  const costCategoriesData = [
+    {
+      title: 'Materials Breakdown',
+      data: [
+        { name: 'Steel', value: 12000, color: '#1e3a8a' },
+        { name: 'Concrete', value: 8500, color: '#3b82f6' },
+        { name: 'Insulation', value: 6200, color: '#60a5fa' },
+        { name: 'Tiles', value: 4800, color: '#93c5fd' },
+        { name: 'Other', value: 3100, color: '#dbeafe' }
+      ]
+    },
+    {
+      title: 'Labor Analysis',
+      data: [
+        { name: 'Plumbers', value: 15000, color: '#1e3a8a' },
+        { name: 'Electricians', value: 11500, color: '#3b82f6' },
+        { name: 'Carpenters', value: 9800, color: '#60a5fa' },
+        { name: 'General', value: 7200, color: '#93c5fd' },
+        { name: 'Supervisors', value: 4500, color: '#dbeafe' }
+      ]
+    },
+    {
+      title: 'Equipment Costs',
+      data: [
+        { name: 'Excavator', value: 8500, color: '#1e3a8a' },
+        { name: 'Crane', value: 6800, color: '#3b82f6' },
+        { name: 'Tools', value: 4200, color: '#60a5fa' },
+        { name: 'Transport', value: 3100, color: '#93c5fd' },
+        { name: 'Maintenance', value: 2400, color: '#dbeafe' }
+      ]
+    }
+  ]
 
   return (
     <MainLayout>
@@ -2078,7 +2123,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                       {data.daily && (
                                         <>
                                           <div className="text-xs text-gray-600">Weekly: £{data.daily.reduce((sum: number, day: number) => sum + day, 0).toLocaleString()}</div>
-                                          <div className="text-xs cursor-pointer text-blue-600 hover:text-blue-800" onClick={() => handleDrillDown(data, 'line', 'spending-trends')}>Click for details →</div>
+                                          <div className="text-xs cursor-pointer text-blue-600 hover:text-blue-800" onClick={() => handleWeekClick(data)}>Click for details →</div>
                                         </>
                                       )}
                                     </div>
@@ -2892,6 +2937,88 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </CardContent>
             </Card>
 
+            {/* Professional Analysis Navigation */}
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="p-3 bg-blue-100 rounded-lg">
+                      <Eye className="h-6 w-6 text-blue-700" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-blue-900">Professional Analysis</h3>
+                      <p className="text-sm text-blue-600">
+                        Advanced EVM metrics, variance decomposition, and strategic insights
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => setActiveTab('professional')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    View Analysis
+                    <ChevronRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Scrollable Information Summary Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold flex items-center">
+                  📊 Budget Intelligence Summary
+                </CardTitle>
+                <div className="text-sm text-muted-foreground">
+                  Key insights and metrics for operational decision-making
+                </div>
+              </CardHeader>
+              <CardContent className="max-h-64 overflow-y-auto space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="text-sm font-medium text-green-800">Performance Indicators</div>
+                      <ul className="text-xs text-green-700 mt-2 space-y-1">
+                        <li>• Weekly burn rate: £{((projectData.totalSpent || 0) / 12).toLocaleString()}</li>
+                        <li>• Budget utilization: {((projectData.totalSpent / projectData.budget) * 100).toFixed(1)}%</li>
+                        <li>• Days remaining: {projectData.budgetForecast?.daysUntilOverrun || 'N/A'}</li>
+                      </ul>
+                    </div>
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="text-sm font-medium text-blue-800">Trend Analysis</div>
+                      <ul className="text-xs text-blue-700 mt-2 space-y-1">
+                        <li>• Spending trend: {projectData.budgetForecast?.overrunAmount > 0 ? 'Increasing' : 'Stable'}</li>
+                        <li>• Forecast confidence: {projectData.budgetForecast?.confidence || 'N/A'}%</li>
+                        <li>• Risk level: {projectData.budgetForecast?.overrunAmount > 2000 ? 'High' : 'Moderate'}</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="text-sm font-medium text-amber-800">Category Analysis</div>
+                      <ul className="text-xs text-amber-700 mt-2 space-y-1">
+                        <li>• Materials: {((projectData.costBreakdown?.materials?.actual / projectData.costBreakdown?.materials?.budget) * 100).toFixed(0) || 'N/A'}% utilized</li>
+                        <li>• Labor: {((projectData.costBreakdown?.labor?.actual / projectData.costBreakdown?.labor?.budget) * 100).toFixed(0) || 'N/A'}% utilized</li>
+                        <li>• Equipment: {((projectData.costBreakdown?.equipment?.actual / projectData.costBreakdown?.equipment?.budget) * 100).toFixed(0) || 'N/A'}% utilized</li>
+                      </ul>
+                    </div>
+                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      <div className="text-sm font-medium text-gray-800">Quick Actions</div>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <Button size="sm" variant="outline" className="h-6 text-xs">Export Data</Button>
+                        <Button size="sm" variant="outline" className="h-6 text-xs">Send Report</Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="border-t pt-3">
+                  <div className="text-xs text-muted-foreground">
+                    Last updated: {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Auto-refresh indicator */}
             <div className="flex items-center justify-between pt-6 text-xs text-gray-500 mt-8 border-t border-gray-200">
               <div className="flex items-center space-x-2">
@@ -2908,6 +3035,62 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>
             </div>
+            
+            {/* Week Detail Card Popup */}
+            {showWeekDetailCard && selectedWeekDetail && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <Card className="w-full max-w-md mx-4">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                    <CardTitle className="text-lg font-semibold">
+                      Week {selectedWeekDetail.week} Details
+                    </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowWeekDetailCard(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Period</label>
+                        <p className="text-sm text-gray-900">{selectedWeekDetail.date || selectedWeekDetail.week}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Weekly Spend</label>
+                        <p className="text-sm text-gray-900 font-semibold">
+                          £{selectedWeekDetail.daily?.reduce((sum, day) => sum + day, 0)?.toLocaleString() || 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Cumulative</label>
+                        <p className="text-sm text-gray-900 font-semibold">
+                          £{selectedWeekDetail.actual?.toLocaleString() || 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Forecast</label>
+                        <p className="text-sm text-gray-900">
+                          £{selectedWeekDetail.projected?.toLocaleString() || 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button size="sm" className="flex-1" onClick={() => exportToPDF()}>
+                        Export PDF
+                      </Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => exportToExcel()}>
+                        Export Excel
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
             </div>
           </TabsContent>
 
