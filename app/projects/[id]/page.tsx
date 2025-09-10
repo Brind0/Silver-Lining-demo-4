@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, use } from "react"
 import { MainLayout } from "@/components/main-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -43,6 +43,7 @@ import {
   DollarSign,
   Clock,
   AlertTriangle,
+  AlertCircle,
   CheckCircle,
   XCircle,
   Plus,
@@ -423,7 +424,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [showProjectEditModal, setShowProjectEditModal] = useState(false)
   const [showAssistantModal, setShowAssistantModal] = useState(false)
   const [showTechnicalModal, setShowTechnicalModal] = useState(false)
-  const [timePeriod, setTimePeriod] = useState("30days")
+  const [timePeriod, setTimePeriod] = useState("lifetime")
   const [autoRefresh, setAutoRefresh] = useState(true)
   const [selectedDrillDown, setSelectedDrillDown] = useState<any>(null)
   const [showDrillDownModal, setShowDrillDownModal] = useState(false)
@@ -1252,6 +1253,133 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     return `£${overrun.toLocaleString()} Projected Overrun`
   }
 
+  const handlePriorityActionClick = (tab: string) => {
+    setActiveTab(tab)
+  }
+
+  const getProjectPriorityIntelligence = (project: any) => {
+    const priorities = []
+    let nextId = 1
+    const budgetPercentage = (project.spent / project.budget) * 100
+    const daysRemaining = Math.ceil((new Date(project.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    
+    // Critical budget overrun alert
+    if (budgetPercentage > 110) {
+      priorities.push({
+        id: nextId++,
+        icon: 'AlertTriangle',
+        title: 'Critical Budget Overrun',
+        description: `£${(project.spent - project.budget).toLocaleString()} over budget - immediate review required`,
+        confidence: 95,
+        urgency: 'high',
+        color: 'red',
+        actions: [
+          { label: 'View Budget', primary: true, tab: 'budget', scrollTo: 'budget-overview' },
+          { label: 'View Analysis', primary: false, tab: 'professional', scrollTo: 'budget-risk-intelligence' }
+        ]
+      })
+    }
+    
+    // Schedule variance alert
+    if (daysRemaining < 30 && project.progress < 90) {
+      priorities.push({
+        id: nextId++,
+        icon: 'Clock',
+        title: 'Schedule Variance Risk',
+        description: `${daysRemaining} days left, ${project.progress}% complete - acceleration needed`,
+        confidence: 88,
+        urgency: 'high',
+        color: 'red',
+        actions: [
+          { label: 'View EVM Analysis', primary: true, tab: 'professional', scrollTo: 'budget-risk-intelligence' },
+          { label: 'Check Resources', primary: false, tab: 'budget', scrollTo: 'pending-approvals' }
+        ]
+      })
+    }
+    
+    // Positive performance opportunity
+    if (budgetPercentage < 90 && project.progress > 75) {
+      priorities.push({
+        id: nextId++,
+        icon: 'CheckCircle',
+        title: 'Performance Opportunity',
+        description: `£${(project.budget - project.spent).toLocaleString()} potential savings - ahead of schedule`,
+        confidence: 92,
+        urgency: 'low',
+        color: 'green',
+        actions: [
+          { label: 'View Risk Intelligence', primary: true, tab: 'professional', scrollTo: 'budget-risk-intelligence' },
+          { label: 'View Impact Analysis', primary: false, tab: 'professional', scrollTo: 'active-budget-impact' }
+        ]
+      })
+    }
+    
+    // Medium priority items to fill grid
+    if (priorities.length < 4) {
+      const receiptCount = Math.floor(Math.random() * 5) + 3
+      priorities.push({
+        id: nextId++,
+        icon: 'Clock',
+        title: 'Pending Approvals',
+        description: `${receiptCount} receipts awaiting review and approval`,
+        confidence: 75,
+        urgency: 'medium',
+        color: 'amber',
+        actions: [
+          { label: 'Review Items', primary: true, tab: 'budget', scrollTo: 'pending-approvals' }
+        ]
+      })
+    }
+    
+    if (priorities.length < 4) {
+      priorities.push({
+        id: nextId++,
+        icon: 'Target',
+        title: 'Quality Inspection',
+        description: `Structural assessment due for ${project.progress}% completion`,
+        confidence: 85,
+        urgency: 'medium',
+        color: 'amber',
+        actions: [
+          { label: 'View Analysis', primary: true, tab: 'professional', scrollTo: 'budget-risk-intelligence' }
+        ]
+      })
+    }
+    
+    // Fill remaining slots if needed
+    while (priorities.length < 4) {
+      if (priorities.length === 2) {
+        priorities.push({
+          id: nextId++,
+          icon: 'TrendingUp',
+          title: 'Progress Report Due',
+          description: `Weekly stakeholder update scheduled`,
+          confidence: 70,
+          urgency: 'low',
+          color: 'blue',
+          actions: [
+            { label: 'View Progress', primary: true, tab: 'professional', scrollTo: 'predictive-analytics' }
+          ]
+        })
+      } else {
+        priorities.push({
+          id: nextId++,
+          icon: 'DollarSign',
+          title: 'Material Delivery',
+          description: `Next delivery scheduled for this week`,
+          confidence: 80,
+          urgency: 'low',
+          color: 'green',
+          actions: [
+            { label: 'Track Delivery', primary: true, tab: 'budget', scrollTo: 'spending-trends' }
+          ]
+        })
+      }
+    }
+    
+    return priorities.slice(0, 4)
+  }
+
   // Phase 1 Helper Functions
   const handleWeekClick = (weekData: any) => {
     console.log('handleWeekClick called with:', weekData)
@@ -1361,11 +1489,22 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   <span className="h-4 w-4 text-muted-foreground text-sm font-semibold flex items-center justify-center">£</span>
                   <span className="text-sm font-medium text-gray-600">Budget</span>
                 </div>
-                {projectData.spent > projectData.budget && (
-                  <Badge variant="destructive" className="text-xs">
-                    Over Budget
-                  </Badge>
-                )}
+                <Badge 
+                  variant="secondary" 
+                  className={
+                    projectData.spent > projectData.budget * 1.1
+                      ? "bg-red-50 text-red-700 border-red-200" 
+                      : projectData.spent > projectData.budget
+                        ? "bg-amber-50 text-amber-700 border-amber-200"
+                        : "bg-green-50 text-green-700 border-green-200"
+                  }
+                >
+                  {projectData.spent > projectData.budget * 1.1
+                    ? "Critical" 
+                    : projectData.spent > projectData.budget
+                      ? "At Risk"
+                      : "On Track"}
+                </Badge>
               </div>
               <div className="text-2xl font-bold text-gray-900 mb-1">£{projectData.budget.toLocaleString()}</div>
               <div className="flex items-center justify-between mb-2">
@@ -1945,81 +2084,114 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
           <TabsContent value="budget" className="space-y-4">
             <div className="space-y-6">
-              {/* Budget Status Overview */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    Budget Forecasts
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Badge 
-                          className={`text-xs font-semibold border-2 px-3 py-1 ${
-                            getBudgetStatus(projectData).status === "on-track" ? "bg-green-100 text-green-800 border-green-300" :
-                            getBudgetStatus(projectData).status === "at-risk" ? "bg-amber-100 text-amber-800 border-amber-300" :
-                            "bg-red-100 text-red-800 border-red-300"
-                          }`}
-                        >
-                          {getBudgetStatus(projectData).status === "on-track" ? "On Track" :
-                           getBudgetStatus(projectData).status === "at-risk" ? "At Risk" : "Over Budget"}
-                        </Badge>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Based on current spend rate of £{projectData.budgetForecast?.currentBurnRate?.toLocaleString() || 'N/A'}/week</p>
-                        <p>Forecast confidence: {projectData.budgetForecast?.confidence || 'N/A'}%</p>
-                      </TooltipContent>
-                    </Tooltip>
+              {/* Priority Intelligence */}
+              <Card className="h-[360px]" id="budget-overview">
+                <CardHeader className="pb-1">
+                  <CardTitle className="text-lg font-semibold flex items-center mb-0">
+                    <Target className="h-5 w-5 mr-2 text-red-500" />
+                    Priority Intelligence
                   </CardTitle>
+                  <div className="text-xs text-muted-foreground -mt-1">
+                    Critical alerts and strategic opportunities
+                  </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Overall Budget Progress */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Project Budget</span>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm text-muted-foreground">
-                          £{projectData.spent.toLocaleString()} / £{projectData.budget.toLocaleString()}
-                        </span>
-                        <span className={`text-xs font-medium ${getBudgetStatus(projectData).textColor}`}>
-                          Forecast: £{projectData.budgetForecast?.projectedTotal?.toLocaleString() || 'N/A'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <Progress
-                        value={(projectData.spent / projectData.budget) * 100}
-                        className={`h-3 [&>div]:${getBudgetStatus(projectData).color}`}
-                      />
-                      {/* Forecast indicator */}
-                      <div 
-                        className="absolute top-0 h-3 w-0.5 bg-gray-400 opacity-60"
-                        style={{ left: `${Math.min(((projectData.budgetForecast?.projectedTotal || 0) / projectData.budget) * 100, 100)}%` }}
-                      />
-                    </div>
-                    {(projectData.budgetForecast?.overrunAmount || 0) > 0 && (
-                      <div className={`p-2 rounded-lg ${
-                        getBudgetStatus(projectData).status === "over-budget" ? "bg-red-50 border border-red-200" :
-                        "bg-amber-50 border border-amber-200"
-                      }`}>
-                        <div className="flex items-center space-x-2">
-                          <AlertTriangle className={`h-4 w-4 ${
-                            getBudgetStatus(projectData).status === "over-budget" ? "text-red-600" : "text-amber-600"
-                          }`} />
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <span className={`text-xs font-medium ${
-                                getBudgetStatus(projectData).status === "over-budget" ? "text-red-700" : "text-amber-700"
-                              }`}>
-                                {formatOverrunWarning(projectData)}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Based on current spend rate and project timeline</p>
-                              <p>Current burn rate: £{projectData.budgetForecast?.currentBurnRate?.toLocaleString() || 'N/A'}/week</p>
-                            </TooltipContent>
-                          </Tooltip>
+                <CardContent className="pt-2">
+                  <div className="grid grid-cols-2 gap-3 h-full">
+                    {getProjectPriorityIntelligence(projectData).map((priority) => {
+                      const getBorderColor = (color: string) => {
+                        switch (color) {
+                          case 'red': return 'border-l-red-500 bg-red-50'
+                          case 'amber': return 'border-l-amber-500 bg-amber-50'
+                          case 'green': return 'border-l-green-500 bg-green-50'
+                          default: return 'border-l-blue-500 bg-blue-50'
+                        }
+                      }
+                      
+                      const getTextColor = (color: string) => {
+                        switch (color) {
+                          case 'red': return 'text-red-800'
+                          case 'amber': return 'text-amber-800'
+                          case 'green': return 'text-green-800'
+                          default: return 'text-blue-800'
+                        }
+                      }
+                      
+                      const getConfidenceColor = (color: string) => {
+                        switch (color) {
+                          case 'red': return 'bg-red-100 text-red-800 border-red-300'
+                          case 'amber': return 'bg-amber-100 text-amber-800 border-amber-300'
+                          case 'green': return 'bg-green-100 text-green-800 border-green-300'
+                          default: return 'bg-blue-100 text-blue-800 border-blue-300'
+                        }
+                      }
+                      
+                      const IconComponent = {
+                        'AlertTriangle': AlertTriangle,
+                        'CheckCircle': CheckCircle,
+                        'Clock': Clock,
+                        'Target': Target,
+                        'TrendingUp': TrendingUp,
+                        'DollarSign': DollarSign
+                      }[priority.icon] || Target
+                      
+                      const handlePriorityClick = (action: any) => {
+                        setActiveTab(action.tab)
+                        if (action.scrollTo) {
+                          setTimeout(() => {
+                            const element = document.getElementById(action.scrollTo)
+                            if (element) {
+                              element.scrollIntoView({ behavior: 'smooth' })
+                            }
+                          }, 100)
+                        }
+                      }
+                      
+                      return (
+                        <div key={priority.id} className={`border-l-4 p-3 rounded-lg ${getBorderColor(priority.color)}`}>
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <IconComponent className={`h-4 w-4 ${
+                                priority.color === 'red' ? 'text-red-600' :
+                                priority.color === 'amber' ? 'text-amber-600' :
+                                priority.color === 'green' ? 'text-green-600' :
+                                'text-blue-600'
+                              }`} />
+                              <h4 className={`text-sm font-medium ${getTextColor(priority.color)}`}>
+                                {priority.title}
+                              </h4>
+                            </div>
+                            <Badge className={`text-xs ${getConfidenceColor(priority.color)}`}>
+                              {priority.confidence}%
+                            </Badge>
+                          </div>
+                          
+                          <p className={`text-xs mb-3 leading-relaxed ${getTextColor(priority.color)}`}>
+                            {priority.description}
+                          </p>
+                          
+                          <div className="flex flex-wrap gap-1">
+                            {priority.actions.map((action: any, idx: number) => (
+                              <Button
+                                key={idx}
+                                size="sm"
+                                variant={action.primary ? "default" : "outline"}
+                                onClick={() => handlePriorityClick(action)}
+                                className={`text-xs h-6 px-2 ${
+                                  action.primary ? 
+                                    priority.color === 'red' ? 'bg-red-600 hover:bg-red-700' :
+                                    priority.color === 'amber' ? 'bg-amber-600 hover:bg-amber-700' :
+                                    priority.color === 'green' ? 'bg-green-600 hover:bg-green-700' :
+                                    'bg-blue-600 hover:bg-blue-700'
+                                  : 'border-gray-300 hover:bg-gray-50'
+                                }`}
+                              >
+                                {action.label}
+                              </Button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )
+                    })}
                   </div>
                 </CardContent>
               </Card>
@@ -2028,9 +2200,17 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               {/* 2x2 Dashboard Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Top Left: Comprehensive Line Graph */}
-              <Card className="col-span-1 h-[500px] flex flex-col">
+              <Card className="col-span-1 h-[500px] flex flex-col relative" id="spending-trends">
                 <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
-                  <CardTitle className="text-lg">Spending Trends</CardTitle>
+                  <div className="flex flex-col">
+                    <CardTitle className="text-lg font-semibold flex items-center">
+                      <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
+                      Spending Trends
+                    </CardTitle>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Weekly spending patterns with milestone context
+                    </div>
+                  </div>
                   <div className="flex items-center space-x-2">
                     <Select value={timePeriod} onValueChange={handleTimePeriodChange}>
                       <SelectTrigger className="w-24">
@@ -2226,337 +2406,257 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                   </div>
                 </CardContent>
-              </Card>
-
-              {/* Top Right: Key Cost Drivers */}
-              <Card className="col-span-1 h-[500px] flex flex-col">
-                <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
-                  <div>
-                    <CardTitle className="text-lg font-semibold flex items-center">
-                      <PieChart className="h-5 w-5 mr-2 text-green-600" />
-                      Budget Impact Analysis
-                    </CardTitle>
-                    <p className="text-sm text-gray-600 mt-1">Active cost overruns impacting budget with immediate remediation actions</p>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Button size="sm" variant="outline" onClick={exportToPDF}>
-                      <Download className="h-4 w-4" />
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button size="sm" variant="outline">
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem onClick={exportToPDF}>Export to PDF</DropdownMenuItem>
-                        <DropdownMenuItem onClick={exportToExcel}>Export to Excel</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex-1 min-h-0 overflow-auto">
-                  <div className="space-y-4">
-                    {[
-                      { 
-                        driver: 'Steel Price Spike', 
-                        description: 'Price increase already applied to current orders', 
-                        impact: 1200, 
-                        type: 'overrun',
-                        category: 'Materials',
-                        daysActive: 12,
-                        dailyImpact: 0,
-                        actionText: 'Renegotiate Contract',
-                        actionDetails: 'SteelCorp Ltd: +44 1234 567890 | Alternative: MetalPro: +44 1234 567891 | Contract renegotiation deadline: 3 days'
-                      },
-                      { 
-                        driver: 'Crane Rental Overrun', 
-                        description: 'Extended rental period already incurred', 
-                        impact: 450, 
-                        type: 'overrun',
-                        category: 'Equipment',
-                        daysActive: 8,
-                        dailyImpact: 45,
-                        actionText: 'Switch Provider',
-                        actionDetails: 'CraneHire Plus: +44 1234 567892 | 15% cheaper rates available | Immediate availability confirmed'
-                      },
-                      { 
-                        driver: 'Overtime Labor Costs', 
-                        description: 'Weather delays causing daily overtime charges', 
-                        impact: 890, 
-                        type: 'overrun',
-                        category: 'Labour',
-                        daysActive: 5,
-                        dailyImpact: 178,
-                        actionText: 'Adjust Schedule',
-                        actionDetails: 'Crew management portal: scheduletools.com | Emergency scheduling: +44 1234 567895'
-                      },
-                      { 
-                        driver: 'Emergency Waterproofing', 
-                        description: 'Additional materials already ordered due to rain damage', 
-                        impact: 650, 
-                        type: 'overrun',
-                        category: 'Materials',
-                        daysActive: 3,
-                        dailyImpact: 0,
-                        actionText: 'Insurance Claim',
-                        actionDetails: 'Claim #WX2024-1847 | Adjuster: Sarah Mills +44 1234 567896 | Documentation required by Friday'
-                      },
-                      { 
-                        driver: 'Specialized Subcontractor', 
-                        description: 'Expert plumbing work already commenced at premium rate', 
-                        impact: 890, 
-                        type: 'overrun',
-                        category: 'Labour',
-                        daysActive: 15,
-                        dailyImpact: 0,
-                        actionText: 'Compare Quotes',
-                        actionDetails: 'PlumbPro: +44 1234 567893 | AquaExperts: +44 1234 567894 | Current contract ends Monday'
-                      }
-                    ].map((driver, index) => {
-                      const isOverrun = driver.type === 'overrun'
-                      const impact = Math.abs(driver.impact)
-                      
-                      return (
-                        <div key={index} className={`p-4 border rounded-lg hover:shadow-sm transition-all cursor-pointer overflow-hidden ${
-                          isOverrun ? 'border-red-200 hover:bg-red-25' : 'border-green-200 hover:bg-green-25'
-                        }`}>
-                          <div className="flex justify-between items-start mb-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-gray-900 truncate">{driver.driver}</div>
-                              <div className="text-sm text-gray-600 mt-1">{driver.description}</div>
-                              {isOverrun && (
-                                <div className="flex items-center space-x-4 mt-2">
-                                  <div className="flex items-center space-x-1">
-                                    <Clock className="h-3 w-3 text-gray-400" />
-                                    <span className="text-xs text-gray-500">{driver.daysActive} days active</span>
-                                  </div>
-                                  {driver.dailyImpact > 0 && (
-                                    <div className="flex items-center space-x-1">
-                                      <AlertTriangle className="h-3 w-3 text-red-400" />
-                                      <span className="text-xs text-red-600 font-medium">£{driver.dailyImpact}/day</span>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                            <div className="text-right flex-shrink-0 ml-3">
-                              <div className={`text-lg font-bold ${
-                                isOverrun ? 'text-red-600' : 'text-green-600'
-                              }`}>
-                                {isOverrun ? '+' : '-'}£{impact.toLocaleString()}
-                              </div>
-                              <div className="text-xs text-gray-500">{driver.category}</div>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              {isOverrun ? (
-                                <TrendingUp className="h-4 w-4 text-red-600" />
-                              ) : (
-                                <TrendingDown className="h-4 w-4 text-green-600" />
-                              )}
-                              <span className={`text-sm font-medium ${
-                                isOverrun ? 'text-red-600' : 'text-green-600'
-                              }`}>
-                                {isOverrun ? 'Cost Overrun' : 'Cost Saving'}
-                              </span>
-                            </div>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto"
-                                  onClick={() => handleDrillDown(driver, 'bar', 'cost-categories')}
-                                >
-                                  {driver.actionText} <ChevronRight className="w-3 h-3 ml-1" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-sm">
-                                <p className="text-sm">{driver.actionDetails}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-
-
-              {/* Bottom Left: Budget Risk Alerts */}
-              <Card className="col-span-1 h-[500px] flex flex-col">
-                <CardHeader className="flex-shrink-0">
-                  <CardTitle className="text-lg font-semibold flex items-center">
-                    <AlertTriangle className="h-5 w-5 mr-2 text-orange-600" />
-                    Budget Risk Alerts
-                  </CardTitle>
-                  <p className="text-sm text-gray-600 mt-1">Future trends and upcoming events that may impact project budget</p>
-                </CardHeader>
-                <CardContent className="flex-1 min-h-0 overflow-auto">
-                  <div className="space-y-4">
-                    {/* Enhanced Risk Alerts with Actions */}
-                    {[
-                      {
-                        id: 1,
-                        level: 'amber',
-                        title: 'Future Material Cost Risk',
-                        message: 'Market indicators suggest 5-8% steel price increase over next 6-8 weeks - proactive action recommended',
-                        impact: '£2,400 potential increase',
-                        confidence: 85,
-                        recommendation: 'Lock in current pricing or establish hedging strategy to prevent budget overrun',
-                        actions: [
-                          { label: 'Secure Fixed Pricing Contract', urgent: true },
-                          { label: 'Evaluate Alternative Materials', urgent: false }
-                        ],
-                        positiveContext: '15% contingency buffer available to absorb potential increases'
-                      },
-                      {
-                        id: 2,
-                        level: 'green',
-                        title: 'Bulk Purchase Opportunity',
-                        message: 'ElectricPro offers 8% additional discount on next electrical component order if placed by month-end',
-                        impact: '£400 potential savings',
-                        confidence: 88,
-                        recommendation: 'Accelerate electrical component procurement to capture discount window',
-                        actions: [
-                          { label: 'Review Electrical Requirements', urgent: false },
-                          { label: 'Place Early Order', urgent: true }
-                        ],
-                        positiveContext: 'Current electrical timeline allows for early procurement'
-                      },
-                      {
-                        id: 3,
-                        level: 'red',
-                        title: 'Weather Risk Exposure',
-                        message: '40% chance of rainfall next week could impact crane operations and extend rental period',
-                        impact: '£1,800 potential additional cost',
-                        confidence: 78,
-                        recommendation: 'Implement weather contingency plan: accelerate crane-dependent work or secure backup equipment',
-                        actions: [
-                          { label: 'Execute Weather Contingency Plan', urgent: true },
-                          { label: 'Secure Backup Equipment Options', urgent: true }
-                        ],
-                        positiveContext: 'Alternative indoor work can progress during weather delays'
-                      },
-                      {
-                        id: 4,
-                        level: 'amber',
-                        title: 'Seasonal Supply Chain Disruption',
-                        message: 'Approaching holiday period (Dec 20-Jan 3) may cause 2-week delays in specialized equipment delivery',
-                        impact: '£1,200 potential storage and delay costs',
-                        confidence: 68,
-                        recommendation: 'Order critical equipment by Nov 30th to avoid seasonal delays, or plan alternative work sequences',
-                        actions: [
-                          { label: 'Accelerate Equipment Orders', urgent: true },
-                          { label: 'Develop Alternative Work Schedule', urgent: false }
-                        ],
-                        positiveContext: 'Most materials already secured, only specialized fittings at risk'
-                      },
-                      {
-                        id: 5,
-                        level: 'green',
-                        title: 'Energy Cost Optimization Window',
-                        message: 'Projected 15% drop in energy costs next month due to seasonal demand patterns',
-                        impact: '£800 potential savings',
-                        confidence: 73,
-                        recommendation: 'Schedule energy-intensive operations (concrete curing, heating) for optimal pricing window',
-                        actions: [
-                          { label: 'Reschedule Energy Operations', urgent: false },
-                          { label: 'Lock in Favorable Rates', urgent: false }
-                        ],
-                        positiveContext: 'Flexible timeline allows optimization for cost savings'
-                      }
-                    ].map((alert) => (
-                      <div key={alert.id} className={`rounded-lg border-l-4 p-4 ${
-                        alert.level === 'red' ? 'border-red-500 bg-red-50' :
-                        alert.level === 'amber' ? 'border-amber-500 bg-amber-50' :
-                        'border-green-500 bg-green-50'
-                      }`}>
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center space-x-2">
-                            {alert.level === 'red' ? <AlertTriangle className="h-4 w-4 text-red-600" /> :
-                             alert.level === 'amber' ? <AlertTriangle className="h-4 w-4 text-amber-600" /> :
-                             <CheckCircle className="h-4 w-4 text-green-600" />}
-                            <h4 className={`font-semibold text-sm ${
-                              alert.level === 'red' ? 'text-red-800' :
-                              alert.level === 'amber' ? 'text-amber-800' :
-                              'text-green-800'
-                            }`}>
-                              {alert.title}
-                            </h4>
-                          </div>
-                          <Badge className={`text-xs ${
-                            alert.level === 'red' ? 'bg-red-100 text-red-800 border-red-300' :
-                            alert.level === 'amber' ? 'bg-amber-100 text-amber-800 border-amber-300' :
-                            'bg-green-100 text-green-800 border-green-300'
-                          }`}>
-                            {alert.confidence}% confidence
-                          </Badge>
-                        </div>
-                        
-                        <p className={`text-sm mb-2 ${
-                          alert.level === 'red' ? 'text-red-700' :
-                          alert.level === 'amber' ? 'text-amber-700' :
-                          'text-green-700'
-                        }`}>
-                          {alert.message}
-                        </p>
-                        
-                        <div className="flex justify-between items-center mb-3">
-                          <span className={`text-xs font-medium ${
-                            alert.level === 'red' ? 'text-red-800' :
-                            alert.level === 'amber' ? 'text-amber-800' :
-                            'text-green-800'
-                          }`}>
-                            Impact: {alert.impact}
-                          </span>
-                          <span className="text-xs text-gray-600">
-                            {alert.positiveContext}
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <p className="text-xs font-medium text-gray-700">
-                            Recommendation: {alert.recommendation}
+                
+                {/* Enhanced Spending Trends Drill-Down Overlay */}
+                {showWeekDetailCard && selectedWeekDetail && (
+                  <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 p-4 overflow-y-auto rounded-lg">
+                    <div className="space-y-4">
+                      {/* Header */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h2 className="text-xl font-bold text-gray-900">
+                            {selectedWeekDetail.week?.replace('Week ', 'Week ') || 'Week Details'} Spending Breakdown
+                          </h2>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Detailed analysis of expenditure composition and patterns
                           </p>
-                          <div className="flex flex-wrap gap-2">
-                            {alert.actions.map((action, index) => (
-                              <Button
-                                key={index}
-                                size="sm"
-                                variant={action.urgent ? "default" : "outline"}
-                                className={`text-xs h-7 ${action.urgent ? 
-                                  (alert.level === 'red' ? 'bg-red-600 hover:bg-red-700' : 
-                                   alert.level === 'amber' ? 'bg-amber-600 hover:bg-amber-700' :
-                                   'bg-green-600 hover:bg-green-700') : ''
-                                }`}
-                              >
-                                {action.label}
-                              </Button>
-                            ))}
-                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowWeekDetailCard(false)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      {/* Key Metrics */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {(() => {
+                          const weeklySpend = selectedWeekDetail.daily?.reduce((sum: number, day: number) => sum + day, 0) || 0
+                          
+                          // Determine if this is forecasted data (future weeks) or actual data (past/current weeks)
+                          const isActualWeek = selectedWeekDetail.actual !== null && selectedWeekDetail.actual !== undefined
+                          
+                          // Get actual previous week data
+                          const previousWeek = getPreviousWeekData(selectedWeekDetail)
+                          
+                          // Calculate previous week value - always prefer actual data if available
+                          let previousWeekSpend = 0
+                          if (previousWeek) {
+                            // Check if previous week has actual spending data
+                            if (previousWeek.daily && previousWeek.daily.length > 0) {
+                              // Previous week has actual spending data - use it
+                              previousWeekSpend = previousWeek.daily.reduce((sum: number, day: number) => sum + day, 0) || 0
+                            } else if (previousWeek.actual !== null && previousWeek.actual !== undefined) {
+                              // Previous week has actual cumulative data but no daily breakdown - calculate weekly amount
+                              const prevPrevWeek = getPreviousWeekData(previousWeek)
+                              if (prevPrevWeek && prevPrevWeek.actual !== null && prevPrevWeek.actual !== undefined) {
+                                previousWeekSpend = previousWeek.actual - prevPrevWeek.actual
+                              } else {
+                                previousWeekSpend = previousWeek.actual
+                              }
+                            } else if (previousWeek.projected) {
+                              // Previous week only has forecasted data - use it
+                              const prevPrevWeek = getPreviousWeekData(previousWeek)
+                              if (prevPrevWeek?.projected) {
+                                previousWeekSpend = previousWeek.projected - prevPrevWeek.projected
+                              } else {
+                                previousWeekSpend = previousWeek.projected
+                              }
+                            }
+                          }
+                          
+                          // Calculate weekly budget allocation (current week cumulative budget - previous week cumulative budget)
+                          let weeklyBudgetAllocation = 0
+                          if (selectedWeekDetail.budgetAllocation && previousWeek?.budgetAllocation) {
+                            weeklyBudgetAllocation = selectedWeekDetail.budgetAllocation - previousWeek.budgetAllocation
+                          } else if (selectedWeekDetail.budgetAllocation) {
+                            // For first week, use the full budget allocation
+                            weeklyBudgetAllocation = selectedWeekDetail.budgetAllocation
+                          } else if (selectedWeekDetail.budget && previousWeek?.budget) {
+                            weeklyBudgetAllocation = selectedWeekDetail.budget - previousWeek.budget
+                          } else if (selectedWeekDetail.budget) {
+                            weeklyBudgetAllocation = selectedWeekDetail.budget
+                          }
+                          
+                          const weeklyForecast = selectedWeekDetail.projected && previousWeek?.projected ? 
+                            selectedWeekDetail.projected - previousWeek.projected : 0
+                          
+                          return [
+                            { 
+                              label: isActualWeek ? 'Weekly Spend' : 'Weekly Forecast', 
+                              value: isActualWeek ? weeklySpend : weeklyForecast, 
+                              sublabel: selectedWeekDetail.date || selectedWeekDetail.week 
+                            },
+                            { label: 'Previous Week', value: previousWeekSpend, sublabel: previousWeekSpend > 0 ? `${weeklySpend > previousWeekSpend ? '+' : ''}${((weeklySpend - previousWeekSpend) / previousWeekSpend * 100).toFixed(1)}%` : 'First week' },
+                            { 
+                              label: 'Weekly Budget', 
+                              value: weeklyBudgetAllocation, 
+                              sublabel: isActualWeek ? (weeklySpend > weeklyBudgetAllocation ? 'Over budget' : 'Within budget') : 'Allocated budget'
+                            },
+                            { label: 'Cumulative', value: selectedWeekDetail.actual || selectedWeekDetail.projected || 0, sublabel: 'Project to date' }
+                          ].map((metric, index) => (
+                            <div key={index} className="bg-gray-50 p-3 rounded">
+                              <div className="text-xs text-gray-600">{metric.label}</div>
+                              <div className="text-lg font-bold text-gray-900">£{metric.value.toLocaleString()}</div>
+                              <div className="text-xs text-gray-500 mt-1">{metric.sublabel}</div>
+                            </div>
+                          ))
+                        })()}
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Category Breakdown */}
+                        <div className="bg-gray-50 p-4 rounded">
+                          <h3 className="text-sm font-semibold mb-3">Spending by Category</h3>
+                          {(() => {
+                            const weeklySpend = selectedWeekDetail.daily?.reduce((sum: number, day: number) => sum + day, 0) || 0
+                            const breakdown = [
+                              { category: 'Materials', percentage: 45, color: 'bg-blue-500' },
+                              { category: 'Labour', percentage: 35, color: 'bg-green-500' },
+                              { category: 'Equipment', percentage: 12, color: 'bg-amber-500' },
+                              { category: 'Other', percentage: 8, color: 'bg-purple-500' }
+                            ]
+                            
+                            return breakdown.map((item, index) => {
+                              const amount = Math.floor(weeklySpend * item.percentage / 100)
+                              return (
+                                <div key={index} className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center space-x-2">
+                                    <div className={`w-2 h-2 rounded-full ${item.color}`}></div>
+                                    <span className="text-xs font-medium">{item.category}</span>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="text-xs font-semibold">£{amount.toLocaleString()}</div>
+                                    <div className="text-xs text-gray-500">{item.percentage}%</div>
+                                  </div>
+                                </div>
+                              )
+                            })
+                          })()}
+                        </div>
+                        
+                        {/* Spending Pattern */}
+                        <div className="bg-gray-50 p-4 rounded">
+                          <h3 className="text-sm font-semibold mb-3">Spending Pattern</h3>
+                          {(() => {
+                            const weeklySpend = selectedWeekDetail.daily?.reduce((sum: number, day: number) => sum + day, 0) || 0
+                            
+                            // Determine if this is forecasted data (future weeks) or actual data (past/current weeks)
+                            const isCurrentWeekActual = selectedWeekDetail.actual !== null && selectedWeekDetail.actual !== undefined
+                            
+                            // Get actual previous week data
+                            const previousWeek = getPreviousWeekData(selectedWeekDetail)
+                            
+                            // Calculate previous week value - always prefer actual data if available
+                            let previousWeekSpend = 0
+                            if (previousWeek) {
+                              // Check if previous week has actual spending data
+                              if (previousWeek.daily && previousWeek.daily.length > 0) {
+                                // Previous week has actual spending data - use it
+                                previousWeekSpend = previousWeek.daily.reduce((sum: number, day: number) => sum + day, 0) || 0
+                              } else if (previousWeek.actual !== null && previousWeek.actual !== undefined) {
+                                // Previous week has actual cumulative data but no daily breakdown - calculate weekly amount
+                                const prevPrevWeek = getPreviousWeekData(previousWeek)
+                                if (prevPrevWeek && prevPrevWeek.actual !== null && prevPrevWeek.actual !== undefined) {
+                                  previousWeekSpend = previousWeek.actual - prevPrevWeek.actual
+                                } else {
+                                  previousWeekSpend = previousWeek.actual
+                                }
+                              } else if (previousWeek.projected) {
+                                // Previous week only has forecasted data - use it
+                                const prevPrevWeek = getPreviousWeekData(previousWeek)
+                                if (prevPrevWeek?.projected) {
+                                  previousWeekSpend = previousWeek.projected - prevPrevWeek.projected
+                                } else {
+                                  previousWeekSpend = previousWeek.projected
+                                }
+                              }
+                            }
+                            
+                            const currentWeekValue = isCurrentWeekActual ? weeklySpend : (selectedWeekDetail.projected && previousWeek?.projected ? selectedWeekDetail.projected - previousWeek.projected : 0)
+                            const variance = previousWeekSpend > 0 ? currentWeekValue - previousWeekSpend : 0
+                            const variancePercentage = previousWeekSpend > 0 ? ((variance / previousWeekSpend) * 100).toFixed(1) : '0.0'
+                            
+                            let explanation
+                            if (previousWeekSpend === 0) {
+                              explanation = { type: 'normal', title: 'First Week', description: 'Initial project spending period' }
+                            } else if (Math.abs(variance) < 200) {
+                              explanation = { type: 'normal', title: 'Consistent Pattern', description: 'Spending aligned with trajectory' }
+                            } else if (variance > 500) {
+                              explanation = { type: 'spike', title: `Spending Spike (+${variancePercentage}%)`, description: 'Heritage timber delivery and masonry work' }
+                            } else if (variance < -500) {
+                              explanation = { type: 'reduction', title: `Reduced Spending (${variancePercentage}%)`, description: 'Weather delays affecting exterior work' }
+                            } else if (variance > 0) {
+                              explanation = { type: 'spike', title: `Increased Spending (+${variancePercentage}%)`, description: 'Higher activity this week' }
+                            } else {
+                              explanation = { type: 'reduction', title: `Decreased Spending (${variancePercentage}%)`, description: 'Lower activity this week' }
+                            }
+                            
+                            return (
+                              <div className={`p-3 rounded ${
+                                explanation.type === 'spike' ? 'bg-red-50 border border-red-200' :
+                                explanation.type === 'reduction' ? 'bg-green-50 border border-green-200' :
+                                'bg-blue-50 border border-blue-200'
+                              }`}>
+                                <div className={`font-medium text-xs mb-1 ${
+                                  explanation.type === 'spike' ? 'text-red-800' :
+                                  explanation.type === 'reduction' ? 'text-green-800' :
+                                  'text-blue-800'
+                                }`}>
+                                  {explanation.title}
+                                </div>
+                                <p className={`text-xs ${
+                                  explanation.type === 'spike' ? 'text-red-700' :
+                                  explanation.type === 'reduction' ? 'text-green-700' :
+                                  'text-blue-700'
+                                }`}>
+                                  {explanation.description}
+                                </p>
+                              </div>
+                            )
+                          })()}
                         </div>
                       </div>
-                    ))}
-                    
-                    {/* Project Health Summary */}
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Target className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm font-medium text-blue-800">Project Health Score: 82%</span>
+                      
+                      {/* Major Expenditures */}
+                      <div className="bg-gray-50 p-4 rounded">
+                        <h3 className="text-sm font-semibold mb-3">Major Expenditures This Week</h3>
+                        <div className="space-y-2">
+                          {[
+                            { item: 'Reclaimed oak beams', category: 'Materials', amount: 2800, supplier: 'Heritage Timber Ltd' },
+                            { item: 'Limestone restoration', category: 'Labour', amount: 1200, supplier: 'Craftsman Masonry' },
+                            { item: 'Heritage crane rental', category: 'Equipment', amount: 450, supplier: 'Elite Lifting' }
+                          ].map((item, index) => (
+                            <div key={index} className="flex items-center justify-between p-2 bg-white rounded text-xs">
+                              <div>
+                                <div className="font-medium">{item.item}</div>
+                                <div className="text-gray-600">{item.supplier} • {item.category}</div>
+                              </div>
+                              <div className="font-semibold">£{item.amount.toLocaleString()}</div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <p className="text-xs text-blue-700">
-                        Overall project remains on track with manageable risks and positive performance indicators.
-                        Labour efficiency gains are offsetting material cost pressures.
-                      </p>
+                      
+                      {/* Close Instructions */}
+                      <div className="text-center">
+                        <div className="text-xs text-gray-500 mb-2">
+                          Click anywhere outside or use the × button to close
+                        </div>
+                        <Button size="sm" onClick={() => setShowWeekDetailCard(false)}>
+                          Close Details
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </CardContent>
+                )}
               </Card>
+
+
+
 
               {/* Bottom Right: Swipeable Cost Categories */}
               <Card className="col-span-1 h-[500px] flex flex-col">
@@ -2567,7 +2667,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       {costCategoriesData[currentCategoryIndex].title}
                     </CardTitle>
                     <div className="text-xs text-muted-foreground mt-1">
-                      {currentCategoryIndex === 0 ? 'Budget vs Projected vs Actual' : 'Time-period analysis with variance tracking'}
+                      {currentCategoryIndex === 0 ? 'Actual vs Budget vs Projected' : 'Time-period analysis with variance tracking'}
                     </div>
                   </div>
                   <div className="flex items-center space-x-1">
@@ -2632,7 +2732,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       {costCategoriesData[currentCategoryIndex].type === 'bar' ? (
                         <BarChart
                           data={costCategoriesData[currentCategoryIndex].data}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 20 }}
                           onClick={(data) => handleDrillDown(data, 'bar', 'cost-categories')}
                         >
                           <CartesianGrid strokeDasharray="2 2" stroke="#e5e7eb" strokeOpacity={0.4} />
@@ -2643,7 +2743,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 500 }}
                             angle={-45}
                             textAnchor="end"
-                            height={80} 
+                            height={50} 
                           />
                           <YAxis 
                             axisLine={false}
@@ -2661,15 +2761,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             formatter={(value: any, name: string) => [`£${Number(value).toLocaleString()}`, name]}
                             labelStyle={{ color: '#475569', fontWeight: 600 }}
                           />
-                          <Legend />
+                          <Bar dataKey="Actual" fill="#059669" name="Actual" />
                           <Bar dataKey="Budget" fill="#dc2626" name="Budget" />
                           <Bar dataKey="Projected" fill="#475569" name="Projected" />
-                          <Bar dataKey="Actual" fill="#059669" name="Actual" />
                         </BarChart>
                       ) : (
                         <ComposedChart
                           data={costCategoriesData[currentCategoryIndex].data}
-                          margin={{ top: 20, right: 80, left: 20, bottom: 5 }}
+                          margin={{ top: 5, right: 30, left: 20, bottom: -10 }}
                         >
                           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" strokeOpacity={0.3} />
                           <XAxis 
@@ -2722,13 +2821,34 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       )}
                     </ResponsiveContainer>
                   </div>
+                  
+                  {/* Legend */}
+                  {/* Legend - only for bar chart, analysis chart uses built-in legend */}
+                  {costCategoriesData[currentCategoryIndex].type === 'bar' && (
+                    <div className="pt-3 border-t border-gray-200">
+                      <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-3 bg-green-600"></div>
+                          <span className="text-gray-600">Actual</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-3 bg-red-600"></div>
+                          <span className="text-gray-600">Budget</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-3" style={{backgroundColor: '#475569'}}></div>
+                          <span className="text-gray-600">Projected</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
             
 
             {/* Additional Forecasting Tools - Stats Cards (Moved to bottom) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-6">
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-2">
@@ -2749,11 +2869,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     <span className="text-sm font-medium">Days to Budget Limit</span>
                   </div>
                   <div className={`text-2xl font-bold mt-2 ${
-                    (projectData.budgetForecast?.daysUntilOverrun || 0) < 30 
-                      ? "text-red-600" 
-                      : (projectData.budgetForecast?.daysUntilOverrun || 0) < 60 
-                        ? "text-amber-600" 
-                        : "text-green-600"
+                    projectData.budgetForecast?.daysUntilOverrun === null || (projectData.budgetForecast?.daysUntilOverrun || 0) < 0
+                      ? "text-green-600" 
+                      : (projectData.budgetForecast?.daysUntilOverrun || 0) < 30
+                        ? "text-red-600"
+                        : (projectData.budgetForecast?.daysUntilOverrun || 0) < 60 
+                          ? "text-amber-600" 
+                          : "text-green-600"
                   }`}>
                     {projectData.budgetForecast?.daysUntilOverrun === null || (projectData.budgetForecast?.daysUntilOverrun || 0) < 0
                       ? "Under Budget" 
@@ -2772,25 +2894,47 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     <span className="text-sm font-medium">Projected Total</span>
                   </div>
                   <div className={`text-2xl font-bold mt-2 ${
-                    (projectData.budgetForecast?.projectedTotal || 0) > projectData.budget
+                    (projectData.budgetForecast?.projectedTotal || 0) > projectData.budget * 1.1
                       ? "text-red-600"
-                      : (projectData.budgetForecast?.projectedTotal || 0) > projectData.budget * 0.9
+                      : (projectData.budgetForecast?.projectedTotal || 0) > projectData.budget
                         ? "text-amber-600"
                         : "text-green-600"
                   }`}>
                     £{projectData.budgetForecast?.projectedTotal?.toLocaleString() || 'N/A'}
                   </div>
-                  <p className={`text-xs mt-1 ${
-                    (projectData.budgetForecast?.overrunAmount || 0) > 0
-                      ? "text-red-500"
-                      : "text-green-500"
-                  }`}>
+                  <p className="text-xs text-gray-500 mt-1">
                     {(projectData.budgetForecast?.overrunAmount || 0) > 0
                       ? `£${projectData.budgetForecast!.overrunAmount.toLocaleString()} over`
                       : (projectData.budgetForecast?.overrunAmount || 0) < 0
                         ? `£${Math.abs(projectData.budgetForecast!.overrunAmount).toLocaleString()} under`
                         : "On budget"}
                   </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Pending Approvals</span>
+                  </div>
+                  <div className="text-2xl font-bold text-amber-600 mt-2">
+                    4
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Awaiting review</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Next Milestone</span>
+                  </div>
+                  <div className="text-lg font-bold text-blue-600 mt-2">
+                    Mar 28
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Electrical inspection</p>
                 </CardContent>
               </Card>
             </div>
@@ -2886,7 +3030,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             </Card>
 
             {/* Pending Approvals (Moved to bottom) */}
-            <Card className="mt-6">
+            <Card className="mt-6" id="pending-approvals">
               <CardHeader>
                 <CardTitle>Pending Approvals</CardTitle>
               </CardHeader>
@@ -3051,7 +3195,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </CardContent>
             </Card>
 
-            {/* Professional Analysis Navigation */}
+            {/* Enhanced Professional Analysis Navigation */}
             <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -3060,170 +3204,38 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       <Eye className="h-6 w-6 text-blue-700" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-blue-900">Professional Analysis</h3>
+                      <h3 className="text-lg font-semibold text-blue-900">Professional Analysis Suite</h3>
                       <p className="text-sm text-blue-600">
-                        Advanced EVM metrics, variance decomposition, and strategic insights
+                        EVM metrics, variance decomposition, market intelligence, and strategic risk assessment
                       </p>
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={() => setActiveTab('professional')}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    View Analysis
-                    <ChevronRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Phase 2: Budget Risk Intelligence Panel */}
-            <Card className="bg-gradient-to-r from-slate-50 to-gray-50 border-slate-200">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-3 bg-slate-100 rounded-lg">
-                      <TrendingUp className="h-6 w-6 text-slate-700" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg font-semibold text-slate-900">Budget Risk Intelligence</CardTitle>
-                      <div className="text-sm text-slate-600">
-                        Market analysis and predictive risk assessment
+                      <div className="flex items-center space-x-4 mt-2">
+                        <div className="flex items-center space-x-1">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-xs text-blue-600">Risk Intelligence Active</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                          <span className="text-xs text-blue-600">3 Decision Points</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge className="bg-slate-100 text-slate-700 border-slate-300">
-                      Live Data
-                    </Badge>
-                    <Button size="sm" variant="outline" className="text-xs">
-                      Export Analysis
+                  <div className="flex flex-col space-y-2">
+                    <Button 
+                      onClick={() => setActiveTab('professional')}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      View Analysis Suite
+                      <ChevronRight className="h-4 w-4 ml-2" />
                     </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Market Intelligence Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Market Indicators */}
-                  <div className="space-y-3">
-                    <div className="text-sm font-medium text-slate-700 mb-3">Market Indicators</div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-slate-200">
-                        <div className="text-sm">
-                          <div className="font-medium">Material Price Index</div>
-                          <div className="text-xs text-slate-500">UK Construction Materials</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-semibold text-red-600">+12.3%</div>
-                          <div className="text-xs text-slate-500">vs Q3 2024</div>
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-slate-200">
-                        <div className="text-sm">
-                          <div className="font-medium">Labour Cost Index</div>
-                          <div className="text-xs text-slate-500">Skilled Trades</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-semibold text-amber-600">+8.7%</div>
-                          <div className="text-xs text-slate-500">vs Q3 2024</div>
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-slate-200">
-                        <div className="text-sm">
-                          <div className="font-medium">Transport Costs</div>
-                          <div className="text-xs text-slate-500">Logistics & Delivery</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-semibold text-green-600">-2.1%</div>
-                          <div className="text-xs text-slate-500">vs Q3 2024</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Risk Assessment */}
-                  <div className="space-y-3">
-                    <div className="text-sm font-medium text-slate-700 mb-3">Risk Assessment</div>
-                    <div className="space-y-2">
-                      <div className="p-3 bg-white rounded-lg border border-slate-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium">Budget Overrun Risk</span>
-                          <Badge className="bg-red-100 text-red-700 border-red-300">High</Badge>
-                        </div>
-                        <div className="text-xs text-slate-600 mb-2">73% probability of 5-15% overrun</div>
-                        <div className="w-full bg-slate-200 rounded-full h-2">
-                          <div className="bg-red-500 h-2 rounded-full" style={{width: '73%'}}></div>
-                        </div>
-                      </div>
-                      <div className="p-3 bg-white rounded-lg border border-slate-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium">Schedule Delay Risk</span>
-                          <Badge className="bg-amber-100 text-amber-700 border-amber-300">Medium</Badge>
-                        </div>
-                        <div className="text-xs text-slate-600 mb-2">42% probability of 2-4 week delay</div>
-                        <div className="w-full bg-slate-200 rounded-full h-2">
-                          <div className="bg-amber-500 h-2 rounded-full" style={{width: '42%'}}></div>
-                        </div>
-                      </div>
-                      <div className="p-3 bg-white rounded-lg border border-slate-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium">Quality Impact Risk</span>
-                          <Badge className="bg-green-100 text-green-700 border-green-300">Low</Badge>
-                        </div>
-                        <div className="text-xs text-slate-600 mb-2">18% probability of rework required</div>
-                        <div className="w-full bg-slate-200 rounded-full h-2">
-                          <div className="bg-green-500 h-2 rounded-full" style={{width: '18%'}}></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Predictive Analytics */}
-                  <div className="space-y-3">
-                    <div className="text-sm font-medium text-slate-700 mb-3">Predictive Analytics</div>
-                    <div className="space-y-2">
-                      <div className="p-3 bg-white rounded-lg border border-slate-200">
-                        <div className="text-sm font-medium mb-1">Project Completion Cost</div>
-                        <div className="text-lg font-bold text-slate-900">£52,300</div>
-                        <div className="text-xs text-slate-500">95% confidence interval: £48,900 - £57,200</div>
-                      </div>
-                      <div className="p-3 bg-white rounded-lg border border-slate-200">
-                        <div className="text-sm font-medium mb-1">Expected Completion</div>
-                        <div className="text-lg font-bold text-slate-900">Feb 15, 2025</div>
-                        <div className="text-xs text-slate-500">±12 days with current trajectory</div>
-                      </div>
-                      <div className="p-3 bg-white rounded-lg border border-slate-200">
-                        <div className="text-sm font-medium mb-1">Industry Benchmark</div>
-                        <div className="text-lg font-bold text-green-600">87th percentile</div>
-                        <div className="text-xs text-slate-500">Cost efficiency vs similar projects</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Professional Risk Analysis */}
-                <div className="border-t pt-4">
-                  <div className="text-sm font-medium text-slate-700 mb-3">Professional Risk Analysis</div>
-                  <div className="bg-white rounded-lg border border-slate-200 p-4">
-                    <div className="text-sm text-slate-700 leading-relaxed">
-                      <p className="mb-2">
-                        <strong>Current Risk Profile:</strong> Elevated material cost inflation (12.3% above Q3) poses immediate budget pressure, 
-                        partially offset by improved logistics efficiency. Labour market tightness suggests 8-12 week lead time for specialist trades.
-                      </p>
-                      <p className="mb-2">
-                        <strong>Mitigation Strategy:</strong> Forward contract 60% of remaining material requirements by Week 14 to lock current pricing. 
-                        Engage backup labour contractors now to avoid premium rates during Q1 2025 peak season.
-                      </p>
-                      <p>
-                        <strong>Commercial Recommendation:</strong> Release £7,200 contingency (14% of remaining budget) to secure material contracts. 
-                        Expected ROI of early procurement: £3,800-£5,100 cost avoidance over 8-week period.
-                      </p>
+                    <div className="text-xs text-blue-600 text-center">
+                      Enhanced with Phase 2 Intelligence
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
+
 
             {/* Scrollable Information Summary Card */}
             <Card>
@@ -3298,67 +3310,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>
             </div>
             
-            {/* Week Detail Card Popup */}
-            {(() => {
-              console.log('Week Detail Popup check - showWeekDetailCard:', showWeekDetailCard, 'selectedWeekDetail:', selectedWeekDetail)
-              return showWeekDetailCard && selectedWeekDetail && (
-              <div className="fixed top-20 right-6 z-50">
-                <Card className="w-80 shadow-xl border-2">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                    <CardTitle className="text-lg font-semibold">
-                      {selectedWeekDetail.week?.replace('Week ', '') ? 
-                        `Week ${selectedWeekDetail.week.replace('Week ', '')} Details` : 
-                        'Week Details'
-                      }
-                    </CardTitle>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowWeekDetailCard(false)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Period</label>
-                        <p className="text-sm text-gray-900">{selectedWeekDetail.date || selectedWeekDetail.week?.replace('Week ', 'Week ')}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Weekly Spend</label>
-                        <p className="text-sm text-gray-900 font-semibold">
-                          £{selectedWeekDetail.daily?.reduce((sum, day) => sum + day, 0)?.toLocaleString() || 'N/A'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Cumulative</label>
-                        <p className="text-sm text-gray-900 font-semibold">
-                          £{selectedWeekDetail.actual?.toLocaleString() || 'N/A'}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Forecast</label>
-                        <p className="text-sm text-gray-900">
-                          £{selectedWeekDetail.projected?.toLocaleString() || 'N/A'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button size="sm" className="flex-1" onClick={() => exportToPDF()}>
-                        Export PDF
-                      </Button>
-                      <Button size="sm" variant="outline" className="flex-1" onClick={() => exportToExcel()}>
-                        Export Excel
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )
-            })()}
             </div>
           </TabsContent>
 
@@ -3694,6 +3645,630 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Phase 2: Professional Intelligence Panels */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Budget Risk Intelligence Panel */}
+                <Card className="h-[500px]" id="budget-risk-intelligence">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-semibold flex items-center">
+                      <Target className="h-5 w-5 mr-2 text-red-500" />
+                      Budget Risk Intelligence
+                    </CardTitle>
+                    <CardDescription className="text-sm text-muted-foreground">
+                      Market analysis, risk forecasting, and predictive analytics
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-1 overflow-y-auto p-0 px-6 pb-6">
+                    <div className="space-y-4">
+                      {/* Enhanced Risk Alerts with Actions */}
+                      {[
+                        {
+                          id: 1,
+                          level: 'amber',
+                          title: 'Future Material Cost Risk',
+                          message: 'Market indicators suggest 5-8% steel price increase over next 6-8 weeks - proactive action recommended',
+                          impact: '£2,400 potential increase',
+                          confidence: 85,
+                          recommendation: 'Lock in current pricing or establish hedging strategy to prevent budget overrun',
+                          actions: [
+                            { label: 'Secure Fixed Pricing Contract', urgent: true },
+                            { label: 'Evaluate Alternative Materials', urgent: false }
+                          ],
+                          positiveContext: '15% contingency buffer available to absorb potential increases'
+                        },
+                        {
+                          id: 2,
+                          level: 'green',
+                          title: 'Bulk Purchase Opportunity',
+                          message: 'ElectricPro offers 8% additional discount on next electrical component order if placed by month-end',
+                          impact: '£400 potential savings',
+                          confidence: 88,
+                          recommendation: 'Accelerate electrical component procurement to capture discount window',
+                          actions: [
+                            { label: 'Review Electrical Requirements', urgent: false },
+                            { label: 'Place Early Order', urgent: true }
+                          ],
+                          positiveContext: 'Current electrical timeline allows for early procurement'
+                        },
+                        {
+                          id: 3,
+                          level: 'red',
+                          title: 'Weather Risk Exposure',
+                          message: '40% chance of rainfall next week could impact crane operations and extend rental period',
+                          impact: '£1,800 potential additional cost',
+                          confidence: 78,
+                          recommendation: 'Implement weather contingency plan: accelerate crane-dependent work or secure backup equipment',
+                          actions: [
+                            { label: 'Execute Weather Contingency Plan', urgent: true },
+                            { label: 'Secure Backup Equipment Options', urgent: true }
+                          ],
+                          positiveContext: 'Alternative indoor work can progress during weather delays'
+                        },
+                        {
+                          id: 4,
+                          level: 'amber',
+                          title: 'Seasonal Supply Chain Disruption',
+                          message: 'Approaching holiday period (Dec 20-Jan 3) may cause 2-week delays in specialized equipment delivery',
+                          impact: '£1,200 potential storage and delay costs',
+                          confidence: 68,
+                          recommendation: 'Order critical equipment by Nov 30th to avoid seasonal delays, or plan alternative work sequences',
+                          actions: [
+                            { label: 'Accelerate Equipment Orders', urgent: true },
+                            { label: 'Develop Alternative Work Schedule', urgent: false }
+                          ],
+                          positiveContext: 'Most materials already secured, only specialized fittings at risk'
+                        },
+                        {
+                          id: 5,
+                          level: 'green',
+                          title: 'Energy Cost Optimization Window',
+                          message: 'Projected 15% drop in energy costs next month due to seasonal demand patterns',
+                          impact: '£800 potential savings',
+                          confidence: 73,
+                          recommendation: 'Schedule energy-intensive operations (concrete curing, heating) for optimal pricing window',
+                          actions: [
+                            { label: 'Reschedule Energy Operations', urgent: false },
+                            { label: 'Lock in Favorable Rates', urgent: false }
+                          ],
+                          positiveContext: 'Flexible timeline allows optimization for cost savings'
+                        }
+                      ].map((alert) => (
+                        <div key={alert.id} className={`rounded-lg border-l-4 p-4 ${
+                          alert.level === 'red' ? 'border-red-500 bg-red-50' :
+                          alert.level === 'amber' ? 'border-amber-500 bg-amber-50' :
+                          'border-green-500 bg-green-50'
+                        }`}>
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center space-x-2">
+                              {alert.level === 'red' ? <AlertTriangle className="h-4 w-4 text-red-600" /> :
+                               alert.level === 'amber' ? <AlertTriangle className="h-4 w-4 text-amber-600" /> :
+                               <CheckCircle className="h-4 w-4 text-green-600" />}
+                              <h4 className={`font-semibold text-sm ${
+                                alert.level === 'red' ? 'text-red-800' :
+                                alert.level === 'amber' ? 'text-amber-800' :
+                                'text-green-800'
+                              }`}>
+                                {alert.title}
+                              </h4>
+                            </div>
+                            <Badge className={`text-xs ${
+                              alert.level === 'red' ? 'bg-red-100 text-red-800 border-red-300' :
+                              alert.level === 'amber' ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                              'bg-green-100 text-green-800 border-green-300'
+                            }`}>
+                              {alert.confidence}% confidence
+                            </Badge>
+                          </div>
+                          
+                          <p className={`text-sm mb-2 ${
+                            alert.level === 'red' ? 'text-red-700' :
+                            alert.level === 'amber' ? 'text-amber-700' :
+                            'text-green-700'
+                          }`}>
+                            {alert.message}
+                          </p>
+                          
+                          <div className="flex justify-between items-center mb-3">
+                            <span className={`text-xs font-medium ${
+                              alert.level === 'red' ? 'text-red-800' :
+                              alert.level === 'amber' ? 'text-amber-800' :
+                              'text-green-800'
+                            }`}>
+                              Impact: {alert.impact}
+                            </span>
+                            <span className="text-xs text-gray-600">
+                              {alert.positiveContext}
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <p className="text-xs font-medium text-gray-700">
+                              Recommendation: {alert.recommendation}
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {alert.actions.map((action, index) => (
+                                <Button
+                                  key={index}
+                                  size="sm"
+                                  variant={action.urgent ? "default" : "outline"}
+                                  className={`text-xs h-7 ${action.urgent ? 
+                                    (alert.level === 'red' ? 'bg-red-600 hover:bg-red-700' : 
+                                     alert.level === 'amber' ? 'bg-amber-600 hover:bg-amber-700' :
+                                     'bg-green-600 hover:bg-green-700') : ''
+                                  }`}
+                                >
+                                  {action.label}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Project Health Summary */}
+                      <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <Target className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-medium text-blue-800">Project Health Score: 82%</span>
+                        </div>
+                        <p className="text-xs text-blue-700">
+                          Overall project remains on track with manageable risks and positive performance indicators.
+                          Labour efficiency gains are offsetting material cost pressures.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Active Budget Impact Analysis Panel */}
+                <Card className="h-[500px]" id="active-budget-impact">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-semibold flex items-center">
+                      <AlertCircle className="h-5 w-5 mr-2 text-amber-500" />
+                      Active Budget Impact Analysis
+                    </CardTitle>
+                    <CardDescription className="text-sm text-muted-foreground">
+                      Real-time alerts and decision points requiring immediate attention
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-1 overflow-y-auto p-0 px-6 pb-6">
+                    <div className="space-y-4">
+                      {/* Critical Decision Points */}
+                      {[
+                        {
+                          id: 1,
+                          urgency: 'high',
+                          title: 'Materials Price Lock Decision Required',
+                          deadline: 'Next 48 hours',
+                          decision: 'Whether to commit to current pricing on remaining steel requirements (60% of materials budget)',
+                          impact: {
+                            immediate: '£3,200 savings if locked today',
+                            potential: '£5,800 risk if market prices increase as forecasted',
+                            timeline: 'Decision window closes Friday 5PM'
+                          },
+                          options: [
+                            { 
+                              label: 'Lock Current Pricing', 
+                              risk: 'Low', 
+                              benefit: '£3,200 guaranteed savings',
+                              consequence: 'Committed to current supplier for 8 weeks'
+                            },
+                            { 
+                              label: 'Wait for Market Analysis', 
+                              risk: 'High', 
+                              benefit: 'Potential 12% savings if prices drop',
+                              consequence: 'Exposure to £5,800 price increase risk'
+                            }
+                          ],
+                          recommendation: 'Lock 75% of requirements at current price, maintain 25% exposure for potential gains',
+                          stakeholders: ['Commercial Manager', 'Procurement Lead', 'Project Director']
+                        },
+                        {
+                          id: 2,
+                          urgency: 'medium',
+                          title: 'Labour Resource Allocation Review',
+                          deadline: 'End of week',
+                          decision: 'Reallocate skilled labour resources between concurrent project phases to optimize efficiency',
+                          impact: {
+                            immediate: '15% improvement in labour productivity',
+                            potential: '£2,400 cost avoidance through better resource utilization',
+                            timeline: 'Implementation can begin Monday if approved'
+                          },
+                          options: [
+                            { 
+                              label: 'Implement Proposed Changes', 
+                              risk: 'Low', 
+                              benefit: 'Immediate efficiency gains',
+                              consequence: '2-day transition period with reduced output'
+                            },
+                            { 
+                              label: 'Maintain Current Assignment', 
+                              risk: 'Medium', 
+                              benefit: 'No disruption to current workflow',
+                              consequence: 'Continued suboptimal resource utilization'
+                            }
+                          ],
+                          recommendation: 'Proceed with reallocation - efficiency gains outweigh transition costs',
+                          stakeholders: ['Site Manager', 'Labour Supervisor', 'Project Coordinator']
+                        },
+                        {
+                          id: 3,
+                          urgency: 'low',
+                          title: 'Technology Integration Opportunity',
+                          deadline: 'Next 2 weeks',
+                          decision: 'Whether to adopt new digital project tracking tools for enhanced efficiency',
+                          impact: {
+                            immediate: '£1,800 implementation cost',
+                            potential: '20% improvement in project visibility and 8% reduction in administrative overhead',
+                            timeline: 'Full benefits realized within 4 weeks of implementation'
+                          },
+                          options: [
+                            { 
+                              label: 'Implement Digital Tools', 
+                              risk: 'Medium', 
+                              benefit: 'Long-term efficiency and visibility gains',
+                              consequence: '1-week learning curve for team adaptation'
+                            },
+                            { 
+                              label: 'Continue Current Methods', 
+                              risk: 'Low', 
+                              benefit: 'No immediate disruption or cost',
+                              consequence: 'Missed opportunity for operational improvements'
+                            }
+                          ],
+                          recommendation: 'Implement tools - ROI achieved within 6 weeks and provides foundation for future projects',
+                          stakeholders: ['Project Manager', 'IT Support', 'Team Leads']
+                        }
+                      ].map((decision) => (
+                        <div key={decision.id} className={`rounded-lg border p-4 ${
+                          decision.urgency === 'high' ? 'border-red-300 bg-red-50' :
+                          decision.urgency === 'medium' ? 'border-amber-300 bg-amber-50' :
+                          'border-blue-300 bg-blue-50'
+                        }`}>
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center space-x-2">
+                              {decision.urgency === 'high' ? <Clock className="h-4 w-4 text-red-600" /> :
+                               decision.urgency === 'medium' ? <Clock className="h-4 w-4 text-amber-600" /> :
+                               <Clock className="h-4 w-4 text-blue-600" />}
+                              <h4 className={`font-semibold text-sm ${
+                                decision.urgency === 'high' ? 'text-red-800' :
+                                decision.urgency === 'medium' ? 'text-amber-800' :
+                                'text-blue-800'
+                              }`}>
+                                {decision.title}
+                              </h4>
+                            </div>
+                            <Badge className={`text-xs ${
+                              decision.urgency === 'high' ? 'bg-red-100 text-red-800 border-red-300' :
+                              decision.urgency === 'medium' ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                              'bg-blue-100 text-blue-800 border-blue-300'
+                            }`}>
+                              {decision.deadline}
+                            </Badge>
+                          </div>
+                          
+                          <p className={`text-sm mb-3 ${
+                            decision.urgency === 'high' ? 'text-red-700' :
+                            decision.urgency === 'medium' ? 'text-amber-700' :
+                            'text-blue-700'
+                          }`}>
+                            {decision.decision}
+                          </p>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 text-xs">
+                            <div className="p-2 bg-white rounded border">
+                              <span className="font-medium">Immediate Impact:</span>
+                              <p className="mt-1">{decision.impact.immediate}</p>
+                            </div>
+                            <div className="p-2 bg-white rounded border">
+                              <span className="font-medium">Potential Impact:</span>
+                              <p className="mt-1">{decision.impact.potential}</p>
+                            </div>
+                            <div className="p-2 bg-white rounded border">
+                              <span className="font-medium">Timeline:</span>
+                              <p className="mt-1">{decision.impact.timeline}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2 mb-3">
+                            <p className="text-xs font-medium text-gray-700">Options:</p>
+                            {decision.options.map((option, index) => (
+                              <div key={index} className="flex justify-between items-start p-2 bg-white rounded border text-xs">
+                                <div className="flex-1">
+                                  <span className="font-medium">{option.label}</span>
+                                  <p className="mt-1 text-gray-600">{option.consequence}</p>
+                                </div>
+                                <div className="text-right ml-3">
+                                  <Badge variant="outline" className={`text-xs mb-1 ${
+                                    option.risk === 'High' ? 'border-red-300 text-red-700' :
+                                    option.risk === 'Medium' ? 'border-amber-300 text-amber-700' :
+                                    'border-green-300 text-green-700'
+                                  }`}>
+                                    {option.risk} Risk
+                                  </Badge>
+                                  <p className="text-gray-600">{option.benefit}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <div className="border-t pt-3">
+                            <p className="text-xs font-medium text-gray-700 mb-2">
+                              Recommendation: {decision.recommendation}
+                            </p>
+                            <div className="flex flex-wrap gap-1 text-xs">
+                              <span className="text-gray-600">Stakeholders:</span>
+                              {decision.stakeholders.map((stakeholder, index) => (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  {stakeholder}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Phase 3: Advanced Professional Intelligence Features */}
+              <div className="space-y-6">
+                {/* Commercial Intelligence Dashboard */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg font-semibold flex items-center">
+                      <Activity className="h-5 w-5 mr-2 text-blue-600" />
+                      Commercial Intelligence Dashboard
+                    </CardTitle>
+                    <CardDescription className="text-sm text-muted-foreground">
+                      Executive-level strategic insights and performance benchmarking
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Strategic KPIs */}
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-navy-blue">Strategic KPIs</h4>
+                        <div className="space-y-3">
+                          {[
+                            { label: 'Project ROI', value: '18.4%', trend: 'up', target: '15%' },
+                            { label: 'Commercial Efficiency', value: '94.2%', trend: 'up', target: '90%' },
+                            { label: 'Risk-Adjusted NPV', value: '£24,800', trend: 'stable', target: '£22,000' },
+                            { label: 'Stakeholder Satisfaction', value: '87%', trend: 'up', target: '85%' }
+                          ].map((kpi, index) => (
+                            <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{kpi.label}</div>
+                                <div className="text-xs text-gray-600">Target: {kpi.target}</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-semibold text-gray-900">{kpi.value}</div>
+                                <div className={`text-xs flex items-center ${
+                                  kpi.trend === 'up' ? 'text-green-600' : 
+                                  kpi.trend === 'down' ? 'text-red-600' : 'text-gray-600'
+                                }`}>
+                                  {kpi.trend === 'up' ? <TrendingUp className="h-3 w-3 mr-1" /> : 
+                                   kpi.trend === 'down' ? <TrendingDown className="h-3 w-3 mr-1" /> : 
+                                   <Activity className="h-3 w-3 mr-1" />}
+                                  {kpi.trend === 'stable' ? 'Stable' : kpi.trend === 'up' ? 'Improving' : 'Declining'}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Market Position Analysis */}
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-navy-blue">Market Position</h4>
+                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="text-sm font-medium text-blue-900 mb-2">Industry Ranking</div>
+                          <div className="text-2xl font-bold text-blue-900">#12</div>
+                          <div className="text-xs text-blue-700">of 180 UK construction firms</div>
+                          <div className="mt-3 text-xs text-blue-600">
+                            Moved up 3 positions this quarter based on EVM performance
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Cost Performance vs Peers</span>
+                            <span className="font-medium text-green-600">+12% above avg</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Schedule Performance vs Peers</span>
+                            <span className="font-medium text-green-600">+8% above avg</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Quality Index vs Peers</span>
+                            <span className="font-medium text-blue-600">+15% above avg</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Strategic Recommendations */}
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-navy-blue">Strategic Actions</h4>
+                        <div className="space-y-3">
+                          {[
+                            {
+                              priority: 'high',
+                              action: 'Secure Q1 Material Contracts',
+                              impact: '£15k cost avoidance',
+                              deadline: '2 weeks'
+                            },
+                            {
+                              priority: 'medium',
+                              action: 'Implement Lean Construction Methods',
+                              impact: '18% efficiency gain',
+                              deadline: '4 weeks'
+                            },
+                            {
+                              priority: 'low',
+                              action: 'Expand Supplier Network',
+                              impact: '12% risk reduction',
+                              deadline: '8 weeks'
+                            }
+                          ].map((item, index) => (
+                            <div key={index} className={`p-3 rounded border-l-4 ${
+                              item.priority === 'high' ? 'border-red-500 bg-red-50' :
+                              item.priority === 'medium' ? 'border-amber-500 bg-amber-50' :
+                              'border-blue-500 bg-blue-50'
+                            }`}>
+                              <div className="text-sm font-medium text-gray-900">{item.action}</div>
+                              <div className="text-xs text-gray-600 mt-1">
+                                Impact: {item.impact} | Due: {item.deadline}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Advanced Analytics & Predictive Modeling */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card id="predictive-analytics">
+                    <CardHeader>
+                      <CardTitle className="text-lg font-semibold flex items-center">
+                        <TrendingUp className="h-5 w-5 mr-2 text-green-600" />
+                        Predictive Analytics
+                      </CardTitle>
+                      <CardDescription className="text-sm text-muted-foreground">
+                        AI-powered forecasting and trend analysis
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                          <div className="flex items-center justify-between mb-3">
+                            <h5 className="font-medium text-blue-900">Project Completion Forecast</h5>
+                            <Badge className="bg-blue-100 text-blue-800 border-blue-300">94% Confidence</Badge>
+                          </div>
+                          <div className="text-2xl font-bold text-blue-900 mb-1">March 15, 2024</div>
+                          <div className="text-sm text-blue-700">2 days ahead of original schedule</div>
+                          <div className="mt-3 text-xs text-blue-600">
+                            Based on current velocity and resource allocation patterns
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="p-3 bg-green-50 rounded border border-green-200">
+                            <div className="text-sm font-medium text-green-800">Budget Forecast</div>
+                            <div className="text-lg font-bold text-green-900">£2,400 under</div>
+                            <div className="text-xs text-green-600">vs original budget</div>
+                          </div>
+                          <div className="p-3 bg-amber-50 rounded border border-amber-200">
+                            <div className="text-sm font-medium text-amber-800">Risk Score</div>
+                            <div className="text-lg font-bold text-amber-900">Medium</div>
+                            <div className="text-xs text-amber-600">Weather dependency</div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <h6 className="text-sm font-medium text-gray-800">Key Predictive Indicators</h6>
+                          {[
+                            { metric: 'Material Cost Volatility', status: 'Low', confidence: '91%' },
+                            { metric: 'Labour Availability', status: 'Stable', confidence: '87%' },
+                            { metric: 'Weather Impact Risk', status: 'Medium', confidence: '76%' },
+                            { metric: 'Supply Chain Disruption', status: 'Low', confidence: '89%' }
+                          ].map((indicator, index) => (
+                            <div key={index} className="flex justify-between items-center text-sm">
+                              <span className="text-gray-600">{indicator.metric}</span>
+                              <div className="flex items-center space-x-2">
+                                <Badge variant="outline" className={`text-xs ${
+                                  indicator.status === 'Low' ? 'border-green-300 text-green-700' :
+                                  indicator.status === 'Medium' ? 'border-amber-300 text-amber-700' :
+                                  'border-blue-300 text-blue-700'
+                                }`}>
+                                  {indicator.status}
+                                </Badge>
+                                <span className="text-gray-500 text-xs">{indicator.confidence}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg font-semibold flex items-center">
+                        <PieChart className="h-5 w-5 mr-2 text-purple-600" />
+                        Executive Summary
+                      </CardTitle>
+                      <CardDescription className="text-sm text-muted-foreground">
+                        High-level project status for senior stakeholders
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <h5 className="font-medium text-green-900">Overall Project Health</h5>
+                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                          </div>
+                          <div className="text-lg font-semibold text-green-900">Excellent</div>
+                          <div className="text-sm text-green-700 mt-2">
+                            Project exceeding expectations across all key performance indicators. 
+                            Risk exposure minimal with strong contingency buffers maintained.
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <h6 className="text-sm font-medium text-gray-800">Executive Highlights</h6>
+                          {[
+                            {
+                              title: 'Cost Performance Excellence',
+                              detail: 'CPI of 1.12 demonstrates superior cost control and value delivery',
+                              impact: 'positive'
+                            },
+                            {
+                              title: 'Schedule Optimization Success',
+                              detail: 'SPI of 1.08 indicates ahead-of-schedule delivery capability',
+                              impact: 'positive'
+                            },
+                            {
+                              title: 'Quality Assurance Leadership',
+                              detail: 'Zero defects recorded in recent quality audits across all work packages',
+                              impact: 'positive'
+                            },
+                            {
+                              title: 'Stakeholder Engagement',
+                              detail: 'Client satisfaction rating of 9.2/10 with proactive communication',
+                              impact: 'positive'
+                            }
+                          ].map((highlight, index) => (
+                            <div key={index} className="p-3 bg-white border rounded-lg">
+                              <div className="flex items-start space-x-2">
+                                <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">{highlight.title}</div>
+                                  <div className="text-xs text-gray-600 mt-1">{highlight.detail}</div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="p-3 bg-blue-50 rounded border border-blue-200">
+                          <div className="text-sm font-medium text-blue-900 mb-2">Next Board Presentation</div>
+                          <div className="text-xs text-blue-700">
+                            Prepared executive summary available for quarterly board review. 
+                            All KPIs trending positive with clear value demonstration.
+                          </div>
+                          <Button size="sm" className="mt-2 bg-blue-600 hover:bg-blue-700">
+                            Generate Board Report
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
