@@ -3068,155 +3068,195 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </CardContent>
             </Card>
 
-            {/* Professional Excel Spreadsheet Component */}
-            <Card className="mt-6">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center justify-between">
-                  <span>Project Workbook</span>
-                  <div className="flex items-center space-x-2">
-                    <Button size="sm" variant="outline" className="h-8 px-2 text-xs">
-                      Save
-                    </Button>
-                    <Button size="sm" variant="outline" className="h-8 px-2 text-xs">
-                      Export
-                    </Button>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                {/* Excel-like Interface */}
-                <div className="border rounded-lg bg-white overflow-hidden">
-                  {/* Toolbar */}
-                  <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b text-xs">
-                    <div className="flex items-center space-x-4">
-                      <span className="font-medium text-gray-700">Sheet: Budget Analysis</span>
-                      <div className="flex items-center space-x-1">
-                        <Button size="sm" variant="ghost" className="h-6 px-2 text-xs">Bold</Button>
-                        <Button size="sm" variant="ghost" className="h-6 px-2 text-xs">Italic</Button>
-                        <span className="text-gray-400">|</span>
-                        <Button size="sm" variant="ghost" className="h-6 px-2 text-xs">Sort</Button>
-                        <Button size="sm" variant="ghost" className="h-6 px-2 text-xs">Filter</Button>
-                      </div>
-                    </div>
-                    <div className="text-gray-500">Cell: A1</div>
-                  </div>
-                  
-                  {/* Spreadsheet Grid */}
-                  <div className="overflow-auto" style={{ height: '400px' }}>
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="bg-gray-100">
-                          <th className="w-12 h-8 border border-gray-300 text-xs font-medium text-gray-600 bg-gray-200"></th>
-                          {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map((col) => (
-                            <th key={col} className="min-w-24 h-8 border border-gray-300 text-xs font-medium text-gray-600 bg-gray-200 px-2">
-                              {col}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td className="w-12 h-8 border border-gray-300 text-xs text-center text-gray-600 bg-gray-100 font-medium">1</td>
-                          <td className="border border-gray-300 px-2 py-1 text-sm font-medium bg-blue-50">Category</td>
-                          <td className="border border-gray-300 px-2 py-1 text-sm font-medium bg-blue-50">Budget</td>
-                          <td className="border border-gray-300 px-2 py-1 text-sm font-medium bg-blue-50">Actual</td>
-                          <td className="border border-gray-300 px-2 py-1 text-sm font-medium bg-blue-50">Variance</td>
-                          <td className="border border-gray-300 px-2 py-1 text-sm font-medium bg-blue-50">% Complete</td>
-                          <td className="border border-gray-300 px-2 py-1 text-sm font-medium bg-blue-50">Forecast</td>
-                          <td className="border border-gray-300 px-2 py-1 text-sm font-medium bg-blue-50">Notes</td>
-                          <td className="border border-gray-300"></td>
-                        </tr>
-                        {[
-                          ['Materials', '£18,000', '£16,200', '-£1,800', '85%', '£19,500', 'Premium upgrade approved'],
-                          ['Labour', '£15,000', '£14,300', '-£700', '82%', '£16,800', 'Overtime for weather delays'],
-                          ['Equipment', '£8,000', '£7,500', '-£500', '90%', '£8,200', 'Installation on schedule'],
-                          ['Permits', '£2,000', '£2,000', '£0', '100%', '£2,000', 'All permits obtained'],
-                          ['Overhead', '£1,500', '£1,200', '-£300', '75%', '£1,800', 'Site management costs'],
-                          ['Contingency', '£500', '£0', '-£500', '0%', '£300', 'Reserved for final phase'],
-                          ['TOTAL', '£45,000', '£41,200', '-£3,800', '84%', '£48,600', 'Project tracking well']
-                        ].map((row, rowIndex) => (
-                          <tr key={rowIndex} className={rowIndex === 6 ? 'bg-blue-50 font-medium' : 'hover:bg-gray-50'}>
-                            <td className="w-12 h-8 border border-gray-300 text-xs text-center text-gray-600 bg-gray-100 font-medium">{rowIndex + 2}</td>
-                            {row.map((cell, cellIndex) => (
-                              <td 
-                                key={cellIndex} 
-                                className={`border border-gray-300 px-2 py-1 text-sm ${
-                                  cellIndex === 0 ? 'font-medium' : 
-                                  cellIndex === 3 ? (cell.startsWith('-') ? 'text-green-600' : cell === '£0' ? 'text-gray-600' : 'text-red-600') :
-                                  cellIndex === 4 ? 'text-center' :
-                                  cellIndex === 5 ? (cell.startsWith('£') ? 'font-medium text-blue-600' : 'text-gray-600') :
-                                  cellIndex === 6 ? 'text-xs text-gray-600' : ''
-                                }`}
-                              >
-                                {cell}
-                              </td>
-                            ))}
-                            <td className="border border-gray-300"></td>
-                          </tr>
-                        ))}
-                        {/* Empty rows */}
-                        {Array.from({ length: 8 }, (_, i) => (
-                          <tr key={`empty-${i}`}>
-                            <td className="w-12 h-8 border border-gray-300 text-xs text-center text-gray-600 bg-gray-100 font-medium">{i + 9}</td>
-                            {Array.from({ length: 8 }, (_, j) => (
-                              <td key={j} className="border border-gray-300 h-8"></td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  
-                  {/* Formula Bar */}
-                  <div className="border-t bg-white px-3 py-2">
-                    <div className="flex items-center space-x-2 text-sm">
-                      <span className="text-gray-600 font-medium w-8">fx</span>
-                      <Input 
-                        className="flex-1 h-8 text-sm border-gray-300" 
-                        placeholder="Enter formula or value..."
-                        defaultValue="=SUM(B2:B7)"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Enhanced Professional Analysis Navigation */}
-            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-              <CardContent className="p-6">
+            {/* Project Workbook - Blurred Preview Window */}
+            <Card className="mt-6 relative overflow-hidden">
+              <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-blue-100 rounded-lg">
-                      <Eye className="h-6 w-6 text-blue-700" />
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <FileSpreadsheet className="h-5 w-5 text-green-600" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-blue-900">Professional Analysis Suite</h3>
-                      <p className="text-sm text-blue-600">
-                        EVM metrics, variance decomposition, market intelligence, and strategic risk assessment
-                      </p>
-                      <div className="flex items-center space-x-4 mt-2">
-                        <div className="flex items-center space-x-1">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <span className="text-xs text-blue-600">Risk Intelligence Active</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-                          <span className="text-xs text-blue-600">3 Decision Points</span>
-                        </div>
+                      <CardTitle className="text-lg">Project Workbook</CardTitle>
+                      <p className="text-sm text-gray-600">Excel spreadsheet preview - click to open in external application</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                    Preview Mode
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {/* File Selection and Actions Bar */}
+                <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b">
+                  <div className="flex items-center space-x-4">
+                    <Select defaultValue="budget-analysis">
+                      <SelectTrigger className="w-48">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="budget-analysis">Budget Analysis.xlsx</SelectItem>
+                        <SelectItem value="schedule-tracking">Schedule Tracking.xlsx</SelectItem>
+                        <SelectItem value="resource-planning">Resource Planning.xlsx</SelectItem>
+                        <SelectItem value="progress-reports">Progress Reports.xlsx</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="text-xs text-gray-500">
+                      Modified: Nov 23, 2023 • Size: 1.2 MB • 4 sheets
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="sm" variant="outline">
+                          <Download className="h-4 w-4 mr-2" />
+                          Export
+                          <ChevronDown className="h-4 w-4 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                          <FileSpreadsheet className="h-4 w-4 mr-2" />
+                          Export as Excel (.xlsx)
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <FileText className="h-4 w-4 mr-2" />
+                          Export as CSV
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <PieChart className="h-4 w-4 mr-2" />
+                          Export as PDF
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Mail className="h-4 w-4 mr-2" />
+                          Email to stakeholders
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                      <Eye className="h-4 w-4 mr-2" />
+                      Open in Excel
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Realistic Excel Window Preview with Blur Effect */}
+                <div className="relative bg-white">
+                  {/* Excel-like Title Bar */}
+                  <div className="flex items-center justify-between px-3 py-1 bg-gray-100 border-b text-xs">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-green-500 rounded-sm flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">X</span>
+                      </div>
+                      <span className="font-medium">Budget Analysis.xlsx - Microsoft Excel</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 bg-gray-400 rounded-sm"></div>
+                      <div className="w-3 h-3 bg-gray-400 rounded-sm"></div>
+                      <div className="w-3 h-3 bg-red-500 rounded-sm"></div>
+                    </div>
+                  </div>
+
+                  {/* Excel Ribbon (Simplified) */}
+                  <div className="px-3 py-2 bg-gray-50 border-b text-xs">
+                    <div className="flex items-center space-x-6">
+                      <span className="font-medium text-blue-600">Home</span>
+                      <span className="text-gray-600">Insert</span>
+                      <span className="text-gray-600">Page Layout</span>
+                      <span className="text-gray-600">Data</span>
+                      <span className="text-gray-600">Review</span>
+                    </div>
+                  </div>
+
+                  {/* Sheet Content with Blur Overlay */}
+                  <div className="relative">
+                    {/* Background Spreadsheet Content */}
+                    <div className="p-0">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="bg-gray-100">
+                            <th className="w-12 h-6 border border-gray-300 text-xs font-medium text-gray-600 bg-gray-200"></th>
+                            {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map((col) => (
+                              <th key={col} className="min-w-20 h-6 border border-gray-300 text-xs font-medium text-gray-600 bg-gray-200 px-2">
+                                {col}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td className="w-12 h-6 border border-gray-300 text-xs text-center text-gray-600 bg-gray-100 font-medium">1</td>
+                            <td className="border border-gray-300 px-2 py-1 text-xs font-medium bg-blue-50">Category</td>
+                            <td className="border border-gray-300 px-2 py-1 text-xs font-medium bg-blue-50">Budget</td>
+                            <td className="border border-gray-300 px-2 py-1 text-xs font-medium bg-blue-50">Actual</td>
+                            <td className="border border-gray-300 px-2 py-1 text-xs font-medium bg-blue-50">Variance</td>
+                            <td className="border border-gray-300 px-2 py-1 text-xs font-medium bg-blue-50">% Complete</td>
+                            <td className="border border-gray-300 px-2 py-1 text-xs font-medium bg-blue-50">Forecast</td>
+                            <td className="border border-gray-300 px-2 py-1 text-xs font-medium bg-blue-50">Notes</td>
+                            <td className="border border-gray-300"></td>
+                          </tr>
+                          {[
+                            ['Materials', '£18,000', '£16,200', '-£1,800', '85%', '£19,500', 'Premium upgrade approved'],
+                            ['Labour', '£15,000', '£14,300', '-£700', '82%', '£16,800', 'Overtime for weather delays'],
+                            ['Equipment', '£8,000', '£7,500', '-£500', '90%', '£8,200', 'Installation on schedule'],
+                            ['Permits', '£2,000', '£2,000', '£0', '100%', '£2,000', 'All permits obtained'],
+                            ['Overhead', '£1,500', '£1,200', '-£300', '75%', '£1,800', 'Site management costs'],
+                            ['Contingency', '£500', '£0', '-£500', '0%', '£300', 'Reserved for final phase'],
+                            ['TOTAL', '£45,000', '£41,200', '-£3,800', '84%', '£48,600', 'Project tracking well']
+                          ].slice(0, 6).map((row, rowIndex) => (
+                            <tr key={rowIndex} className={rowIndex === 5 ? 'bg-blue-50 font-medium' : ''}>
+                              <td className="w-12 h-6 border border-gray-300 text-xs text-center text-gray-600 bg-gray-100 font-medium">{rowIndex + 2}</td>
+                              {row.map((cell, cellIndex) => (
+                                <td 
+                                  key={cellIndex} 
+                                  className={`border border-gray-300 px-2 py-1 text-xs ${
+                                    cellIndex === 0 ? 'font-medium' : 
+                                    cellIndex === 3 ? (cell.startsWith('-') ? 'text-green-600' : cell === '£0' ? 'text-gray-600' : 'text-red-600') :
+                                    cellIndex === 4 ? 'text-center' :
+                                    cellIndex === 5 ? (cell.startsWith('£') ? 'font-medium text-blue-600' : 'text-gray-600') :
+                                    cellIndex === 6 ? 'text-xs text-gray-600' : ''
+                                  }`}
+                                >
+                                  {cell}
+                                </td>
+                              ))}
+                              <td className="border border-gray-300"></td>
+                            </tr>
+                          ))}
+                          {/* Additional rows for realistic look */}
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <tr key={`empty-${i}`}>
+                              <td className="w-12 h-6 border border-gray-300 text-xs text-center text-gray-600 bg-gray-100 font-medium">{i + 8}</td>
+                              {Array.from({ length: 8 }, (_, j) => (
+                                <td key={j} className="border border-gray-300 h-6"></td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Blur Overlay with Click-to-Open */}
+                    <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] flex items-center justify-center cursor-pointer hover:bg-white/30 transition-all duration-200 group">
+                      <div className="text-center p-6 bg-white/90 backdrop-blur-sm rounded-lg border shadow-lg group-hover:bg-white/95 transition-all duration-200">
+                        <FileSpreadsheet className="h-8 w-8 text-green-600 mx-auto mb-3" />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Budget Analysis Spreadsheet</h3>
+                        <p className="text-sm text-gray-600 mb-4">Click to open in Microsoft Excel for full editing capabilities</p>
+                        <Button className="bg-green-600 hover:bg-green-700">
+                          <Eye className="h-4 w-4 mr-2" />
+                          Open in Excel
+                        </Button>
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col space-y-2">
-                    <Button 
-                      onClick={() => setActiveTab('professional')}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      View Analysis Suite
-                      <ChevronRight className="h-4 w-4 ml-2" />
-                    </Button>
-                    <div className="text-xs text-blue-600 text-center">
-                      Enhanced with Phase 2 Intelligence
+
+                  {/* Excel Sheet Tabs */}
+                  <div className="flex items-center px-3 py-2 bg-gray-50 border-t text-xs">
+                    <div className="flex items-center space-x-1">
+                      <div className="px-3 py-1 bg-white border border-gray-300 rounded-t font-medium text-blue-600">Budget</div>
+                      <div className="px-3 py-1 text-gray-600 hover:bg-gray-100 cursor-pointer">Timeline</div>
+                      <div className="px-3 py-1 text-gray-600 hover:bg-gray-100 cursor-pointer">Resources</div>
+                      <div className="px-3 py-1 text-gray-600 hover:bg-gray-100 cursor-pointer">Analysis</div>
                     </div>
                   </div>
                 </div>
