@@ -1261,101 +1261,88 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     const priorities = []
     let nextId = 1
     const budgetPercentage = (project.spent / project.budget) * 100
-    const daysRemaining = Math.ceil((new Date(project.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    const today = new Date()
+    const currentHour = today.getHours()
     
-    // Critical budget overrun alert
+    // TODAY/THIS WEEK FOCUS ONLY - Immediate actionable items
+    
+    // Critical budget overrun requiring immediate action TODAY
     if (budgetPercentage > 110) {
       priorities.push({
         id: nextId++,
         icon: 'AlertTriangle',
         title: 'Critical Budget Overrun',
-        description: `£${(project.spent - project.budget).toLocaleString()} over budget - immediate review required`,
+        description: `£${(project.spent - project.budget).toLocaleString()} over budget - requires immediate review today`,
         confidence: 95,
         urgency: 'high',
         color: 'red',
         actions: [
-          { label: 'View Budget', primary: true, tab: 'budget', scrollTo: 'budget-overview' },
+          { label: 'Review Now', primary: true, tab: 'budget', scrollTo: 'budget-overview' },
           { label: 'View Analysis', primary: false, tab: 'professional', scrollTo: 'budget-risk-intelligence' }
         ]
       })
     }
     
-    // Schedule variance alert
-    if (daysRemaining < 30 && project.progress < 90) {
-      priorities.push({
-        id: nextId++,
-        icon: 'Clock',
-        title: 'Schedule Variance Risk',
-        description: `${daysRemaining} days left, ${project.progress}% complete - acceleration needed`,
-        confidence: 88,
-        urgency: 'high',
-        color: 'red',
-        actions: [
-          { label: 'View EVM Analysis', primary: true, tab: 'professional', scrollTo: 'budget-risk-intelligence' },
-          { label: 'Check Resources', primary: false, tab: 'budget', scrollTo: 'pending-approvals' }
-        ]
-      })
-    }
-    
-    // Positive performance opportunity
-    if (budgetPercentage < 90 && project.progress > 75) {
+    // THIS WEEK performance opportunity that can be acted on immediately  
+    if (budgetPercentage < 85 && project.progress > 70) {
       priorities.push({
         id: nextId++,
         icon: 'CheckCircle',
         title: 'Performance Opportunity',
-        description: `£${(project.budget - project.spent).toLocaleString()} potential savings - ahead of schedule`,
+        description: `£${(project.budget - project.spent).toLocaleString()} potential savings available - capture this week`,
         confidence: 92,
-        urgency: 'low',
+        urgency: 'medium',
         color: 'green',
         actions: [
           { label: 'View Risk Intelligence', primary: true, tab: 'professional', scrollTo: 'budget-risk-intelligence' },
-          { label: 'View Impact Analysis', primary: false, tab: 'professional', scrollTo: 'active-budget-impact' }
+          { label: 'Review Impact Analysis', primary: false, tab: 'professional', scrollTo: 'active-budget-impact' }
         ]
       })
     }
     
-    // Medium priority items to fill grid
-    if (priorities.length < 4) {
-      const receiptCount = Math.floor(Math.random() * 5) + 3
-      priorities.push({
-        id: nextId++,
-        icon: 'Clock',
-        title: 'Pending Approvals',
-        description: `${receiptCount} receipts awaiting review and approval`,
-        confidence: 75,
-        urgency: 'medium',
-        color: 'amber',
-        actions: [
-          { label: 'Review Items', primary: true, tab: 'budget', scrollTo: 'pending-approvals' }
-        ]
-      })
-    }
+    // Pending approvals requiring TODAY'S attention
+    const receiptCount = Math.floor(Math.random() * 5) + 3
+    priorities.push({
+      id: nextId++,
+      icon: 'DollarSign',
+      title: 'Pending Approvals',
+      description: `${receiptCount} receipts awaiting review and approval - signatures needed today`,
+      confidence: 98,
+      urgency: 'high',
+      color: 'amber',
+      actions: [
+        { label: 'Review Items', primary: true, tab: 'budget', scrollTo: 'pending-approvals' },
+        { label: 'Check Impact', primary: false, tab: 'professional', scrollTo: 'active-budget-impact' }
+      ]
+    })
     
-    if (priorities.length < 4) {
+    // Quality inspection due THIS WEEK (immediate scheduling needed)
+    if (project.progress > 84 && priorities.length < 4) {
       priorities.push({
         id: nextId++,
         icon: 'Target',
         title: 'Quality Inspection',
-        description: `Structural assessment due for ${project.progress}% completion`,
+        description: `Structural assessment due for 84% completion - schedule this week`,
         confidence: 85,
         urgency: 'medium',
         color: 'amber',
         actions: [
-          { label: 'View Analysis', primary: true, tab: 'professional', scrollTo: 'budget-risk-intelligence' }
+          { label: 'View Analysis', primary: true, tab: 'professional', scrollTo: 'budget-risk-intelligence' },
+          { label: 'Schedule Now', primary: false, tab: 'professional', scrollTo: 'active-budget-impact' }
         ]
       })
     }
     
-    // Fill remaining slots if needed
+    // Fill remaining slots with immediate/daily items only
     while (priorities.length < 4) {
-      if (priorities.length === 2) {
+      if (priorities.length === 3) {
         priorities.push({
           id: nextId++,
           icon: 'TrendingUp',
           title: 'Progress Report Due',
-          description: `Weekly stakeholder update scheduled`,
-          confidence: 70,
-          urgency: 'low',
+          description: `Daily stakeholder update needed - due by 5pm today`,
+          confidence: 90,
+          urgency: 'medium',
           color: 'blue',
           actions: [
             { label: 'View Progress', primary: true, tab: 'professional', scrollTo: 'predictive-analytics' }
@@ -1364,11 +1351,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       } else {
         priorities.push({
           id: nextId++,
-          icon: 'DollarSign',
+          icon: 'Clock',
           title: 'Material Delivery',
-          description: `Next delivery scheduled for this week`,
-          confidence: 80,
-          urgency: 'low',
+          description: `Delivery arriving this afternoon - confirm receipt required`,
+          confidence: 88,
+          urgency: 'medium',
           color: 'green',
           actions: [
             { label: 'Track Delivery', primary: true, tab: 'budget', scrollTo: 'spending-trends' }
@@ -2442,27 +2429,27 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                           // Get actual previous week data
                           const previousWeek = getPreviousWeekData(selectedWeekDetail)
                           
-                          // Calculate previous week value - always prefer actual data if available
+                          // Calculate previous week value - prioritize actual, then forecasted
                           let previousWeekSpend = 0
                           if (previousWeek) {
-                            // Check if previous week has actual spending data
-                            if (previousWeek.daily && previousWeek.daily.length > 0) {
-                              // Previous week has actual spending data - use it
-                              previousWeekSpend = previousWeek.daily.reduce((sum: number, day: number) => sum + day, 0) || 0
-                            } else if (previousWeek.actual !== null && previousWeek.actual !== undefined) {
-                              // Previous week has actual cumulative data but no daily breakdown - calculate weekly amount
+                            // Check if previous week has actual spending data first
+                            if (previousWeek.daily && previousWeek.daily.length > 0 && previousWeek.daily.some(day => day > 0)) {
+                              // Previous week has actual daily spending data - use it
+                              previousWeekSpend = previousWeek.daily.reduce((sum: number, day: number) => sum + day, 0)
+                            } else if (previousWeek.actual !== null && previousWeek.actual !== undefined && previousWeek.actual > 0) {
+                              // Previous week has actual cumulative data - calculate weekly amount
                               const prevPrevWeek = getPreviousWeekData(previousWeek)
                               if (prevPrevWeek && prevPrevWeek.actual !== null && prevPrevWeek.actual !== undefined) {
-                                previousWeekSpend = previousWeek.actual - prevPrevWeek.actual
+                                previousWeekSpend = Math.max(0, previousWeek.actual - prevPrevWeek.actual)
                               } else {
                                 previousWeekSpend = previousWeek.actual
                               }
-                            } else if (previousWeek.projected) {
-                              // Previous week only has forecasted data - use it
+                            } else if (previousWeek.projected !== null && previousWeek.projected !== undefined) {
+                              // Previous week has forecasted data - calculate weekly forecast
                               const prevPrevWeek = getPreviousWeekData(previousWeek)
-                              if (prevPrevWeek?.projected) {
-                                previousWeekSpend = previousWeek.projected - prevPrevWeek.projected
-                              } else {
+                              if (prevPrevWeek && prevPrevWeek.projected !== null && prevPrevWeek.projected !== undefined) {
+                                previousWeekSpend = Math.max(0, previousWeek.projected - prevPrevWeek.projected)
+                              } else if (previousWeek.projected > 0) {
                                 previousWeekSpend = previousWeek.projected
                               }
                             }
@@ -2550,27 +2537,27 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             // Get actual previous week data
                             const previousWeek = getPreviousWeekData(selectedWeekDetail)
                             
-                            // Calculate previous week value - always prefer actual data if available
+                            // Calculate previous week value - prioritize actual, then forecasted
                             let previousWeekSpend = 0
                             if (previousWeek) {
-                              // Check if previous week has actual spending data
-                              if (previousWeek.daily && previousWeek.daily.length > 0) {
-                                // Previous week has actual spending data - use it
-                                previousWeekSpend = previousWeek.daily.reduce((sum: number, day: number) => sum + day, 0) || 0
-                              } else if (previousWeek.actual !== null && previousWeek.actual !== undefined) {
-                                // Previous week has actual cumulative data but no daily breakdown - calculate weekly amount
+                              // Check if previous week has actual spending data first
+                              if (previousWeek.daily && previousWeek.daily.length > 0 && previousWeek.daily.some(day => day > 0)) {
+                                // Previous week has actual daily spending data - use it
+                                previousWeekSpend = previousWeek.daily.reduce((sum: number, day: number) => sum + day, 0)
+                              } else if (previousWeek.actual !== null && previousWeek.actual !== undefined && previousWeek.actual > 0) {
+                                // Previous week has actual cumulative data - calculate weekly amount
                                 const prevPrevWeek = getPreviousWeekData(previousWeek)
                                 if (prevPrevWeek && prevPrevWeek.actual !== null && prevPrevWeek.actual !== undefined) {
-                                  previousWeekSpend = previousWeek.actual - prevPrevWeek.actual
+                                  previousWeekSpend = Math.max(0, previousWeek.actual - prevPrevWeek.actual)
                                 } else {
                                   previousWeekSpend = previousWeek.actual
                                 }
-                              } else if (previousWeek.projected) {
-                                // Previous week only has forecasted data - use it
+                              } else if (previousWeek.projected !== null && previousWeek.projected !== undefined) {
+                                // Previous week has forecasted data - calculate weekly forecast
                                 const prevPrevWeek = getPreviousWeekData(previousWeek)
-                                if (prevPrevWeek?.projected) {
-                                  previousWeekSpend = previousWeek.projected - prevPrevWeek.projected
-                                } else {
+                                if (prevPrevWeek && prevPrevWeek.projected !== null && prevPrevWeek.projected !== undefined) {
+                                  previousWeekSpend = Math.max(0, previousWeek.projected - prevPrevWeek.projected)
+                                } else if (previousWeek.projected > 0) {
                                   previousWeekSpend = previousWeek.projected
                                 }
                               }
@@ -3237,61 +3224,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             </Card>
 
 
-            {/* Scrollable Information Summary Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold flex items-center">
-                  📊 Budget Intelligence Summary
-                </CardTitle>
-                <div className="text-sm text-muted-foreground">
-                  Key insights and metrics for operational decision-making
-                </div>
-              </CardHeader>
-              <CardContent className="max-h-64 overflow-y-auto space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="text-sm font-medium text-green-800">Performance Indicators</div>
-                      <ul className="text-xs text-green-700 mt-2 space-y-1">
-                        <li>• Weekly burn rate: £{((projectData.totalSpent || 0) / 12).toLocaleString()}</li>
-                        <li>• Budget utilization: {((projectData.totalSpent / projectData.budget) * 100).toFixed(1)}%</li>
-                        <li>• Days remaining: {projectData.budgetForecast?.daysUntilOverrun || 'N/A'}</li>
-                      </ul>
-                    </div>
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="text-sm font-medium text-blue-800">Trend Analysis</div>
-                      <ul className="text-xs text-blue-700 mt-2 space-y-1">
-                        <li>• Spending trend: {projectData.budgetForecast?.overrunAmount > 0 ? 'Increasing' : 'Stable'}</li>
-                        <li>• Forecast confidence: {projectData.budgetForecast?.confidence || 'N/A'}%</li>
-                        <li>• Risk level: {projectData.budgetForecast?.overrunAmount > 2000 ? 'High' : 'Moderate'}</li>
-                      </ul>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                      <div className="text-sm font-medium text-amber-800">Category Analysis</div>
-                      <ul className="text-xs text-amber-700 mt-2 space-y-1">
-                        <li>• Materials: {((projectData.costBreakdown?.materials?.actual / projectData.costBreakdown?.materials?.budget) * 100).toFixed(0) || 'N/A'}% utilized</li>
-                        <li>• Labor: {((projectData.costBreakdown?.labor?.actual / projectData.costBreakdown?.labor?.budget) * 100).toFixed(0) || 'N/A'}% utilized</li>
-                        <li>• Equipment: {((projectData.costBreakdown?.equipment?.actual / projectData.costBreakdown?.equipment?.budget) * 100).toFixed(0) || 'N/A'}% utilized</li>
-                      </ul>
-                    </div>
-                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                      <div className="text-sm font-medium text-gray-800">Quick Actions</div>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        <Button size="sm" variant="outline" className="h-6 text-xs">Export Data</Button>
-                        <Button size="sm" variant="outline" className="h-6 text-xs">Send Report</Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="border-t pt-3">
-                  <div className="text-xs text-muted-foreground">
-                    Last updated: {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Auto-refresh indicator */}
             <div className="flex items-center justify-between pt-6 text-xs text-gray-500 mt-8 border-t border-gray-200">
@@ -3467,16 +3399,105 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
           <TabsContent value="professional" className="space-y-6">
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">Professional Variance Analysis</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Earned Value Management (EVM) analysis compliant with UK construction industry standards
-                  </p>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">Professional Variance Analysis</h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Earned Value Management (EVM) analysis with integrated industry benchmarking and compliance standards
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline" className="text-xs">
+                      BS6576 | BS8102 | PAS2035 Compliant
+                    </Badge>
+                    {projectData.suppliers?.[0]?.bsCompliance?.map(standard => (
+                      <Badge key={standard} variant="outline" className="text-xs">
+                        {standard}
+                      </Badge>
+                    )) || null}
+                  </div>
                 </div>
-                <Badge variant="outline" className="text-xs">
-                  BS6576 | BS8102 | PAS2035 Compliant
-                </Badge>
+
+                {/* Comprehensive Industry Benchmarking Integration */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border">
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-900 flex items-center">
+                      <Target className="h-4 w-4 mr-2 text-blue-600" />
+                      Project Classification
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Type:</span>
+                        <span className="font-medium capitalize">{projectData.projectType}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Budget Range:</span>
+                        <span className="font-medium">{formatCurrency(projectData.budget)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Complexity:</span>
+                        <span className="font-medium">
+                          {projectData.projectType === 'heritage' ? 'High (Conservation)' : 
+                           projectData.projectType === 'luxury' ? 'High (Premium)' : 'Standard'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-900 flex items-center">
+                      <BarChart3 className="h-4 w-4 mr-2 text-green-600" />
+                      Performance vs Peers
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Industry CPI Range:</span>
+                        <span className="font-medium">
+                          {projectData.projectType === 'heritage' ? '0.85-1.05' : '0.95-1.10'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Typical Variance:</span>
+                        <span className="font-medium">
+                          {projectData.projectType === 'heritage' ? '10-15%' : '5-10%'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Project Ranking:</span>
+                        <span className={`font-medium ${Math.abs(projectData.spent - projectData.budget) / projectData.budget < 0.1 ? 'text-green-600' : 'text-blue-600'}`}>
+                          {Math.abs(projectData.spent - projectData.budget) / projectData.budget < 0.1 ? 'Top Quartile' : 'Median'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-900 flex items-center">
+                      <Shield className="h-4 w-4 mr-2 text-purple-600" />
+                      Benchmarking Context
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Cost Performance vs Industry:</span>
+                        <span className="font-medium text-green-600">+12% above avg</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Schedule Performance vs Industry:</span>
+                        <span className="font-medium text-green-600">+8% above avg</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Quality Index vs Industry:</span>
+                        <span className="font-medium text-blue-600">+15% above avg</span>
+                      </div>
+                      <p className="text-xs text-gray-600 leading-relaxed mt-2">
+                        Performance metrics compare favorably against 
+                        {projectData.projectType === 'heritage' ? ' heritage restoration sector averaging CPI 0.92' : ' luxury construction market averaging CPI 0.98'}. 
+                        Ranking in top quartile for cost control efficiency.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Professional Variance Cards */}
@@ -3571,80 +3592,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 />
               )}
 
-              {/* Industry Benchmarking Summary */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <BarChart3 className="h-5 w-5 mr-2 text-green-600" />
-                    Industry Benchmarking Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="space-y-3">
-                      <h4 className="font-medium text-gray-900">Project Classification</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Type:</span>
-                          <span className="font-medium capitalize">{projectData.projectType}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Budget Range:</span>
-                          <span className="font-medium">{formatCurrency(projectData.budget)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Complexity:</span>
-                          <span className="font-medium">
-                            {projectData.projectType === 'heritage' ? 'High (Conservation)' : 
-                             projectData.projectType === 'luxury' ? 'High (Premium)' : 'Standard'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <h4 className="font-medium text-gray-900">Performance vs Peers</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Industry CPI Range:</span>
-                          <span className="font-medium">
-                            {projectData.projectType === 'heritage' ? '0.85-1.05' : '0.95-1.10'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Typical Variance:</span>
-                          <span className="font-medium">
-                            {projectData.projectType === 'heritage' ? '10-15%' : '5-10%'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Project Ranking:</span>
-                          <span className="font-medium">
-                            {Math.abs(projectData.spent - projectData.budget) / projectData.budget < 0.1 ? 'Top Quartile' : 'Median'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <h4 className="font-medium text-gray-900">Compliance Standards</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {projectData.suppliers?.[0]?.bsCompliance?.map(standard => (
-                          <Badge key={standard} variant="outline" className="text-xs">
-                            {standard}
-                          </Badge>
-                        )) || [
-                          <Badge key="default" variant="outline" className="text-xs">BS8102</Badge>
-                        ]}
-                      </div>
-                      <p className="text-xs text-gray-600">
-                        All suppliers verified compliant with relevant British Standards
-                        {projectData.projectType === 'heritage' && ' and conservation requirements'}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
 
               {/* Phase 2: Professional Intelligence Panels */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -4015,259 +3962,127 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
               {/* Phase 3: Advanced Professional Intelligence Features */}
               <div className="space-y-6">
-                {/* Commercial Intelligence Dashboard */}
-                <Card>
+
+                {/* Critical Decision Windows - Full Width */}
+                <Card id="predictive-analytics">
                   <CardHeader>
                     <CardTitle className="text-lg font-semibold flex items-center">
-                      <Activity className="h-5 w-5 mr-2 text-blue-600" />
-                      Commercial Intelligence Dashboard
+                      <Clock className="h-5 w-5 mr-2 text-amber-600" />
+                      Critical Decision Windows
                     </CardTitle>
                     <CardDescription className="text-sm text-muted-foreground">
-                      Executive-level strategic insights and performance benchmarking
+                      Timing-critical actions requiring immediate attention to prevent issues
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {/* Strategic KPIs */}
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-navy-blue">Strategic KPIs</h4>
-                        <div className="space-y-3">
-                          {[
-                            { label: 'Project ROI', value: '18.4%', trend: 'up', target: '15%' },
-                            { label: 'Commercial Efficiency', value: '94.2%', trend: 'up', target: '90%' },
-                            { label: 'Risk-Adjusted NPV', value: '£24,800', trend: 'stable', target: '£22,000' },
-                            { label: 'Stakeholder Satisfaction', value: '87%', trend: 'up', target: '85%' }
-                          ].map((kpi, index) => (
-                            <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">{kpi.label}</div>
-                                <div className="text-xs text-gray-600">Target: {kpi.target}</div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-sm font-semibold text-gray-900">{kpi.value}</div>
-                                <div className={`text-xs flex items-center ${
-                                  kpi.trend === 'up' ? 'text-green-600' : 
-                                  kpi.trend === 'down' ? 'text-red-600' : 'text-gray-600'
-                                }`}>
-                                  {kpi.trend === 'up' ? <TrendingUp className="h-3 w-3 mr-1" /> : 
-                                   kpi.trend === 'down' ? <TrendingDown className="h-3 w-3 mr-1" /> : 
-                                   <Activity className="h-3 w-3 mr-1" />}
-                                  {kpi.trend === 'stable' ? 'Stable' : kpi.trend === 'up' ? 'Improving' : 'Declining'}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                      {/* Urgent - Next Week */}
+                      <div className="p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg border-l-4 border-red-500">
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="font-semibold text-red-900 flex items-center">
+                            <AlertTriangle className="h-4 w-4 mr-2" />
+                            Decision by Nov 29th
+                          </h5>
+                          <Badge className="bg-red-100 text-red-800 border-red-300 text-xs">6 days left</Badge>
+                        </div>
+                        <div className="text-sm text-red-800 mb-2">Steel price increase forecast - lock in contracts before Q1 2024</div>
+                        <div className="text-xs text-red-700">
+                          <strong>Consequence of delay:</strong> 8% price increase = £2,400 additional cost
                         </div>
                       </div>
 
-                      {/* Market Position Analysis */}
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-navy-blue">Market Position</h4>
-                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                          <div className="text-sm font-medium text-blue-900 mb-2">Industry Ranking</div>
-                          <div className="text-2xl font-bold text-blue-900">#12</div>
-                          <div className="text-xs text-blue-700">of 180 UK construction firms</div>
-                          <div className="mt-3 text-xs text-blue-600">
-                            Moved up 3 positions this quarter based on EVM performance
-                          </div>
+                      {/* Medium - 2 Months */}
+                      <div className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border-l-4 border-amber-500">
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="font-semibold text-amber-900 flex items-center">
+                            <Clock className="h-4 w-4 mr-2" />
+                            Plan by Jan 15th
+                          </h5>
+                          <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-xs">8 weeks</Badge>
                         </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Cost Performance vs Peers</span>
-                            <span className="font-medium text-green-600">+12% above avg</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Schedule Performance vs Peers</span>
-                            <span className="font-medium text-green-600">+8% above avg</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Quality Index vs Peers</span>
-                            <span className="font-medium text-blue-600">+15% above avg</span>
-                          </div>
+                        <div className="text-sm text-amber-800 mb-2">Q1 2024 supplier negotiations - secure preferential rates</div>
+                        <div className="text-xs text-amber-700">
+                          <strong>Action needed:</strong> Renegotiate contracts to maintain cost advantage
                         </div>
                       </div>
 
-                      {/* Strategic Recommendations */}
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-navy-blue">Strategic Actions</h4>
-                        <div className="space-y-3">
-                          {[
-                            {
-                              priority: 'high',
-                              action: 'Secure Q1 Material Contracts',
-                              impact: '£15k cost avoidance',
-                              deadline: '2 weeks'
-                            },
-                            {
-                              priority: 'medium',
-                              action: 'Implement Lean Construction Methods',
-                              impact: '18% efficiency gain',
-                              deadline: '4 weeks'
-                            },
-                            {
-                              priority: 'low',
-                              action: 'Expand Supplier Network',
-                              impact: '12% risk reduction',
-                              deadline: '8 weeks'
-                            }
-                          ].map((item, index) => (
-                            <div key={index} className={`p-3 rounded border-l-4 ${
-                              item.priority === 'high' ? 'border-red-500 bg-red-50' :
-                              item.priority === 'medium' ? 'border-amber-500 bg-amber-50' :
-                              'border-blue-500 bg-blue-50'
-                            }`}>
-                              <div className="text-sm font-medium text-gray-900">{item.action}</div>
-                              <div className="text-xs text-gray-600 mt-1">
-                                Impact: {item.impact} | Due: {item.deadline}
-                              </div>
-                            </div>
-                          ))}
+                      {/* Strategic - 3 Months */}
+                      <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-l-4 border-blue-500">
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="font-semibold text-blue-900 flex items-center">
+                            <TrendingUp className="h-4 w-4 mr-2" />
+                            Review by Feb 28th
+                          </h5>
+                          <Badge className="bg-blue-100 text-blue-800 border-blue-300 text-xs">16 weeks</Badge>
                         </div>
+                        <div className="text-sm text-blue-800 mb-2">Project completion strategy - optimize final phase efficiency</div>
+                        <div className="text-xs text-blue-700">
+                          <strong>Decision point:</strong> Resource reallocation for maximum value capture
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Decision Matrix */}
+                    <div className="space-y-3">
+                      <h6 className="text-sm font-semibold text-gray-800">Action Timing Matrix</h6>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {[
+                          { 
+                            action: 'Finalize Q1 2024 material contracts', 
+                            deadline: '6 days', 
+                            urgency: 'critical',
+                            impact: 'Avoid 8% price escalation' 
+                          },
+                          { 
+                            action: 'Renegotiate supplier agreements', 
+                            deadline: '8 weeks', 
+                            urgency: 'high',
+                            impact: 'Maintain cost advantage' 
+                          },
+                          { 
+                            action: 'Project completion strategy review', 
+                            deadline: '16 weeks', 
+                            urgency: 'medium',
+                            impact: 'Optimize final phase efficiency' 
+                          },
+                          { 
+                            action: 'Performance benchmarking analysis', 
+                            deadline: '20 weeks', 
+                            urgency: 'low',
+                            impact: 'Capture lessons learned' 
+                          }
+                        ].map((item, index) => (
+                          <div key={index} className={`flex justify-between items-center p-2 rounded text-xs ${
+                            item.urgency === 'critical' ? 'bg-red-50 border-l-2 border-red-400' :
+                            item.urgency === 'high' ? 'bg-amber-50 border-l-2 border-amber-400' :
+                            item.urgency === 'medium' ? 'bg-blue-50 border-l-2 border-blue-400' :
+                            'bg-gray-50 border-l-2 border-gray-400'
+                          }`}>
+                            <div>
+                              <div className={`font-medium ${
+                                item.urgency === 'critical' ? 'text-red-900' :
+                                item.urgency === 'high' ? 'text-amber-900' :
+                                item.urgency === 'medium' ? 'text-blue-900' :
+                                'text-gray-900'
+                              }`}>{item.action}</div>
+                              <div className="text-gray-600">{item.impact}</div>
+                            </div>
+                            <div className="text-right">
+                              <Badge variant="outline" className={`text-xs ${
+                                item.urgency === 'critical' ? 'border-red-300 text-red-700' :
+                                item.urgency === 'high' ? 'border-amber-300 text-amber-700' :
+                                item.urgency === 'medium' ? 'border-blue-300 text-blue-700' :
+                                'border-gray-300 text-gray-700'
+                              }`}>
+                                {item.deadline}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Advanced Analytics & Predictive Modeling */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card id="predictive-analytics">
-                    <CardHeader>
-                      <CardTitle className="text-lg font-semibold flex items-center">
-                        <TrendingUp className="h-5 w-5 mr-2 text-green-600" />
-                        Predictive Analytics
-                      </CardTitle>
-                      <CardDescription className="text-sm text-muted-foreground">
-                        AI-powered forecasting and trend analysis
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                          <div className="flex items-center justify-between mb-3">
-                            <h5 className="font-medium text-blue-900">Project Completion Forecast</h5>
-                            <Badge className="bg-blue-100 text-blue-800 border-blue-300">94% Confidence</Badge>
-                          </div>
-                          <div className="text-2xl font-bold text-blue-900 mb-1">March 15, 2024</div>
-                          <div className="text-sm text-blue-700">2 days ahead of original schedule</div>
-                          <div className="mt-3 text-xs text-blue-600">
-                            Based on current velocity and resource allocation patterns
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="p-3 bg-green-50 rounded border border-green-200">
-                            <div className="text-sm font-medium text-green-800">Budget Forecast</div>
-                            <div className="text-lg font-bold text-green-900">£2,400 under</div>
-                            <div className="text-xs text-green-600">vs original budget</div>
-                          </div>
-                          <div className="p-3 bg-amber-50 rounded border border-amber-200">
-                            <div className="text-sm font-medium text-amber-800">Risk Score</div>
-                            <div className="text-lg font-bold text-amber-900">Medium</div>
-                            <div className="text-xs text-amber-600">Weather dependency</div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <h6 className="text-sm font-medium text-gray-800">Key Predictive Indicators</h6>
-                          {[
-                            { metric: 'Material Cost Volatility', status: 'Low', confidence: '91%' },
-                            { metric: 'Labour Availability', status: 'Stable', confidence: '87%' },
-                            { metric: 'Weather Impact Risk', status: 'Medium', confidence: '76%' },
-                            { metric: 'Supply Chain Disruption', status: 'Low', confidence: '89%' }
-                          ].map((indicator, index) => (
-                            <div key={index} className="flex justify-between items-center text-sm">
-                              <span className="text-gray-600">{indicator.metric}</span>
-                              <div className="flex items-center space-x-2">
-                                <Badge variant="outline" className={`text-xs ${
-                                  indicator.status === 'Low' ? 'border-green-300 text-green-700' :
-                                  indicator.status === 'Medium' ? 'border-amber-300 text-amber-700' :
-                                  'border-blue-300 text-blue-700'
-                                }`}>
-                                  {indicator.status}
-                                </Badge>
-                                <span className="text-gray-500 text-xs">{indicator.confidence}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg font-semibold flex items-center">
-                        <PieChart className="h-5 w-5 mr-2 text-purple-600" />
-                        Executive Summary
-                      </CardTitle>
-                      <CardDescription className="text-sm text-muted-foreground">
-                        High-level project status for senior stakeholders
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                          <div className="flex items-center justify-between mb-2">
-                            <h5 className="font-medium text-green-900">Overall Project Health</h5>
-                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                          </div>
-                          <div className="text-lg font-semibold text-green-900">Excellent</div>
-                          <div className="text-sm text-green-700 mt-2">
-                            Project exceeding expectations across all key performance indicators. 
-                            Risk exposure minimal with strong contingency buffers maintained.
-                          </div>
-                        </div>
-
-                        <div className="space-y-3">
-                          <h6 className="text-sm font-medium text-gray-800">Executive Highlights</h6>
-                          {[
-                            {
-                              title: 'Cost Performance Excellence',
-                              detail: 'CPI of 1.12 demonstrates superior cost control and value delivery',
-                              impact: 'positive'
-                            },
-                            {
-                              title: 'Schedule Optimization Success',
-                              detail: 'SPI of 1.08 indicates ahead-of-schedule delivery capability',
-                              impact: 'positive'
-                            },
-                            {
-                              title: 'Quality Assurance Leadership',
-                              detail: 'Zero defects recorded in recent quality audits across all work packages',
-                              impact: 'positive'
-                            },
-                            {
-                              title: 'Stakeholder Engagement',
-                              detail: 'Client satisfaction rating of 9.2/10 with proactive communication',
-                              impact: 'positive'
-                            }
-                          ].map((highlight, index) => (
-                            <div key={index} className="p-3 bg-white border rounded-lg">
-                              <div className="flex items-start space-x-2">
-                                <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                                <div>
-                                  <div className="text-sm font-medium text-gray-900">{highlight.title}</div>
-                                  <div className="text-xs text-gray-600 mt-1">{highlight.detail}</div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        <div className="p-3 bg-blue-50 rounded border border-blue-200">
-                          <div className="text-sm font-medium text-blue-900 mb-2">Next Board Presentation</div>
-                          <div className="text-xs text-blue-700">
-                            Prepared executive summary available for quarterly board review. 
-                            All KPIs trending positive with clear value demonstration.
-                          </div>
-                          <Button size="sm" className="mt-2 bg-blue-600 hover:bg-blue-700">
-                            Generate Board Report
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
               </div>
             </div>
           </TabsContent>
