@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { useSidebar } from "@/contexts/sidebar-context"
 import {
   LayoutDashboard,
   FolderOpen,
@@ -127,7 +128,7 @@ function SidebarContent({ collapsed = false, onNavigate }: { collapsed?: boolean
 }
 
 export function Sidebar({ className }: SidebarProps) {
-  const [collapsed, setCollapsed] = useState(false)
+  const { isCollapsed, toggleCollapsed } = useSidebar()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
@@ -154,21 +155,21 @@ export function Sidebar({ className }: SidebarProps) {
       <div
         className={cn(
           "hidden md:flex h-full flex-col bg-white border-r border-blue-900 transition-all duration-300",
-          collapsed ? "w-16" : "w-64",
+          isCollapsed ? "w-16" : "w-64",
           className,
         )}
       >
-        <SidebarContent collapsed={collapsed} />
+        <SidebarContent collapsed={isCollapsed} />
 
         {/* Collapse button - desktop only */}
         <div className="absolute top-20 -right-3 z-10">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={toggleCollapsed}
             className="h-6 w-6 p-0 bg-background border shadow-sm"
           >
-            {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+            {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
           </Button>
         </div>
       </div>

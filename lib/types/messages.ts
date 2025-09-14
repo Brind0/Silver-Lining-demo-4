@@ -203,3 +203,69 @@ export interface DeliveryStatus {
   providerResponse?: any;
   errorMessage?: string;
 }
+
+// Layout and UI Types
+export type LayoutState = 'browse' | 'selected' | 'ai-working' | 'preview' | 'manual-override';
+
+// Chat and AI-related Types
+export interface ChatMessage {
+  id: string;
+  type: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+  citations?: string[];
+  confidence?: number;
+  isStreaming?: boolean;
+  displayedContent?: string;
+  showRecommendedActions?: boolean;
+}
+
+export interface QuickQuestion {
+  icon: any; // React component type
+  text: string;
+  query: string;
+}
+
+// Component Props Types
+export interface GmailMessageCardProps {
+  message: Message;
+  isSelected: boolean;
+  onClick: () => void;
+}
+
+export interface MessageCardProps {
+  message: Message;
+  onReply: (message: Message) => void;
+  priority: 'urgent' | 'action' | 'review';
+}
+
+export interface AIFirstInterfaceProps {
+  message: Message | null;
+  layoutState: LayoutState;
+  onLayoutStateChange: (state: LayoutState) => void;
+  onManualOverride: () => void;
+  onBackToBrowse: () => void;
+  showEmailPreview: boolean;
+  generatedEmail: string | null;
+  onEmailGenerated: (email: string) => void;
+  onCloseEmailPreview: () => void;
+}
+
+export interface MiniChatRAGProps {
+  message: Message;
+  className?: string;
+}
+
+// Event Types for Custom Events
+export interface AITemplateSelectedEvent extends CustomEvent {
+  detail: {
+    content: string;
+    subject: string;
+  };
+}
+
+export interface AutoTriggerQueryEvent extends CustomEvent {
+  detail: {
+    query: string;
+  };
+}

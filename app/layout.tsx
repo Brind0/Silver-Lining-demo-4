@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
+import { SidebarProvider } from "@/contexts/sidebar-context"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,8 +25,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} antialiased`}>
       <body className="font-sans">
-        {children}
-        <Toaster position="top-right" />
+        <SidebarProvider>
+          {children}
+          <Toaster position="top-right" />
+        </SidebarProvider>
       </body>
     </html>
   )

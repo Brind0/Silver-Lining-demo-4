@@ -64,6 +64,63 @@ const generateMockSuggestions = (message: Message | null): AISuggestion[] => {
       }
     ]
   }
+
+  // Gas supplier delay crisis - British Gas Commercial
+  if (message.priority === 'urgent' && message.sender?.company?.includes('British Gas Commercial')) {
+    return [
+      {
+        id: 'ai-crisis-1',
+        type: 'response_draft',
+        title: 'Crisis Escalation Response',
+        content: `David,\n\nThank you for the urgent notification regarding the gas connection permit delay for Marchmont House Heritage project.\n\nI understand the gravity of this situation - 6 days overdue with potential 2-3 week project delay. This directly threatens our May 15th completion deadline and affects multiple trades.\n\nImmediate Actions I'm Taking:\n• Contacting local authority permit office directly within the hour\n• Escalating through our heritage project coordinator at Historic England\n• Arranging emergency consultation with planning department\n• Preparing alternative timeline scenarios for stakeholders\n\nI'll call you within 2 hours with a definitive plan and timeline. Given the £12,000 daily cost impact, this requires our highest priority attention.\n\nLet's resolve this together. I'll also need your team's flexibility on rescheduling once permits are secured.\n\nBest regards,\nEmily Johnson\nOperations Director\nDirect: 07XXX XXX XXX`,
+        confidence: 0.94,
+        metadata: { 
+          tone: 'professional', 
+          urgency: 'critical', 
+          includes_timeline: true, 
+          stakeholder_management: true,
+          cost_aware: true 
+        }
+      },
+      {
+        id: 'ai-crisis-2',
+        type: 'response_draft',
+        title: 'Direct Action Response',
+        content: `David,\n\nUrgent gas connection permit issue acknowledged - 6 days overdue, May 15 deadline at risk.\n\nImmediate Response Plan:\n• Emergency permit renewal call to local authority - within 1 hour\n• Historic England liaison contacted for expedited processing\n• Client notification scheduled for 3pm today with mitigation plan\n• Alternative supplier consultation initiated as backup\n• Daily coordination calls established until resolved\n\nCost Impact Tracking:\n• Current delay cost: £12k additional\n• Each further day: £2.4k impact\n• Alternative solutions budget: £5k allocated\n\nNext Steps:\n1. Permit office call (within 1 hour)\n2. Status update call to you (2pm today)\n3. Client briefing with options (3pm today)\n4. Revised project timeline (by EOD)\n\nThis is my top priority. Will call you at 2pm sharp with progress update.\n\nEmily Johnson\n07XXX XXX XXX`,
+        confidence: 0.92,
+        metadata: { 
+          tone: 'urgent', 
+          action_focused: true, 
+          includes_timeline: true,
+          cost_breakdown: true 
+        }
+      },
+      {
+        id: 'ai-crisis-3',
+        type: 'action_suggestion',
+        title: 'Multi-Stakeholder Coordination Plan',
+        content: `CRISIS COORDINATION PROTOCOL:\n\n1. IMMEDIATE (Next 2 Hours):\n• Call permit office directly\n• Contact Historic England for expedited processing\n• Brief project team on situation\n\n2. CLIENT COMMUNICATION (Today 3pm):\n• Honest assessment of situation\n• Present 3 scenario options with timelines\n• Reassure with proactive action plan\n\n3. SUPPLIER MANAGEMENT:\n• Daily coordination calls with British Gas\n• Identify backup gas connection options\n• Negotiate timeline flexibility from other trades\n\n4. RISK MITIGATION:\n• Document all decisions for audit trail\n• Prepare media response if project becomes public\n• Review all other utility permits for similar risks\n\n5. PROCESS IMPROVEMENT:\n• Implement 45-day permit expiry alerts system\n• Create utility supplier performance dashboard\n• Add permit buffer recommendations to all future projects`,
+        confidence: 0.96,
+        metadata: { 
+          type: 'crisis_management', 
+          stakeholder_coordination: true,
+          process_improvement: true 
+        }
+      },
+      {
+        id: 'ai-crisis-4',
+        type: 'escalation',
+        title: 'Timeline Risk Analysis & Scenario Planning',
+        content: `TIMELINE IMPACT ANALYSIS:\n\nCURRENT SITUATION:\n• Gas connection: 6 days overdue\n• Project completion: May 15 (5 days away)\n• Affected trades: Electrical, Plumbing, HVAC, Finishing\n• Daily delay cost: £2,400\n\nSCENARIO PLANNING:\n\nBEST CASE (Permit renewed tomorrow):\n• Gas connection: May 12-13\n• Project completion: May 18-20 (3-5 days late)\n• Additional cost: £7,200-£12,000\n• Client impact: Minimal, manageable delay\n\nREALISTIC CASE (Permit renewed in 3-5 days):\n• Gas connection: May 16-18\n• Project completion: May 25-28 (10-13 days late)\n• Additional cost: £24,000-£31,200\n• Client impact: Significant, requires rescheduling\n\nWORST CASE (Permit issues continue):\n• Gas connection: May 20+\n• Project completion: June 3+ (19+ days late)\n• Additional cost: £45,600+\n• Client impact: Major disruption, potential contract issues\n\nRECOMMENDED ACTIONS:\n1. Pursue Best Case with maximum urgency\n2. Prepare client for Realistic Case scenario\n3. Develop contingency plans for Worst Case\n4. Consider alternative heating solutions as backup`,
+        confidence: 0.98,
+        metadata: { 
+          type: 'risk_analysis', 
+          scenario_planning: true,
+          financial_analysis: true 
+        }
+      }
+    ]
+  }
   
   if (message.category === 'team' && message.content.includes('delivery delayed')) {
     return [

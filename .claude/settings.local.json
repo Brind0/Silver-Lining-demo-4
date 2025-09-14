@@ -21,7 +21,10 @@
       "Read(/c:\\Users\\soggy\\OneDrive\\Pictures\\Screenshots/**)",
       "Bash(powershell:*)",
       "Read(//c/Users/soggy/OneDrive/Pictures/Screenshots/**)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npm run lint)",
+      "Bash(cat:*)",
+      "Bash(WEBSOCKET_PORT=3002 node websocket-server.js)"
     ],
     "deny": [],
     "ask": []

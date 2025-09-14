@@ -220,6 +220,64 @@ class MockMessagesDB implements MessagesDB {
       },
       created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
       updated_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      id: '5',
+      subject: 'URGENT: Gas connection permit expired - 6 days overdue',
+      content: 'Emily,\n\nThis is regarding the Marchmont House Heritage project gas connection. Our excavation permit expired 6 days ago and we cannot proceed with the gas line installation until this is renewed.\n\nThe delay is now impacting our scheduled connection date of May 10th. Each additional day of delay compounds the timeline risk for your project completion deadline of May 15th.\n\nWe need your immediate assistance to expedite the permit renewal through the local authority. Without this, we\'re looking at a potential 2-3 week delay to the overall project timeline.\n\nThis affects not just gas connection but all subsequent trades waiting on utilities completion.\n\nPlease call me urgently at 0800-111-999 to discuss immediate next steps.\n\nRegards,\nDavid Thompson\nBritish Gas Commercial',
+      senderId: 'british-gas-commercial',
+      sender: {
+        id: 'british-gas-commercial',
+        name: 'David Thompson',
+        email: 'david.thompson@britishgas.com',
+        phone: '0800-111-999',
+        company: 'British Gas Commercial',
+        avatar: undefined,
+        category: 'external',
+        reliabilityScore: 6,
+        avgResponseTime: 2.8,
+        isVip: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      source: 'email',
+      category: 'external',
+      priority: 'urgent',
+      status: 'requires_response',
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+      responseRequired: true,
+      dueDate: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
+      projectId: 'marchmont-heritage',
+      project: {
+        id: 'marchmont-heritage',
+        name: 'Marchmont Heritage',
+        description: 'Historic building renovation',
+        budget: 120000,
+        spent: 165000,
+        timeline: {
+          currentWeek: 14,
+          totalWeeks: 16
+        },
+        status: 'active',
+        startDate: new Date(Date.now() - 14 * 7 * 24 * 60 * 60 * 1000).toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      aiSuggestions: [],
+      chaseHistory: [],
+      relatedMessages: [],
+      tags: ['urgent', 'utilities', 'timeline-risk', 'permits'],
+      metadata: {
+        hasAttachment: false,
+        attachmentCount: 0,
+        estimatedImportance: 9,
+        timelineImpact: 21, // days potential delay
+        costImpact: 12000, // additional costs
+        riskLevel: 'critical',
+        affectedTrades: ['electrical', 'plumbing', 'hvac', 'finishing']
+      },
+      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
     }
   ]
 
@@ -293,6 +351,19 @@ class MockMessagesDB implements MessagesDB {
       category: 'external',
       reliabilityScore: 6,
       avgResponseTime: 3.5,
+      isVip: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'british-gas-commercial',
+      name: 'David Thompson',
+      email: 'david.thompson@britishgas.com',
+      phone: '0800-111-999',
+      company: 'British Gas Commercial',
+      category: 'external',
+      reliabilityScore: 6,
+      avgResponseTime: 2.8,
       isVip: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()

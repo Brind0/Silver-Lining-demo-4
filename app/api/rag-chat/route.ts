@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
       confidence: ragResponse.confidence,
       citations: ragResponse.citations || [],
       suggestedFollowUps: ragResponse.suggestedFollowUps || [],
+      showRecommendedActions: ragResponse.showRecommendedActions || false,
       timestamp: new Date().toISOString()
     })
 

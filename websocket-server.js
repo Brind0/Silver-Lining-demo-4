@@ -8,9 +8,9 @@ const connectionAttempts = new Map();
 
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' 
+    origin: process.env.NODE_ENV === 'production'
       ? ["https://yourdomain.com"] // Update for production
-      : ["http://localhost:3000", "http://127.0.0.1:3000"],
+      : ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001"],
     methods: ["GET", "POST"],
     credentials: true
   },

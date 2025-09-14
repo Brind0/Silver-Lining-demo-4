@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, use } from "react"
+import { useSearchParams } from "next/navigation"
 import { MainLayout } from "@/components/main-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -84,6 +85,9 @@ import { TechnicalSpecificationsModal } from "@/components/technical-specificati
 import { ActivityTooltip } from "@/components/activity-tooltip"
 import { ProfessionalVarianceCard, ProfessionalVarianceGrid } from "@/components/professional-variance-cards"
 import { ProfessionalInvestigationModal } from "@/components/professional-investigation-modal"
+import { AICrisisNotification } from "@/components/ai-crisis-notification"
+import { AITimelineImpact } from "@/components/ai-timeline-impact"
+import { AIBusinessInsights } from "@/components/ai-business-insights"
 import { formatCurrency } from "@/lib/evm-calculations"
 
 const projects = [
@@ -407,6 +411,7 @@ function getStatusText(status: string) {
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const searchParams = useSearchParams()
   const projectData = getProjectData(id)
   const [activeTab, setActiveTab] = useState("overview")
   const [groupTasks, setGroupTasks] = useState(false)
@@ -414,7 +419,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [selectedTask, setSelectedTask] = useState<any>(null)
   const [taskAssignments, setTaskAssignments] = useState<{[key: number]: string}>({})
   const [searchTerm, setSearchTerm] = useState("")
-  
+
+  // Demo flow state
+  const [showDemoNotification, setShowDemoNotification] = useState(false)
+  const [demoActionType, setDemoActionType] = useState<string>('')
+  const [showAgentUpdates, setShowAgentUpdates] = useState(false)
+
   // Enhanced Phase 1 State Management
   const [selectedWeekDetail, setSelectedWeekDetail] = useState<any>(null)
   const [showWeekDetailCard, setShowWeekDetailCard] = useState(false)
@@ -456,6 +466,39 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       setSelectedTimelineWeek(allData[0].week)
     }
   }, [selectedTimelineWeek])
+
+  // Handle demo flow parameters from AI Assistant
+  useEffect(() => {
+    const demo = searchParams.get('demo')
+    const actions = searchParams.get('actions')
+    const source = searchParams.get('source')
+    const action = searchParams.get('action')
+    const from = searchParams.get('from')
+
+    if (demo === 'gas-delay-analysis' && actions === 'completed' && source === 'ai-assistant') {
+      setDemoActionType('gas-delay-resolved')
+      setShowDemoNotification(true)
+      setActiveTab("ai-analysis") // Automatically switch to AI Analysis tab
+
+      // Auto-hide notification after 5 seconds
+      setTimeout(() => {
+        setShowDemoNotification(false)
+      }, 5000)
+    }
+
+    // Handle new gas-delay-resolved action from messages
+    if (action === 'gas-delay-resolved' && from === 'messages') {
+      setShowAgentUpdates(true)
+      setDemoActionType('gas-delay-resolved')
+      setShowDemoNotification(true)
+      setActiveTab("overview") // Stay on overview tab
+
+      // Auto-hide notification after 5 seconds
+      setTimeout(() => {
+        setShowDemoNotification(false)
+      }, 5000)
+    }
+  }, [searchParams])
 
   const toggleTaskCompletion = (taskId: number) => {
     setCompletedTasks(prev => 
@@ -1128,6 +1171,47 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   }
 
   const recentActivity = [
+    ...(showAgentUpdates ? [
+      {
+        action: "Gas delay escalation email sent to British Gas Commercial",
+        project: projectData.name,
+        time: "Just now",
+        icon: Mail,
+        color: "text-red-600",
+        details: "AI Agent sent escalation email to David Thompson, Senior Permits Manager at British Gas Commercial regarding gas connection permit delay. Tracking ID: ESC-" + Date.now(),
+        user: "AI Assistant",
+        exactTime: new Date().toLocaleString(),
+        amount: "£0",
+        status: "Sent",
+        nextStep: "Await response within 24 hours"
+      },
+      {
+        action: "Project timeline updated with delay scenarios",
+        project: projectData.name,
+        time: "Just now",
+        icon: AlertTriangle,
+        color: "text-red-600",
+        details: "Timeline impact analysis completed. Gas connection delay creating 7-day critical path impact with £12,000 potential cost exposure",
+        user: "AI Assistant",
+        exactTime: new Date().toLocaleString(),
+        amount: "£0",
+        status: "Updated",
+        nextStep: "Monitor supplier response"
+      },
+      {
+        action: "Team notifications dispatched regarding permit delays",
+        project: projectData.name,
+        time: "Just now",
+        icon: Users,
+        color: "text-amber-600",
+        details: "Automated notifications sent to all trade teams about gas connection delays affecting electrical and plumbing work schedules",
+        user: "AI Assistant",
+        exactTime: new Date().toLocaleString(),
+        amount: "£0",
+        status: "Dispatched",
+        nextStep: "Teams acknowledge receipt"
+      }
+    ] : []),
     {
       action: "Heritage stone delivered",
       project: projectData.name,
@@ -1181,17 +1265,19 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       nextStep: "Schedule next inspection"
     },
     {
-      action: "Timber moisture test overdue",
+      action: showAgentUpdates ? "Timber moisture test rescheduled pending gas connection" : "Timber moisture test overdue",
       project: projectData.name,
       time: "1 day ago",
       icon: AlertTriangle,
-      color: "text-red-600",
-      details: "Bi-weekly timber moisture content testing is overdue and requires immediate attention",
+      color: showAgentUpdates ? "text-amber-600" : "text-red-600",
+      details: showAgentUpdates
+        ? "Bi-weekly timber moisture content testing rescheduled due to gas connection permit delays affecting project timeline"
+        : "Bi-weekly timber moisture content testing is overdue and requires immediate attention",
       user: "Alice Cooper",
       exactTime: new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleString(),
       amount: "£0",
-      status: "Attention Required",
-      nextStep: "Schedule emergency moisture testing"
+      status: showAgentUpdates ? "Rescheduled" : "Attention Required",
+      nextStep: showAgentUpdates ? "Resume after gas connection resolved" : "Schedule emergency moisture testing"
     },
     {
       action: "Oak beam installation started",
@@ -1396,6 +1482,27 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <MainLayout>
+      {/* AI Crisis Notification - positioned absolutely */}
+      {!showAgentUpdates && <AICrisisNotification projectId={id} />}
+
+      {/* Demo Success Notification */}
+      {showDemoNotification && demoActionType === 'gas-delay-resolved' && (
+        <div className="fixed top-20 right-6 z-50 animate-in slide-in-from-right-2 fade-in duration-300">
+          <Alert className="w-96 bg-green-50 border-green-200">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <div className="ml-2">
+              <h4 className="text-sm font-semibold text-green-800">AI Actions Completed Successfully!</h4>
+              <p className="text-xs text-green-700 mt-1">
+                ✅ Escalation email sent to British Gas Commercial<br />
+                ✅ Project timeline updated with delay scenarios<br />
+                ✅ Team notifications dispatched<br />
+                📊 <strong>View updated analysis below in AI Analysis tab</strong>
+              </p>
+            </div>
+          </Alert>
+        </div>
+      )}
+
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -1538,9 +1645,37 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   year: 'numeric'
                 })}
               </div>
-              <div className="text-sm text-gray-600">
-                {Math.ceil((new Date(projectData.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days remaining
+              <div className={`text-sm ${showAgentUpdates ? "text-red-600 font-medium" : "text-gray-600"}`}>
+                {showAgentUpdates
+                  ? `${Math.ceil((new Date(projectData.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) + 7} days remaining (7-day delay risk)`
+                  : `${Math.ceil((new Date(projectData.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days remaining`
+                }
               </div>
+              {showAgentUpdates && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="mt-2 px-2 py-1 bg-red-50 border border-red-200 rounded text-xs text-red-800 cursor-help hover:bg-red-100 transition-colors">
+                      <div className="flex items-center space-x-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        <span className="font-medium">Gas connection permit delay affecting critical path</span>
+                      </div>
+                      <div className="text-red-600 mt-1">
+                        Impact: Electrical & plumbing work delayed pending permit approval
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs bg-white border border-gray-200 shadow-lg p-3">
+                    <div className="text-sm">
+                      <div className="font-medium text-gray-900 mb-2">Timeline Scenarios:</div>
+                      <div className="space-y-1">
+                        <div className="text-green-600">Best case (response &lt;48hrs): 16 Dec ✅</div>
+                        <div className="text-amber-600">Likely case (response 3-5 days): 19 Dec ⚠️</div>
+                        <div className="text-red-600">Worst case (response &gt;5 days): 24 Dec ❌</div>
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </CardContent>
           </Card>
 
@@ -1582,6 +1717,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             <TabsTrigger value="team">Team</TabsTrigger>
             <TabsTrigger value="budget">Budget</TabsTrigger>
             <TabsTrigger value="professional">Professional Analysis</TabsTrigger>
+            <TabsTrigger value="ai-analysis">AI Analysis</TabsTrigger>
             <TabsTrigger value="files">Files</TabsTrigger>
           </TabsList>
 
@@ -4124,6 +4260,22 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   </CardContent>
                 </Card>
               </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="ai-analysis" className="space-y-6">
+            <div className="space-y-6">
+              {/* AI Timeline Impact Analysis - Show for Marchmont project crisis */}
+              {id === '2' && (
+                <AITimelineImpact 
+                  projectId={id} 
+                  crisisType="gas_delay" 
+                  className="mb-6"
+                />
+              )}
+              
+              {/* AI Business Intelligence Panel */}
+              <AIBusinessInsights projectId={id} />
             </div>
           </TabsContent>
         </Tabs>

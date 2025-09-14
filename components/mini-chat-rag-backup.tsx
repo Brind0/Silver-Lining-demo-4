@@ -88,8 +88,6 @@ export function MiniChatRAG({ message, className }: MiniChatRAGProps) {
     emailContent: string
     type: string
     confidence: number
-    displayedContent?: string
-    isTyping?: boolean
   } | null>(null)
   const [refinementQuery, setRefinementQuery] = useState('')
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -151,7 +149,8 @@ Would you like me to help you prepare follow-up actions or update the project ti
   const handleShowReplyComposition = (event: Event) => {
     const customEvent = event as CustomEvent<{ emailContent: string; type: string; confidence: number }>
     const { emailContent, type, confidence } = customEvent.detail
-    startCompositionTyping(emailContent, type, confidence)
+    setCompositionData({ emailContent, type, confidence })
+    setShowReplyComposition(true)
   }
 
   const quickQuestions: QuickQuestion[] = [
@@ -198,67 +197,31 @@ Would you like me to help you prepare follow-up actions or update the project ti
     handleSubmit(refinementQuery)
   }
 
-  const startCompositionTyping = (content: string, type: string, confidence: number) => {
-    const compositionData = {
-      emailContent: content,
-      type,
-      confidence,
-      displayedContent: '',
-      isTyping: true
-    }
-
-    setCompositionData(compositionData)
-    setShowReplyComposition(true)
-
-    const words = content.split(' ')
-    let currentWordIndex = 0
-
-    const typeNextWord = () => {
-      if (currentWordIndex < words.length) {
-        const displayedSoFar = words.slice(0, currentWordIndex + 1).join(' ')
-
-        setCompositionData(prev => prev ? {
-          ...prev,
-          displayedContent: displayedSoFar
-        } : null)
-
-        currentWordIndex++
-        setTimeout(typeNextWord, 50) // 50ms between words
-      } else {
-        // Typing complete
-        setCompositionData(prev => prev ? {
-          ...prev,
-          isTyping: false
-        } : null)
-      }
-    }
-
-    setTimeout(typeNextWord, 300) // Start after 300ms delay
-  }
-
   const handleSendEscalationEmail = () => {
-    const emailContent = `Dear David Thompson,
+    const emailContent = `Subject: URGENT: Gas Connection Permit Delay - Escalation Required
+
+Dear David Thompson,
 
 I hope this email finds you well. I am writing to escalate a critical issue regarding the gas connection permit for the Marchmont House Heritage project (Permit Reference: GAS-2024-MH-001).
 
-Current Situation:
-- Gas connection works were scheduled to begin on March 15th, 2024
-- We have experienced an unexpected 6-day delay in permit approval
-- This delay directly impacts our critical path and project delivery timeline
-- The heritage nature of this property makes alternative solutions challenging
+## Current Situation:
+• Gas connection works were scheduled to begin on March 15th, 2024
+• We have experienced an unexpected 6-day delay in permit approval
+• This delay directly impacts our critical path and project delivery timeline
+• The heritage nature of this property makes alternative solutions challenging
 
-Business Impact:
-- Timeline Risk: 6-day delay affects subsequent electrical and plumbing work
-- Budget Impact: Potential £12,000 in additional costs due to trade rescheduling
-- Client Relations: High-profile heritage project with significant stakeholder visibility
+## Business Impact:
+• **Timeline Risk**: 6-day delay affects subsequent electrical and plumbing work
+• **Budget Impact**: Potential £12,000 in additional costs due to trade rescheduling
+• **Client Relations**: High-profile heritage project with significant stakeholder visibility
 
-Immediate Action Required:
+## Immediate Action Required:
 We respectfully request your urgent intervention to:
-1. Expedite Permit Review: Priority processing of our pending application
-2. Provide Clear Timeline: Definitive approval date for planning purposes
-3. Alternative Solutions: If delays are unavoidable, guidance on interim measures
+1. **Expedite Permit Review**: Priority processing of our pending application
+2. **Provide Clear Timeline**: Definitive approval date for planning purposes
+3. **Alternative Solutions**: If delays are unavoidable, guidance on interim measures
 
-Our Commitment:
+## Our Commitment:
 We remain fully committed to compliance with all safety and heritage regulations. Our team is available for immediate consultation to address any outstanding concerns.
 
 Given the critical nature of this project, I would be grateful for your urgent attention to this matter. I am available at your convenience for a call to discuss resolution options.
@@ -286,7 +249,7 @@ The email includes quantified impacts (6-day delay, £12,000 potential costs) to
       timestamp: new Date().toISOString(),
       confidence: 94,
       displayedContent: '',
-      showRecommendedActions: false // Don't show actions on escalation email message
+      showRecommendedActions: true
     }
 
     setChatHistory(prev => [...prev, newMessage])
@@ -344,105 +307,6 @@ Would you like me to create a revised project schedule or explore specific mitig
       action: 'view-project-timeline'
     })
 
-    window.location.href = `/projects/2?${params.toString()}`
-  }
-
-  const handleReviewFollowupEmail = () => {
-    const followupEmailContent = `Dear David Thompson,
-
-I hope this email finds you well. I am writing as a follow-up to yesterday's escalation regarding the gas connection permit delay for the Marchmont House Heritage project (Permit Reference: GAS-2024-MH-001).
-
-Current Status Update:
-- Gas connection permit application remains pending approval
-- Project delay has now extended to 7 days from original timeline
-- Critical path impact continues to affect subsequent electrical and plumbing work
-
-Request for Update:
-Could you please provide an estimated timeline for the permit approval? Our team is prepared to begin work immediately upon receiving the necessary clearance.
-
-We appreciate your attention to this time-sensitive matter and look forward to your response.
-
-Best regards,
-[Your Name]
-[Your Title]
-[Contact Information]`
-
-    const compositionData = {
-      emailContent: followupEmailContent,
-      type: 'follow-up-email',
-      confidence: 92
-    }
-
-    setCompositionData(compositionData)
-    setShowReplyComposition(true)
-  }
-
-  const handleMessageAndre = () => {
-    const andreMessage = `Hi Andre,
-
-I wanted to update you on the Marchmont Heritage project status. We've encountered a delay with the gas connection permit that's affecting our timeline.
-
-Key Points:
-- Gas permit delayed by 7 days from British Gas Commercial
-- Have escalated to their Senior Permits Manager (David Thompson)
-- Sent follow-up email this morning requesting status update
-- All subsequent trades (electrical, plumbing) are on hold pending resolution
-
-Impact:
-- Project completion may extend by 5-7 days
-- Additional costs estimated at £15,500 if delay continues
-- Client has been informed of proactive escalation measures
-
-Next Steps:
-- Daily follow-up with British Gas Commercial
-- Alternative supplier assessment in progress
-- Will update you as soon as we have more information
-
-Let me know if you need any additional details or have concerns about the timeline impact.
-
-Best regards,
-[Your Name]`
-
-    const compositionData = {
-      emailContent: andreMessage,
-      type: 'andre-message',
-      confidence: 89
-    }
-
-    setCompositionData(compositionData)
-    setShowReplyComposition(true)
-  }
-
-  const handleApproveMessages = () => {
-    // Show both the follow-up email and Andre message for review
-    const followupEmailContent = `Dear David Thompson,
-
-I hope this email finds you well. I am writing as a follow-up to yesterday's escalation regarding the gas connection permit delay for the Marchmont House Heritage project (Permit Reference: GAS-2024-MH-001).
-
-Current Status Update:
-- Gas connection permit application remains pending approval
-- Project delay has now extended to 7 days from original timeline
-- Critical path impact continues to affect subsequent electrical and plumbing work
-
-Request for Update:
-Could you please provide an estimated timeline for the permit approval? Our team is prepared to begin work immediately upon receiving the necessary clearance.
-
-We appreciate your attention to this time-sensitive matter and look forward to your response.
-
-Best regards,
-[Your Name]
-[Your Title]
-[Contact Information]`
-
-    startCompositionTyping(followupEmailContent, 'follow-up-email', 92)
-  }
-
-  const handleReturnToMarchmont = () => {
-    const params = new URLSearchParams({
-      from: 'messages',
-      action: 'gas-delay-resolved',
-      messageId: message.id
-    })
     window.location.href = `/projects/2?${params.toString()}`
   }
 
@@ -562,60 +426,29 @@ Ready to proceed with sending the escalation email?`,
   }
 
   const handleApproveAndSend = async () => {
-    if (!compositionData) return
-
-    setIsLoading(true)
     try {
       const response = await fetch('/api/send-escalation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messageId: message.id,
-          emailContent: compositionData.emailContent,
+          emailContent: compositionData?.emailContent,
           recipient: 'David Thompson <d.thompson@britishgas.com>',
           subject: 'URGENT: Gas Connection Permit Delay - Escalation Required'
         })
       })
 
       if (response.ok) {
-        const result = await response.json()
-
-        // Add success message to chat
-        const successMessage: ChatMessage = {
-          id: `success-${Date.now()}`,
-          type: 'assistant',
-          content: `✅ Escalation email sent successfully!\n\nI've composed a daily follow-up email for the gas permit and a message for Andre to inform him of the situation. Would you like to review the messages?`,
-          timestamp: new Date().toISOString(),
-          showRecommendedActions: true // Show new action buttons for follow-up options
-        }
-
-        setChatHistory(prev => [...prev, successMessage])
-
-        // Close composition box
-        setShowReplyComposition(false)
-        setCompositionData(null)
-
-        // Scroll to bottom
-        setTimeout(() => scrollToBottom(), 100)
-
-      } else {
-        throw new Error('Failed to send email')
+        const event = new CustomEvent('escalation-sent', {
+          detail: {
+            emailSent: true,
+            nextStep: 'follow-up-composition'
+          }
+        })
+        window.dispatchEvent(event)
       }
     } catch (error) {
       console.error('Error sending escalation:', error)
-
-      // Add error message to chat
-      const errorMessage: ChatMessage = {
-        id: `error-${Date.now()}`,
-        type: 'assistant',
-        content: '❌ Failed to send escalation email. Please try again or contact support.',
-        timestamp: new Date().toISOString(),
-        showRecommendedActions: false
-      }
-
-      setChatHistory(prev => [...prev, errorMessage])
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -813,15 +646,6 @@ Ready to proceed with sending the escalation email?`,
       case 'View Project':
         handleViewProject()
         break
-      case 'Review Follow-up Email':
-        handleReviewFollowupEmail()
-        break
-      case 'Review Message to Andre':
-        handleMessageAndre()
-        break
-      case 'Return to Marchmont':
-        handleReturnToMarchmont()
-        break
       default:
         console.log('Unknown action:', action)
     }
@@ -850,7 +674,7 @@ Ready to proceed with sending the escalation email?`,
   }
 
   return (
-    <div className="flex flex-col h-full max-h-screen overflow-hidden">
+    <div className="flex flex-col h-full">
       <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50 flex-shrink-0">
         <h4 className="font-semibold text-gray-900 flex items-center text-sm">
           <Bot className="h-4 w-4 mr-2 text-blue-600" />
@@ -863,7 +687,7 @@ Ready to proceed with sending the escalation email?`,
 
       {/* Reply Composition Box - appears above chat when escalation email is triggered */}
       {showReplyComposition && compositionData && (
-        <div className="flex-shrink-0 border-b bg-slate-50">
+        <div className="flex-shrink-0 border-b bg-yellow-50">
           <div className="p-4">
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-medium text-gray-900 flex items-center">
@@ -890,31 +714,40 @@ Ready to proceed with sending the escalation email?`,
                 <div className="text-sm font-medium text-gray-700 mb-2">
                   Subject: URGENT: Gas Connection Permit Delay - Escalation Required
                 </div>
-                <div className="text-sm text-gray-900 leading-relaxed whitespace-pre-line">
-                  {compositionData.displayedContent || compositionData.emailContent}
-                  {compositionData.isTyping && (
-                    <span className="inline-block w-2 h-4 bg-blue-600 ml-1 animate-pulse" />
-                  )}
+                <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap font-mono">
+                  {compositionData.emailContent}
                 </div>
               </div>
             </div>
 
+            {/* Refinement Input */}
+            <div className="mt-3 flex gap-2">
+              <Input
+                placeholder="Ask me to refine the tone, add details, or make changes..."
+                value={refinementQuery}
+                onChange={(e) => setRefinementQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAIRefinement()}
+                className="text-sm"
+              />
+              <Button
+                size="sm"
+                onClick={handleAIRefinement}
+                disabled={!refinementQuery.trim() || isLoading}
+              >
+                Refine
+              </Button>
+            </div>
           </div>
         </div>
       )}
 
-      <div className="flex-1 min-h-0 flex flex-col">
+      <div className={cn(
+        "flex-1 min-h-0 flex flex-col",
+        showReplyComposition ? "max-h-[60vh]" : "max-h-full"
+      )}>
         <div className="flex-1 overflow-hidden">
-          <ScrollArea
-            ref={scrollAreaRef}
-            className={cn(
-              "px-4",
-              showReplyComposition
-                ? "h-[calc(100vh-26rem)]"
-                : "h-[calc(100vh-12rem)]"
-            )}
-          >
-          <div className="pb-2 pt-4 space-y-4">
+          <ScrollArea ref={scrollAreaRef} className="h-full px-4">
+          <div className="py-4 space-y-4">
             {chatHistory.map((msg) => (
               <div
                 key={msg.id}
@@ -970,76 +803,42 @@ Ready to proceed with sending the escalation email?`,
                     <div className="mt-4 pt-3 border-t border-gray-100">
                       <div className="text-xs font-medium text-gray-700 mb-2">Recommended Actions:</div>
                       <div className="grid grid-cols-2 gap-2">
-                        {msg.content.includes('Escalation email sent successfully') ? (
-                          // Show follow-up action buttons for success message
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleRecommendedAction('Review Follow-up Email')}
-                              className="h-8 px-3 text-xs text-gray-700 hover:text-gray-900 justify-start border-gray-300 bg-white"
-                            >
-                              <Mail className="h-3 w-3 mr-2" />
-                              Review Daily Follow-up
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleRecommendedAction('Review Message to Andre')}
-                              className="h-8 px-3 text-xs text-gray-700 hover:text-gray-900 justify-start border-gray-300 bg-white"
-                            >
-                              <User className="h-3 w-3 mr-2" />
-                              Review Message to Andre
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => handleRecommendedAction('Return to Marchmont')}
-                              className="h-8 px-3 text-xs text-white hover:text-white justify-start bg-blue-600 hover:bg-blue-700 col-span-2"
-                            >
-                              <ExternalLink className="h-3 w-3 mr-2" />
-                              Return to Marchmont Historic Page
-                            </Button>
-                          </>
-                        ) : (
-                          // Show original action buttons for gas delay analysis
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => handleRecommendedAction('Send Escalation Email')}
-                              className="h-8 px-3 text-xs text-white hover:text-white justify-start bg-blue-600 hover:bg-blue-700"
-                            >
-                              <Mail className="h-3 w-3 mr-2" />
-                              Send Escalation Email
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleRecommendedAction('Contact Supplier')}
-                              className="h-8 px-3 text-xs text-gray-700 hover:text-gray-900 justify-start border-gray-300 bg-white"
-                            >
-                              <AlertTriangle className="h-3 w-3 mr-2" />
-                              Contact Supplier
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleRecommendedAction('Update Timeline')}
-                              className="h-8 px-3 text-xs text-gray-700 hover:text-gray-900 justify-start border-gray-300 bg-white"
-                            >
-                              <Calendar className="h-3 w-3 mr-2" />
-                              Update Timeline
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleRecommendedAction('View Project')}
-                              className="h-8 px-3 text-xs text-gray-700 hover:text-gray-900 justify-start border-gray-300 bg-white"
-                            >
-                              <ExternalLink className="h-3 w-3 mr-2" />
-                              View Project
-                            </Button>
-                          </>
-                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRecommendedAction('Send Escalation Email')}
+                          className="h-8 px-3 text-xs text-gray-700 hover:text-gray-900 justify-start border-gray-300"
+                        >
+                          <Mail className="h-3 w-3 mr-2" />
+                          Send Escalation Email
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRecommendedAction('Contact Supplier')}
+                          className="h-8 px-3 text-xs text-gray-700 hover:text-gray-900 justify-start border-gray-300"
+                        >
+                          <AlertTriangle className="h-3 w-3 mr-2" />
+                          Contact Supplier
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRecommendedAction('Update Timeline')}
+                          className="h-8 px-3 text-xs text-gray-700 hover:text-gray-900 justify-start border-gray-300"
+                        >
+                          <Calendar className="h-3 w-3 mr-2" />
+                          Update Timeline
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRecommendedAction('View Project')}
+                          className="h-8 px-3 text-xs text-gray-700 hover:text-gray-900 justify-start border-gray-300"
+                        >
+                          <ExternalLink className="h-3 w-3 mr-2" />
+                          View Project
+                        </Button>
                       </div>
                     </div>
                   )}
@@ -1076,6 +875,29 @@ Ready to proceed with sending the escalation email?`,
         </div>
 
         <div className="border-t bg-white p-4 flex-shrink-0">
+          {chatHistory.length === 0 && (
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-3">Quick questions about this message:</p>
+              <div className="grid grid-cols-2 gap-2">
+                {quickQuestions.map((q, index) => {
+                  const IconComponent = q.icon
+                  return (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleQuickQuestion(q.query)}
+                      className="h-8 px-2 text-xs text-gray-600 hover:text-blue-700 justify-start"
+                      disabled={isLoading}
+                    >
+                      <IconComponent className="h-3 w-3 mr-1" />
+                      {q.text}
+                    </Button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-2">
             <Input
