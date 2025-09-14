@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { OverrideStatusModal } from "@/components/override-status-modal"
 import { AnimatedCounter } from "@/components/animated-counter"
 import { ActivityTooltip } from "@/components/activity-tooltip"
+import { MeetingPrepAssistant } from "@/components/meeting-prep-assistant"
 import { toast } from "sonner"
 import {
   DollarSign,
@@ -22,12 +23,17 @@ import {
   CheckCircle,
   AlertTriangle,
   X,
+  MessageCircle,
+  Calendar,
 } from "lucide-react"
 
 export default function DashboardPage() {
   const [showOverrideModal, setShowOverrideModal] = useState(false)
   const [selectedProject, setSelectedProject] = useState<any>(null)
   const [showCriticalAlert, setShowCriticalAlert] = useState(false)
+  const [showMeetingPrepNotification, setShowMeetingPrepNotification] = useState(false)
+  const [meetingPrepData, setMeetingPrepData] = useState<any>(null)
+  const [showMeetingPrepModal, setShowMeetingPrepModal] = useState(false)
   const [projects, setProjects] = useState([
     {
       id: 1,
@@ -177,7 +183,19 @@ export default function DashboardPage() {
       setShowCriticalAlert(true)
     }, 2000)
 
-    return () => clearTimeout(timer)
+    // Listen for meeting prep trigger events from sidebar
+    const handleMeetingPrepTrigger = (event: CustomEvent) => {
+      console.log('Meeting prep event received:', event.detail)
+      setMeetingPrepData(event.detail)
+      setShowMeetingPrepNotification(true)
+    }
+
+    window.addEventListener('trigger-meeting-prep', handleMeetingPrepTrigger as EventListener)
+
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('trigger-meeting-prep', handleMeetingPrepTrigger as EventListener)
+    }
   }, [])
 
   const handleOverrideStatus = (project: any) => {
@@ -216,9 +234,47 @@ export default function DashboardPage() {
             <p className="text-muted-foreground">Welcome back, Emily. Here's your business overview</p>
           </div>
           <div className="relative">
+            {/* Meeting Prep Notification */}
+            {showMeetingPrepNotification && (
+              <div className="absolute -top-8 right-0 w-96 animate-in slide-in-from-right-2 fade-in duration-300 z-50">
+                <div className="bg-blue-50 border border-blue-300 rounded-md shadow-lg p-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-2 flex-1 min-w-0">
+                      <MessageCircle className="w-4 h-4 text-blue-500 animate-pulse flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-blue-800">{meetingPrepData?.message}</p>
+                        <p className="text-xs text-blue-600 mt-1">Hover for preview</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 flex-shrink-0 ml-3">
+                      <button
+                        onClick={() => {
+                          setShowMeetingPrepModal(true)
+                          setShowMeetingPrepNotification(false)
+                        }}
+                        className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded transition-colors duration-200"
+                      >
+                        Prepare Meeting Brief
+                      </button>
+                      <button
+                        onClick={() => setShowMeetingPrepNotification(false)}
+                        className="p-1 rounded hover:bg-blue-100 transition-colors group"
+                        title="Dismiss notification"
+                      >
+                        <X className="w-4 h-4 text-blue-400 group-hover:text-blue-600" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Urgent Popup - Top Bar Alert */}
             {showCriticalAlert && (
-              <div className="absolute -top-12 right-0 w-96 animate-in slide-in-from-right-2 fade-in duration-300 z-50">
+              <div className={`absolute right-0 w-96 animate-in slide-in-from-right-2 fade-in duration-300 z-40 ${
+                showMeetingPrepNotification ? 'top-8' : '-top-8'
+              }`}>
                 <div className="bg-red-50 border border-red-300 rounded-md shadow-lg p-3">
                   {/* Header and Content */}
                   <div className="flex items-center justify-between">
@@ -228,7 +284,7 @@ export default function DashboardPage() {
                         <p className="text-sm font-medium text-red-800">Marchmont Historic: £45,000 over budget - requires immediate attention</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2 flex-shrink-0 ml-3">
                       <button
                         onClick={() => console.log("Navigate to project")}
@@ -357,12 +413,19 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <OverrideStatusModal 
-        open={showOverrideModal} 
-        onOpenChange={setShowOverrideModal} 
-        projectName={selectedProject?.name || ""} 
-        currentStatus={selectedProject?.status || ""} 
-        onOverride={handleOverrideSubmit} 
+      <OverrideStatusModal
+        open={showOverrideModal}
+        onOpenChange={setShowOverrideModal}
+        projectName={selectedProject?.name || ""}
+        currentStatus={selectedProject?.status || ""}
+        onOverride={handleOverrideSubmit}
+      />
+
+      <MeetingPrepAssistant
+        open={showMeetingPrepModal}
+        onOpenChange={setShowMeetingPrepModal}
+        projectName={meetingPrepData?.project || ""}
+        requester={meetingPrepData?.requester || ""}
       />
     </MainLayout>
   )

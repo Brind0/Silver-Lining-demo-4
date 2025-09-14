@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect, use } from "react"
 import { useSearchParams } from "next/navigation"
+import { DocumentViewer } from "@/components/document-viewer"
+import { FullscreenDocumentViewer } from "@/components/fullscreen-document-viewer"
+import { generateExecutiveBrief } from "@/lib/document-generator"
 import { MainLayout } from "@/components/main-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -430,6 +433,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [showWeekDetailCard, setShowWeekDetailCard] = useState(false)
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0)
   const [createdDocuments, setCreatedDocuments] = useState<any[]>([])
+  const [generatedDocuments, setGeneratedDocuments] = useState<any[]>([])
+  const [highlightedDocumentId, setHighlightedDocumentId] = useState<string | null>(null)
+  const [selectedDocument, setSelectedDocument] = useState<any>(null)
   const [showDocumentModal, setShowDocumentModal] = useState(false)
   const [showProjectEditModal, setShowProjectEditModal] = useState(false)
   const [showAssistantModal, setShowAssistantModal] = useState(false)
@@ -497,6 +503,32 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       setTimeout(() => {
         setShowDemoNotification(false)
       }, 5000)
+    }
+
+    // Handle Meeting Prep Assistant navigation
+    const tab = searchParams.get('tab')
+    const highlight = searchParams.get('highlight')
+
+    if (tab === 'files' && highlight) {
+      setActiveTab('files')
+      setHighlightedDocumentId(highlight)
+
+      // Check for generated document in localStorage
+      const generatedDoc = localStorage.getItem('generatedDocument')
+      if (generatedDoc) {
+        try {
+          const docData = JSON.parse(generatedDoc)
+          if (docData.projectId === id && docData.id === highlight) {
+            const executiveBrief = generateExecutiveBrief(docData)
+            setGeneratedDocuments([executiveBrief])
+            // Don't auto-open fullscreen - let user click on the file
+            // Clean up localStorage
+            localStorage.removeItem('generatedDocument')
+          }
+        } catch (error) {
+          console.error('Error parsing generated document:', error)
+        }
+      }
     }
   }, [searchParams])
 
@@ -1087,7 +1119,17 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           .map(photo => ({ ...photo, type: 'photo', isNew: false })),
         ...createdDocuments
           .filter(doc => doc.name.toLowerCase().includes(searchTerm.toLowerCase()))
-          .map(doc => ({ ...doc, type: 'document', isNew: true, uploadDate: doc.createdDate }))
+          .map(doc => ({ ...doc, type: 'document', isNew: true, uploadDate: doc.createdDate })),
+        ...generatedDocuments
+          .filter(doc => doc.filename.toLowerCase().includes(searchTerm.toLowerCase()))
+          .map(doc => ({
+            name: doc.filename,
+            type: 'document',
+            isNew: true,
+            uploadDate: doc.generatedAt,
+            id: doc.id,
+            isGenerated: true
+          }))
       ].sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime())
     : []
 
@@ -3542,6 +3584,28 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                       </div>
                     ))}
+
+                    {/* Integrated Generated Documents */}
+                    {generatedDocuments.map((doc, index) => (
+                      <div
+                        key={`generated-${index}`}
+                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer"
+                        onClick={() => setSelectedDocument(doc)}
+                      >
+                        <FileText className="h-4 w-4 text-indigo-500" />
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2">
+                            <p className="text-sm font-medium">{doc.filename}</p>
+                            <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                            <Badge className="bg-indigo-100 text-indigo-800 text-xs">AI Generated</Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Generated {new Date(doc.generatedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      </div>
+                    ))}
                   </CardContent>
                 </Card>
                 
@@ -5227,6 +5291,15 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           onContactSupplier={(supplier) => {
             console.log('Contacting supplier:', supplier.name)
           }}
+        />
+      )}
+
+      {/* Fullscreen Document Viewer */}
+      {selectedDocument && (
+        <FullscreenDocumentViewer
+          document={selectedDocument}
+          onClose={() => setSelectedDocument(null)}
+          isHighlighted={highlightedDocumentId === selectedDocument.id}
         />
       )}
     </MainLayout>

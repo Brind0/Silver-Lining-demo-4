@@ -19,6 +19,7 @@ import {
   MessageSquare,
   FileText,
   Menu,
+  Sparkles,
 } from "lucide-react"
 
 const navigation = [
@@ -71,6 +72,21 @@ interface SidebarProps {
 function SidebarContent({ collapsed = false, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname()
 
+  const handleDemoTrigger = () => {
+    console.log('Demo Meeting Prep button clicked')
+    // Trigger meeting prep notification on dashboard
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('trigger-meeting-prep', {
+        detail: {
+          requester: 'Simon',
+          project: 'Henderson Golf Sim',
+          message: 'Simon requesting Henderson Golf Sim update for tomorrow\'s meeting'
+        }
+      }))
+    }
+    onNavigate?.()
+  }
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-16 items-center justify-between px-4 border-b border-blue-900">
@@ -110,8 +126,28 @@ function SidebarContent({ collapsed = false, onNavigate }: { collapsed?: boolean
         </nav>
       </div>
 
-      {!collapsed && (
-        <div className="border-t border-blue-900 p-4">
+      <div className="border-t border-blue-900 p-4 space-y-4">
+        {!collapsed && (
+          <Button
+            onClick={handleDemoTrigger}
+            className="w-full h-10 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0 shadow-lg"
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            Demo Meeting Prep
+          </Button>
+        )}
+
+        {collapsed && (
+          <Button
+            onClick={handleDemoTrigger}
+            className="w-full h-10 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0 shadow-lg p-0"
+            title="Demo Meeting Prep"
+          >
+            <Sparkles className="h-4 w-4" />
+          </Button>
+        )}
+
+        {!collapsed && (
           <div className="flex items-center space-x-3">
             <div className="h-10 w-10 rounded-full bg-blue-900 flex items-center justify-center">
               <span className="text-white font-medium text-sm">E</span>
@@ -121,8 +157,8 @@ function SidebarContent({ collapsed = false, onNavigate }: { collapsed?: boolean
               <p className="text-xs text-blue-700 truncate">Operations Director</p>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
